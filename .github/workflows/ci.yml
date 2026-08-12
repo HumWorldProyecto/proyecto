@@ -1,0 +1,36 @@
+name: Primer Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener repositorio
+        uses: actions/checkout@v4
+
+      - name: 1 Mostrar contexto
+        run: |
+          echo "Repositorio: $GITHUB_REPOSITORY"
+          echo "Commit: $GITHUB_SHA"
+
+      - name: 2 Comprobación inicial
+        run: test -f README.md
+
+      - name: Resultado final
+        if: success()
+        run: echo "OK - Todos los pasos se completaron exitosamente"
+
+      - name: Notificación de error
+        if: failure()
+        run: |
+          echo "KO ERROR - Fallo en uno de los pasos anteriores"
+          exit 1
