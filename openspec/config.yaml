@@ -1,5 +1,65 @@
 schema: spec-driven
 
+# Contexto permanente mostrado a los agentes al crear artefactos.
+context: |
+  HumWorld es una aplicación web modular desarrollada mediante OpenSpec como metodología SDD.
+  docs/architecture.md es la fuente de verdad de la arquitectura y debe leerse antes de propose, design o apply, junto con los artefactos vigentes del cambio.
+
+  Distinguir siempre tres niveles: (1) restricciones obligatorias del proyecto, (2) baseline tecnológico provisional del Equipo 5 pendiente de ratificación y (3) decisiones específicas que pertenecen al design.md de cada cambio.
+  Una tecnología provisional no es un requisito del negocio ni una imposición del enunciado. No cambiar tecnologías, dependencias principales ni decisiones arquitectónicas sin análisis de impacto, aprobación humana y ADR cuando corresponda.
+
+  Restricciones obligatorias: aplicación web; arquitectura modular y en capas; separación entre presentación, lógica de negocio y datos; API REST bajo /api/v1 con JSON cuando corresponda y OpenAPI/Swagger; fuentes de noticias exclusivamente RSS, sin web scraping; persistencia mediante un sistema gestor de datos; Docker; GitHub Actions; pruebas automatizadas con cobertura global mínima del 80 %; OpenSpec revisado antes de implementar una historia; ADR para decisiones arquitectónicas relevantes; ningún secreto o credencial en el repositorio.
+
+  El baseline provisional, pendiente de ratificación definitiva del Equipo 5, propone un monolito modular; Python, FastAPI y Uvicorn; React, TypeScript y Vite; PostgreSQL, SQLAlchemy y Alembic; httpx y feedparser; APScheduler como candidato; Leaflet y Chart.js; pytest; Vitest y React Testing Library; Docker Compose y SonarQube. Docker y GitHub Actions también son restricciones obligatorias, aunque sus detalles de uso pertenezcan al diseño.
+
+  Mantener el flujo frontend -> API -> servicios -> repositorios -> sistema gestor de datos. El frontend consume exclusivamente la API; la API invoca servicios y no accede directamente a datos; los servicios coordinan repositorios e integraciones; los jobs disparan casos de uso y no duplican lógica de negocio.
+  No implementar fuera de historias de usuario aprobadas. Cada historia debe incluir pruebas. No inventar requisitos, relaciones funcionales, endpoints ni valores de configuración ausentes de las historias y especificaciones aprobadas.
+
+# Reglas por artefacto OpenSpec.
+rules:
+  proposal:
+    - Definir con claridad el objetivo y el alcance del cambio.
+    - Identificar explícitamente lo que queda fuera de alcance.
+    - Indicar el impacto arquitectónico y las capas o módulos previsiblemente afectados.
+    - No introducir tecnologías o dependencias nuevas sin análisis y aprobación humana.
+  specs:
+    - Expresar los escenarios con Given/When/Then.
+    - Especificar comportamiento observable y verificable.
+    - Mantener los requisitos independientes de la implementación.
+    - No inventar requisitos ni ampliar silenciosamente una historia de usuario.
+  design:
+    - Leer docs/architecture.md antes de diseñar.
+    - Indicar las capas y los módulos afectados.
+    - Distinguir decisiones aprobadas, provisionales y pendientes.
+    - Identificar los archivos que se prevé modificar.
+    - Explicar la estrategia y los niveles de pruebas aplicables.
+    - Justificar cualquier desviación de la arquitectura y detenerse hasta obtener aprobación si existe contradicción.
+  tasks:
+    - Dividir el trabajo en tareas pequeñas y verificables.
+    - Derivar cada tarea de la especificación y el diseño aprobados.
+    - Incluir las pruebas y verificaciones correspondientes.
+    - No incluir funcionalidad fuera de alcance.
+    - Incluir una comprobación final de conformidad con la arquitectura.
+
+# Guía para operaciones OpenSpec.
+operations:
+  apply:
+    guidance:
+      - Leer docs/architecture.md y todos los artefactos vigentes del cambio antes de implementar.
+      - Implementar únicamente las tareas aprobadas.
+      - Mantener la separación de presentación, API, servicios, repositorios, integraciones y jobs.
+      - No introducir tecnologías o dependencias nuevas sin aprobación humana.
+      - Ejecutar las pruebas aplicables y comprobar sus resultados.
+      - No marcar tareas como completadas sin verificarlas.
+      - Detenerse e informar si existe una contradicción con la arquitectura o la especificación.
+  archive:
+    guidance:
+      - Comprobar la conformidad de la implementación con docs/architecture.md.
+      - Comprobar que todas las tareas estén realmente terminadas y verificadas.
+      - Comprobar las pruebas y el umbral de cobertura aplicable.
+      - Comprobar que no se haya añadido funcionalidad fuera de alcance.
+      - Resumir el resultado de estas comprobaciones antes de archivar.
+
 # Project context (optional)
 # This is shown to AI when creating artifacts.
 # Add your tech stack, conventions, style guides, domain knowledge, etc.
