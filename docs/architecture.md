@@ -2,21 +2,21 @@
 
 ## 1. Objetivo
 
-Este documento es la fuente de verdad de la arquitectura base de HumWorld. Establece las restricciones obligatorias del proyecto, el baseline tecnológico provisional del Equipo 5 y los límites de las decisiones que deben resolverse en cada cambio OpenSpec.
+Este documento es la fuente de verdad de la arquitectura base de HumWorld. Establece las restricciones obligatorias del proyecto, el baseline tecnológico confirmado por el Equipo 5 y los límites de las decisiones que deben resolverse en cada cambio OpenSpec.
 
 La arquitectura distingue expresamente tres niveles de decisión:
 
 1. **Restricciones obligatorias:** reglas estables derivadas del proyecto HumWorld que todos los cambios deben respetar.
-2. **Baseline tecnológico provisional:** propuesta actual del Equipo 5 para iniciar la Práctica 6 (P6), pendiente de ratificación definitiva.
+2. **Baseline tecnológico confirmado:** decisión ratificada por el Equipo 5 para iniciar la Práctica 6 (P6).
 3. **Decisiones por cambio:** detalles que deben justificarse en el `design.md` del cambio OpenSpec correspondiente y no se congelan globalmente en este documento.
 
-Una tecnología del baseline provisional no constituye por sí misma un requisito del negocio ni una imposición del enunciado.
+Una tecnología del baseline confirmado no constituye por sí misma un requisito del negocio ni una imposición del enunciado: sigue siendo una elección propia del Equipo 5.
 
 ## 2. Estado de la arquitectura
 
-> Esta arquitectura constituye el baseline provisional del Equipo 5 para iniciar P6. Las restricciones derivadas del proyecto son obligatorias. Las elecciones tecnológicas marcadas como provisionales deberán ser revisadas y ratificadas por el equipo. Cualquier cambio posterior relevante deberá documentarse.
+> Esta arquitectura constituye el baseline tecnológico confirmado por el Equipo 5 para P6. Las restricciones derivadas del proyecto son obligatorias. Las elecciones tecnológicas de la sección 4 ya han sido ratificadas por el equipo; cualquier cambio posterior relevante deberá seguir el proceso de la sección 19 y documentarse mediante ADR.
 
-El documento no autoriza por sí mismo la implementación de historias de usuario. Toda implementación requiere una especificación OpenSpec revisada y aprobada. Las decisiones aún no ratificadas se enumeran en la sección 20.
+El documento no autoriza por sí mismo la implementación de historias de usuario. Toda implementación requiere una especificación OpenSpec revisada y aprobada. Las decisiones confirmadas y el único punto que permanece deliberadamente abierto se enumeran en la sección 20.
 
 ## 3. Restricciones obligatorias
 
@@ -41,22 +41,22 @@ Las siguientes reglas provienen del proyecto HumWorld y son obligatorias:
 - No se pueden introducir tecnologías o dependencias nuevas sin decisión humana.
 - No se deben almacenar secretos ni credenciales en el repositorio.
 
-## 4. Baseline tecnológico provisional
+## 4. Baseline tecnológico confirmado
 
-Todo el contenido de esta sección es la propuesta inicial actual y está **pendiente de ratificación definitiva del Equipo 5**, salvo los elementos que también aparecen como restricciones obligatorias en la sección 3. El enunciado no obliga a utilizar FastAPI, React, PostgreSQL ni ninguna otra elección marcada como provisional.
+Todo el contenido de esta sección ha sido **revisado y confirmado por el Equipo 5** como baseline tecnológico de P6, salvo los elementos que también aparecen como restricciones obligatorias en la sección 3 (que son requisitos del proyecto, no elecciones del equipo). El enunciado no obliga a utilizar NestJS, React, PostgreSQL, Prisma ni ninguna otra elección de esta sección; siguen siendo decisiones propias del Equipo 5, no impuestas por el negocio.
 
-| Área | Propuesta provisional | Estado |
+| Área | Elección confirmada | Estado |
 | --- | --- | --- |
-| Backend | Python, FastAPI y Uvicorn | Pendiente de ratificación |
-| Frontend | React, TypeScript y Vite | Pendiente de ratificación |
-| Persistencia | PostgreSQL, SQLAlchemy y Alembic para migraciones | Pendiente de ratificación |
-| Captura RSS | `httpx` como cliente HTTP y `feedparser` como parser RSS | Pendiente de ratificación |
-| Scheduling | APScheduler como candidato inicial | Pendiente de ratificación |
-| Visualización | Leaflet para mapas y Chart.js para gráficos | Pendiente de ratificación |
-| Pruebas | pytest para backend; Vitest y React Testing Library para frontend | Pendiente de ratificación |
-| DevOps y calidad | Docker, Docker Compose para el entorno local, GitHub Actions y SonarQube | Pendiente de ratificación en sus detalles; Docker y GitHub Actions son además restricciones obligatorias |
+| Backend | Node.js, TypeScript y NestJS | Confirmado |
+| Frontend | React, TypeScript y Vite | Confirmado |
+| Persistencia | PostgreSQL, Prisma ORM y Prisma Migrate para migraciones | Confirmado |
+| Captura RSS | Axios (`@nestjs/axios`) como cliente HTTP y una librería de parseo RSS (p. ej. `rss-parser`) | Confirmado |
+| Scheduling | `@nestjs/schedule` | Confirmado |
+| Visualización | Leaflet para mapas y Chart.js para gráficos | Confirmado |
+| Pruebas | Jest para backend; Vitest y React Testing Library para frontend | Confirmado |
+| DevOps y calidad | Docker, Docker Compose para el entorno local, GitHub Actions y SonarQube | Confirmado; Docker y GitHub Actions son además restricciones obligatorias |
 
-Ninguna sustitución relevante puede realizarse de forma unilateral. El proceso requerido es:
+La decisión humana sobre este baseline ya fue tomada por el Equipo 5. Queda pendiente registrar el ADR formal correspondiente en `docs/adr/`, dejando constancia de contexto, alternativas, decisión y consecuencias, tal como exige la sección 19. Cualquier sustitución posterior de estas elecciones deberá seguir igualmente ese proceso:
 
 ```text
 propuesta
@@ -70,7 +70,7 @@ propuesta
 
 ## 5. Estilo arquitectónico
 
-El estilo propuesto como **baseline provisional** es un monolito modular organizado por responsabilidades y capas. Permite comenzar con un único sistema desplegable, manteniendo límites internos que reduzcan el acoplamiento y faciliten la evolución.
+El estilo confirmado como baseline de P6 es un monolito modular organizado por responsabilidades y capas. Permite comenzar con un único sistema desplegable, manteniendo límites internos que reduzcan el acoplamiento y faciliten la evolución.
 
 No se utilizarán microservicios en el baseline actual. Adoptarlos en el futuro sería un cambio arquitectónico relevante y requeriría análisis de impacto, aprobación humana y ADR.
 
@@ -98,12 +98,12 @@ Las dependencias deben apuntar hacia la lógica de negocio: presentación y API 
 - Implementan y coordinan los casos de uso aprobados.
 - Albergan las reglas para captura RSS, gestión de noticias, análisis de sentimiento, clasificación, consultas y agregaciones, caducidad y purgado.
 - Coordinan repositorios e integraciones mediante contratos claros.
-- No deben depender de SQL concreto.
+- No deben depender de SQL ni del cliente de Prisma de forma directa fuera de la capa de repositorios.
 
 ### Repositorios / datos
 
 - Encapsulan el acceso a datos, la persistencia y las consultas.
-- Ocultan a los servicios los detalles concretos del sistema gestor de datos.
+- Ocultan a los servicios los detalles concretos del sistema gestor de datos y del ORM utilizado.
 - No contienen reglas de presentación ni orquestación de casos de uso.
 
 ### Integraciones
@@ -134,7 +134,7 @@ Los límites conceptuales iniciales son:
 | `purge` | Caducidad y purgado |
 | `config` | Configuración general |
 
-Estos nombres describen límites funcionales, no obligan a crear ahora carpetas, servicios o componentes para todos ellos. Cada cambio OpenSpec debe identificar cuáles de estos módulos afecta.
+Estos nombres describen límites funcionales, no obligan a crear ahora módulos, carpetas o componentes de NestJS para todos ellos. Cada cambio OpenSpec debe identificar cuáles de estos módulos afecta.
 
 El análisis de sentimiento debe exponerse mediante una abstracción conceptual sustituible. No se fija todavía si la implementación utilizará diccionario, NLP, LLM u otro método. La decisión deberá justificarse mediante OpenSpec y, cuando sea arquitectónicamente relevante, un ADR. La HU-17 no implica automáticamente una relación con el motor de sentimiento que no haya sido aprobada funcionalmente.
 
@@ -170,41 +170,41 @@ La regla general de versionado es `/api/v1`. Se prevén inicialmente las siguien
 - `/api/v1/sentiment`
 - `/api/v1/dashboards`
 
-Esta lista no define todos los endpoints concretos. Métodos HTTP, rutas especiales, payloads, DTO, filtros, validaciones y códigos de respuesta deben derivarse de las historias de usuario y del cambio OpenSpec correspondiente. OpenAPI/Swagger debe mantenerse sincronizado con la implementación real.
+Esta lista no define todos los endpoints concretos. Métodos HTTP, rutas especiales, payloads, DTO, filtros, validaciones y códigos de respuesta deben derivarse de las historias de usuario y del cambio OpenSpec correspondiente. OpenAPI/Swagger debe mantenerse sincronizado con la implementación real (en NestJS, mediante `@nestjs/swagger`).
 
 ## 10. Persistencia
 
-El uso de un sistema gestor de datos es obligatorio. PostgreSQL, SQLAlchemy y Alembic forman parte del baseline tecnológico provisional pendiente de ratificación, no de los requisitos impuestos por el proyecto.
+El uso de un sistema gestor de datos es obligatorio. PostgreSQL, Prisma ORM y Prisma Migrate forman parte del baseline tecnológico confirmado por el Equipo 5, no de los requisitos impuestos por el proyecto.
 
-Todo acceso persistente debe quedar encapsulado en repositorios. La API y el frontend no deben ejecutar consultas de datos, y los servicios deben depender de abstracciones en lugar de SQL concreto. El modelo exacto de entidades, las migraciones, los índices y las consultas pertenecen al diseño del cambio que los necesite.
+Todo acceso persistente debe quedar encapsulado en repositorios. La API y el frontend no deben ejecutar consultas de datos, y los servicios deben depender de abstracciones de repositorio en lugar de invocar directamente al cliente de Prisma o SQL concreto. El modelo exacto de entidades (`schema.prisma`), las migraciones, los índices y las consultas pertenecen al diseño del cambio que los necesite.
 
 ## 11. Integraciones RSS
 
 RSS es la única fuente permitida para capturar noticias; el web scraping está prohibido. La integración debe encapsular el acceso HTTP y el parseo, normalizar los resultados y ofrecerlos a los servicios mediante contratos claros.
 
-`httpx` y `feedparser` son elecciones provisionales pendientes de ratificación. El timeout, los reintentos, el backoff, la concurrencia, el algoritmo de deduplicación y otras políticas operativas deben decidirse en el `design.md` del cambio correspondiente.
+Axios (integrado vía `@nestjs/axios`) y una librería de parseo RSS (por ejemplo, `rss-parser`) son elecciones confirmadas por el Equipo 5. El timeout, los reintentos, el backoff, la concurrencia, el algoritmo de deduplicación y otras políticas operativas deben decidirse en el `design.md` del cambio correspondiente.
 
 ## 12. Procesos programados
 
 La captura automática y el purgado automático deben programarse como disparadores de casos de uso. Un job decide cuándo invocar un servicio; el servicio conserva las reglas y coordina repositorios e integraciones.
 
-APScheduler es solamente el candidato inicial del baseline provisional. La estrategia definitiva de scheduling, los solapamientos, la concurrencia, la recuperación ante fallos y los valores de configuración requieren una decisión por cambio y, si alteran la arquitectura, aprobación humana y ADR.
+`@nestjs/schedule` es la elección confirmada del baseline para el scheduling inicial. La estrategia definitiva de scheduling, los solapamientos, la concurrencia, la recuperación ante fallos y los valores de configuración requieren una decisión por cambio y, si alteran la arquitectura, aprobación humana y ADR.
 
 ## 13. Frontend y visualización
 
-El frontend implementará la interfaz web, la administración y los dashboards consumiendo exclusivamente `/api/v1`. React, TypeScript y Vite son propuestas provisionales pendientes de ratificación.
+El frontend implementará la interfaz web, la administración y los dashboards consumiendo exclusivamente `/api/v1`. React, TypeScript y Vite son elecciones confirmadas por el Equipo 5.
 
-Leaflet y Chart.js son también propuestas provisionales para mapas y gráficos. La composición exacta de cada visualización, sus interacciones y la transformación específica de datos deben definirse a partir de la historia de usuario y del `design.md` aplicable. Las reglas centrales de negocio no deben trasladarse a componentes del frontend.
+Leaflet y Chart.js son también elecciones confirmadas para mapas y gráficos. La composición exacta de cada visualización, sus interacciones y la transformación específica de datos deben definirse a partir de la historia de usuario y del `design.md` aplicable. Las reglas centrales de negocio no deben trasladarse a componentes del frontend.
 
 ## 14. Estrategia de pruebas
 
 Cada historia de usuario debe incluir pruebas automatizadas trazables a sus escenarios. Deben utilizarse pruebas unitarias, de integración y de aceptación según corresponda, con una cobertura global mínima obligatoria del 80 %.
 
-Como baseline provisional, el backend utilizaría pytest y el frontend Vitest con React Testing Library. Las herramientas están pendientes de ratificación; la obligación de probar y el umbral de cobertura no lo están. Cada `design.md` debe explicar los niveles de prueba, los casos relevantes y la forma de verificar la implementación.
+Como baseline confirmado, el backend utiliza Jest y el frontend Vitest con React Testing Library. La obligación de probar y el umbral de cobertura del 80 % son restricciones del proyecto, no elecciones del equipo. Cada `design.md` debe explicar los niveles de prueba, los casos relevantes y la forma de verificar la implementación.
 
 ## 15. DevOps y calidad
 
-Docker debe proporcionar un entorno reproducible y GitHub Actions debe ejecutar la integración continua. Docker Compose se propone provisionalmente para el entorno local y SonarQube para análisis de calidad.
+Docker debe proporcionar un entorno reproducible y GitHub Actions debe ejecutar la integración continua. Docker Compose se confirma para el entorno local y SonarQube para análisis de calidad.
 
 Los workflows deberán, cuando exista código aprobado, verificar como mínimo las pruebas aplicables y el umbral global de cobertura. Los detalles de imágenes, servicios, despliegue, ramas y puertas de calidad deben definirse y aprobarse antes de implementarse. Ningún secreto o credencial puede almacenarse en el repositorio; deben utilizarse mecanismos seguros de configuración y secretos del entorno.
 
@@ -214,17 +214,19 @@ La siguiente es una estructura objetivo, no una orden de crear inmediatamente to
 
 ```text
 backend/
-  app/
-    api/
+  src/
+    controllers/
     services/
     repositories/
-    models/
-    schemas/
+    dto/
     integrations/
     jobs/
-    core/
-    main.py
-  tests/
+    common/
+    main.ts
+  prisma/
+    schema.prisma
+    migrations/
+  test/
 
 frontend/
   src/
@@ -259,8 +261,8 @@ Los cambios OpenSpec crearán únicamente la estructura necesaria para su alcanc
 No se permiten las siguientes dependencias o acoplamientos:
 
 - Frontend hacia la base de datos, controladores de persistencia o consultas concretas.
-- API hacia SQL, repositorios concretos o acceso directo a datos; debe pasar por servicios.
-- Servicios hacia SQL concreto o detalles internos de componentes de presentación.
+- API hacia SQL, el cliente de Prisma, repositorios concretos o acceso directo a datos; debe pasar por servicios.
+- Servicios hacia SQL o Prisma Client de forma directa, o detalles internos de componentes de presentación.
 - Jobs que dupliquen lógica de negocio o accedan a datos saltándose los servicios.
 - Web scraping para obtener noticias.
 - Dependencias, tecnologías, integraciones o servicios externos nuevos sin justificación y aprobación humana.
@@ -275,10 +277,10 @@ Los siguientes detalles no se congelan globalmente y deben justificarse, cuando 
 - Ejecuciones solapadas, concurrencia y comportamiento operativo de jobs.
 - Endpoints concretos de una historia de usuario, métodos, payloads, DTO, filtros y códigos.
 - Validaciones funcionales específicas.
-- Estructura exacta de una entidad.
+- Estructura exacta de una entidad en `schema.prisma`.
 - Algoritmo exacto de deduplicación.
 - Política detallada de logging.
-- Índices concretos de base de datos y consultas SQL.
+- Índices concretos de base de datos y consultas.
 - Algoritmo o modelo definitivo de sentimiento.
 - Detalles internos de una visualización.
 - Valores concretos de configuración.
@@ -298,27 +300,32 @@ Cualquier cambio relevante del estilo arquitectónico, backend, frontend, sistem
 7. Actualizar `.github/copilot-instructions.md` si afecta a los agentes.
 8. Aplicar la decisión a las nuevas especificaciones y, solo entonces, al desarrollo aprobado.
 
-Codex, Copilot y otros agentes no pueden cambiar unilateralmente la arquitectura ni convertir una propuesta provisional en una obligación.
+Codex, Copilot y otros agentes no pueden cambiar unilateralmente la arquitectura ni convertir una propuesta futura en una obligación sin pasar por este proceso.
 
-## 20. Decisiones pendientes de ratificación
+## 20. Decisiones confirmadas y puntos abiertos
 
-El Equipo 5 debe revisar y ratificar o sustituir explícitamente:
+El Equipo 5 ha revisado y **confirmado** las siguientes decisiones del baseline tecnológico (sección 4):
 
-- El monolito modular como estilo inicial y la exclusión actual de microservicios.
-- Python, FastAPI y Uvicorn para backend.
+- El monolito modular como estilo inicial, con exclusión de microservicios en esta etapa.
+- Node.js, TypeScript y NestJS para backend.
 - React, TypeScript y Vite para frontend.
-- PostgreSQL, SQLAlchemy y Alembic para persistencia y migraciones.
-- `httpx` y `feedparser` para captura RSS.
-- APScheduler como candidato de scheduling.
+- PostgreSQL, Prisma ORM y Prisma Migrate para persistencia y migraciones.
+- Axios y una librería de parseo RSS (p. ej. `rss-parser`) para captura RSS.
+- `@nestjs/schedule` para scheduling.
 - Leaflet y Chart.js para visualización.
-- pytest, Vitest y React Testing Library como herramientas de prueba.
+- Jest, Vitest y React Testing Library como herramientas de prueba.
 - Docker Compose para entorno local y SonarQube para calidad.
-- El método definitivo de análisis de sentimiento, que permanece deliberadamente abierto.
 
-Docker, GitHub Actions, RSS exclusivo, la prohibición de scraping, la API REST `/api/v1`, OpenAPI/Swagger, OpenSpec, las pruebas y la cobertura global mínima del 80 % son restricciones del proyecto y no están pendientes de ratificación como tales. Sus detalles de implementación sí deben diseñarse en los cambios correspondientes.
+Permanece **deliberadamente abierto**:
+
+- El método definitivo de análisis de sentimiento.
+
+Docker, GitHub Actions, RSS exclusivo, la prohibición de scraping, la API REST `/api/v1`, OpenAPI/Swagger, OpenSpec, las pruebas y la cobertura global mínima del 80 % son restricciones del proyecto, no decisiones del equipo, y por tanto no forman parte de este proceso de confirmación.
+
+Corresponde registrar en `docs/adr/` el o los ADR formales de esta decisión, dejando constancia de contexto, alternativas, decisión y consecuencias, conforme al proceso de la sección 19.
 
 ## 21. Referencias a ADR
 
-Los ADR se almacenarán en `docs/adr/` y registrarán decisiones arquitectónicas relevantes junto con su contexto, alternativas, decisión, consecuencias y estado. Hasta que el Equipo 5 ratifique el baseline y genere los ADR correspondientes, las tecnologías de la sección 4 conservan su condición provisional.
+Los ADR se almacenarán en `docs/adr/` y registrarán decisiones arquitectónicas relevantes junto con su contexto, alternativas, decisión, consecuencias y estado. El Equipo 5 ya ha ratificado el baseline de la sección 4; queda pendiente generar los ADR formales correspondientes que dejen constancia escrita de esa ratificación.
 
 Cada ADR futuro deberá enlazarse desde esta sección o desde un índice dentro de `docs/adr/`. Si un ADR sustituye una decisión anterior, este documento y el contexto permanente de los agentes deberán actualizarse en el mismo cambio de gobierno arquitectónico.
