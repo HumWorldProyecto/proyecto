@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model News {
+  id          String   @id @default(uuid())
+  sourceId    String
+  title       String?
+  link        String?
+  guid        String?
+  description String?
+  pubDate     DateTime?
+  dedupeKey   String?
+  capturedAt  DateTime @default(now())
+
+  @@unique([sourceId, dedupeKey])
+  @@map("news")
+}
