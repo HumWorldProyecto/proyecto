@@ -1,0 +1,3 @@
+# Normalizacion de finales de linea.
+# Evita diffs falsos CRLF/LF entre Windows, Linux y GitHub Actions.
+* text=auto eol=lf

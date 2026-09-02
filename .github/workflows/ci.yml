@@ -11,6 +11,50 @@ permissions:
   contents: read
 
 jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: humworld
+          POSTGRES_PASSWORD: humworld
+          POSTGRES_DB: humworld
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U humworld"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: "postgresql://humworld:humworld@localhost:5432/humworld?schema=public"
+    steps:
+      - name: Obtener repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Generar cliente Prisma
+        run: npx prisma generate
+
+      - name: Aplicar migraciones de Prisma
+        run: npx prisma migrate deploy
+
+      - name: Ejecutar pruebas con cobertura (unitarias + integración)
+        run: npx jest --coverage
+
   check:
     runs-on: ubuntu-latest
     steps:
