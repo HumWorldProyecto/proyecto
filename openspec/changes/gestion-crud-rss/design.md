@@ -1,110 +1,167 @@
 ## Context
 
-La motivación y el alcance funcional se describen en `proposal.md`; los comportamientos verificables están en `specs/gestion-crud-rss/spec.md`. El repositorio todavía no declara una pila tecnológica ni una implementación previa para el registro de fuentes RSS, por lo que este diseño introduce el primer modelo de datos y el primer punto de interacción directa de un administrador con HumWorld.
+La arquitectura vigente de HumWorld define un monolito modular sobre Node.js 24 LTS, TypeScript 5 y NestJS 10.4, con PostgreSQL 16, Prisma ORM 6, Prisma Migrate y una API REST JSON bajo `/api/v1` documentada con Swagger/OpenAPI. HU-01 ya aprobó la captura sobre una instantánea de fuentes elegibles; HU-04 ya usa `News.sourceId` como referencia estable de procedencia.
 
-HU-01 y HU-02 ya consumen "el conjunto de fuentes registradas" mediante un límite abstracto sin contrato interno definitivo; este cambio cierra ese contrato. Ninguna de esas historias impone campos al modelo de la fuente: los "metadatos de fuente" que persiste HU-04 pertenecen al ítem RSS entregado por el feed, no a la entidad administrada aquí.
+HU-15 administra fuentes RSS directamente. La especificación global de HumWorld y la planificación original de HU-15 también exigen gestionar canales/medios que agrupan fuentes. Issue #16 y este OpenSpec representan un slice refinado dedicado a fuentes RSS. Este diseño no introduce silenciosamente una entidad `Channel`: la capacidad de canales/medios continúa siendo alcance obligatorio pendiente y debe quedar trazada en el backlog y en Sprint Review.
 
 ```text
-Administrador
-     |
-     v
-Casos de uso CRUD (crear / consultar / actualizar / desactivar / reactivar)
-     |
-     v
-Registro de fuentes RSS (url, estado activo/inactivo, ...)
-     |
-     v
-Límite abstracto: conjunto de fuentes registradas ACTIVAS
-     |
-     v
-Consumido por HU-01 (captura automática) y HU-02 (actualización manual)
+POST/GET/PUT/PATCH/DELETE /api/v1/sources
+                    |
+                    v
+        casos de uso de fuentes
+          |                  |
+          v                  v
+ repositorio RssSource   validador HTTP
+          |
+          v
+ PostgreSQL 16 / Prisma 6
+          |
+          v
+SourceRegistryPort.getEligibleSources()
+          |
+          v
+      HU-01 / HU-02
 ```
 
 ## Goals / Non-Goals
 
 **Goals:**
 
-- Definir el modelo mínimo de la entidad "fuente RSS" necesario para satisfacer los requisitos de `spec.md`.
-- Definir el contrato interno definitivo del límite abstracto de "conjunto de fuentes registradas activas" que HU-01 y HU-02 dejaron pendiente.
-- Mantener separada la validación de la URL (formato y accesibilidad) de la interpretación del feed (que pertenece a HU-01/HU-02).
+- Fijar la API REST mínima de gestión de fuentes y sus respuestas observables.
+- Persistir un modelo `RssSource` mínimo con URL única y eliminación lógica.
+- Normalizar y validar URLs sin confundir accesibilidad HTTP con validez RSS.
+- Proporcionar a HU-01/HU-02 una instantánea tipada de fuentes activas elegibles.
+- Preservar la trazabilidad entre una noticia y su fuente.
 
 **Non-Goals:**
 
-- Diseñar la interfaz de entrada concreta (API, UI o CLI) para el administrador.
-- Diseñar la autorización o el control de acceso del rol administrador.
-- Rediseñar la captura, el parseo o la periodicidad (HU-01, HU-02, HU-18).
-- Definir persistencia, duplicados o metadatos de noticias (HU-04); solo se garantiza que sus registros no se alteran al desactivar una fuente.
-- Añadir borrado físico, historial de cambios o auditoría de la fuente.
+- Crear una UI administrativa o exigir autenticación para las funcionalidades básicas de Sprint 1.
+- Crear en este slice entidades de canal/medio cuyo contrato todavía no está refinado, sin eliminar esa capacidad obligatoria del alcance global; tampoco se añaden nombres descriptivos, auditoría o historial.
+- Interpretar el contenido RSS durante el alta o la actualización de una fuente.
+- Rediseñar la captura, la periodicidad o el almacenamiento del contenido de noticias.
+- Añadir borrado físico.
 
 ## Decisions
 
-Las decisiones aprobadas fijan el comportamiento reflejado en `spec.md`. Las decisiones pendientes son elecciones de implementación que no cambian ese comportamiento observable.
-
 ### Decisiones APROBADAS
 
-#### Modelo mínimo de la fuente RSS
+#### API REST versionada, JSON y documentada
 
-Cada fuente registrada tiene, como mínimo: un identificador único, una URL y un estado (`activa` o `desactivada`). Otros campos administrativos (por ejemplo, un nombre descriptivo) pueden añadirse sin reglas de validación propias de este cambio, ya que ninguna historia consumidora los exige todavía.
+La interfaz de entrada de Sprint 1 ya no está abierta. `SourcesController` expondrá:
 
-#### Validación de URL en dos niveles, aplicada en creación y actualización
+| Operación | Endpoint | Éxito |
+| --- | --- | --- |
+| Crear | `POST /api/v1/sources` | `201 Created` |
+| Listar | `GET /api/v1/sources` | `200 OK` |
+| Consultar detalle | `GET /api/v1/sources/:id` | `200 OK` |
+| Reemplazar datos editables | `PUT /api/v1/sources/:id` | `200 OK` |
+| Actualizar parcialmente/estado | `PATCH /api/v1/sources/:id` | `200 OK` |
+| Desactivar | `DELETE /api/v1/sources/:id` | `204 No Content` |
 
-Toda operación que fija o modifica la URL de una fuente (creación, o actualización que cambia la URL) exige que la URL sea sintácticamente válida y que responda a una solicitud HTTP. Ambas comprobaciones se ejecutan de forma síncrona, con una finalización finita mediante timeout, reutilizando el mismo principio de finalización finita ya aprobado para HU-01/HU-02 (sin fijar aún su valor concreto).
+Los DTO iniciales son deliberadamente mínimos:
 
-Se descartó verificar en el alta que la URL sirva específicamente un feed RSS interpretable (reutilizando el parser de HU-01): acoplaría la gestión administrativa al comportamiento de interpretación de captura, y una fuente cuyo feed cambia de formato después del alta ya queda cubierta por el aislamiento de fallos por fuente que HU-01 aprobó.
+- `POST`: `{ "url": string }`. Una fuente nueva queda activa.
+- `PUT`: `{ "url": string }`. En Sprint 1 la URL es el único dato reemplazable completo; el estado se administra mediante `PATCH` o `DELETE`.
+- `PATCH`: `{ "url"?: string, "active"?: boolean }`, con al menos una propiedad. `active: true` reactiva y `active: false` desactiva.
+- Respuesta: `id`, `url`, `active`, `createdAt` y `updatedAt`. Las fechas se serializan como cadenas ISO 8601.
+- Listado: sin filtro devuelve todas; `?active=true` y `?active=false` seleccionan un estado.
 
-#### Unicidad de URL sobre el conjunto completo de fuentes registradas
+Los DTO o filtros mal formados —incluido un valor de `active` distinto de `true` o `false`—, las URLs inválidas y las URLs inaccesibles producen `400 Bad Request`; un identificador inexistente produce `404 Not Found`; una URL duplicada produce `409 Conflict`. Si DELETE recibe el identificador de una fuente ya desactivada, mantiene ese estado y devuelve `204` sin cuerpo. Todas las operaciones con cuerpo usan JSON, aparecen en Swagger/OpenAPI y no requieren autenticación en Sprint 1.
 
-La URL se valida como única contra todas las fuentes registradas, estén activas o desactivadas. Comparar solo contra las activas permitiría URLs duplicadas "dormidas" que resurgirían como conflicto al reactivar una fuente.
+#### Persistencia relacional y modelo mínimo
 
-#### Eliminación lógica mediante estado activo/desactivado, reversible
+La persistencia usa PostgreSQL 16, Prisma ORM 6 y Prisma Migrate. El estado objetivo mínimo es:
 
-"Eliminar" una fuente se implementa como una transición de estado (`activa` → `desactivada`), no como un borrado físico del registro. Una fuente desactivada puede reactivarse (`desactivada` → `activa`). El registro y las noticias ya almacenadas asociadas a la fuente (HU-04) no se modifican en ninguna transición.
+```text
+RssSource
+- id: String, UUID estable
+- url: String, obligatoria y única
+- active: Boolean, true por defecto
+- createdAt: DateTime
+- updatedAt: DateTime
+```
 
-Se descartó el borrado físico: perdería la trazabilidad de qué fuente originó noticias ya almacenadas y no sería reversible ante un error del administrador.
+No se añade `name` ni otro campo que este slice de fuentes no necesite. Tampoco se añade `Channel` aquí porque su contrato todavía requiere refinamiento y trazabilidad propia de backlog, no porque la capacidad sea opcional. La restricción única de base de datos se aplica sobre la representación normalizada almacenada y cubre fuentes activas y desactivadas. La comprobación de servicio mejora el error, pero la restricción de PostgreSQL es la defensa frente a carreras concurrentes; el adaptador traduce su conflicto a `409`.
 
-#### Contrato del límite abstracto de fuentes registradas activas
+#### Normalización conservadora de URL
 
-El límite abstracto que consumen HU-01 y HU-02 se define como una operación de solo lectura que entrega una instantánea del conjunto de fuentes con estado `activa`, excluyendo las desactivadas. Es compatible con la "instantánea de fuentes por ejecución" ya aprobada en el diseño de HU-01: los cambios administrativos hechos mediante HU-15 se reflejan en instantáneas posteriores, no en una ejecución ya en curso.
+Antes de validar, comparar o persistir una URL:
 
-No se compromete en este cambio una interfaz de entrada concreta (API/UI) para el administrador, siguiendo el mismo patrón ya usado por HU-01 y HU-02 para sus propios límites abstractos.
+1. se aplica `trim`;
+2. se analiza mediante la clase estándar `URL` de Node.js;
+3. se admiten únicamente los protocolos `http:` y `https:`;
+4. se rechaza la URL si `username` o `password` contienen credenciales embebidas;
+5. se utiliza la representación serializada por `URL.toString()`;
+6. se conservan path y query;
+7. no se eliminan, reordenan ni reinterpretan parámetros arbitrariamente y no se aplica canonicalización avanzada.
 
-### Decisiones PENDIENTES
+La unicidad compara esa representación almacenada. Esto cubre las normalizaciones propias del parser estándar sin inventar reglas de producto adicionales.
 
-#### Tecnología de persistencia
+#### Accesibilidad HTTP separada de la validación RSS
 
-No se ha seleccionado motor ni mecanismo de almacenamiento para el registro de fuentes.
+Un adaptador basado en `@nestjs/axios` y `HttpService` realiza una solicitud HTTP `GET` y exige una respuesta final satisfactoria `2xx` dentro de un timeout finito. Reutiliza el timeout central configurable aprobado para las solicitudes RSS, con `10_000 ms` por defecto, sin añadir otra dependencia HTTP.
 
-#### Normalización de la URL para la comparación de unicidad
+La comprobación se aplica al crear y cuando `PUT` o `PATCH` cambia la URL. No se repite al cambiar solo el estado. El cuerpo no se interpreta como RSS: que una dirección sea accesible no prueba que sea un feed válido; el guard RSS-only sigue perteneciendo a HU-01.
 
-No se ha decidido si la comparación de unicidad normaliza la URL (mayúsculas/minúsculas del host, barra final, parámetros de consulta) o la compara tal como se almacena.
+#### Eliminación lógica y preservación
 
-#### Valor concreto del timeout de accesibilidad HTTP
+`DELETE` y `PATCH active=false` cambian el estado a desactivado. `PATCH active=true` reactiva. Ninguna de estas operaciones borra la fila ni modifica noticias ya persistidas. Como HU-01 toma una instantánea al comenzar cada ejecución, un cambio de estado afecta únicamente a instantáneas posteriores y no altera una captura en curso.
 
-El mecanismo de finalización finita está aprobado; su duración concreta permanece abierta, igual que en HU-01/HU-02.
+La semántica exacta de `DELETE /api/v1/sources/:id` es:
 
-#### Interfaz de entrada concreta y autorización
+- fuente existente activa: cambia a desactivada y responde `204 No Content`;
+- fuente existente ya desactivada: permanece desactivada y responde `204 No Content`;
+- identificador inexistente: responde `404 Not Found`.
 
-Quedan sin seleccionar tanto el contrato de interfaz (API REST, UI administrativa u otro) como el mecanismo de autenticación/autorización que confirme que quien ejecuta las operaciones es un administrador.
+En ninguno de los tres casos se ejecuta un borrado físico.
 
-#### Campos administrativos adicionales
+#### Contrato definitivo de fuentes elegibles
 
-No se ha decidido si la fuente incluye un nombre descriptivo u otros campos opcionales, ni sus reglas de validación si se incorporan.
+HU-15 decide qué fuentes son elegibles: exclusivamente las activas. HU-01/HU-02 deciden cuándo obtener la instantánea.
+
+```ts
+type EligibleSource = Readonly<{
+  id: string;
+  url: string;
+}>;
+
+interface SourceRegistryPort {
+  getEligibleSources(): Promise<readonly EligibleSource[]>;
+}
+```
+
+La implementación consulta únicamente fuentes activas y devuelve una instantánea nueva con `id` y `url`; no expone entidades Prisma ni referencias mutables.
+
+#### Wiring por módulos y capas
+
+Un `SourcesModule` contiene controller, casos de uso, puerto de repositorio, adaptador Prisma y validador HTTP. Exporta un token asociado a `SourceRegistryPort`. Los módulos de captura importan `SourcesModule` y consumen ese token; HU-15 no importa los módulos de captura. Así se respeta API → servicios → repositorios y se evita una dependencia circular.
+
+#### Relación obligatoria de News con RssSource
+
+Se aprueba **A: una FK real y obligatoria `News.sourceId -> RssSource.id`**, con `Restrict`/`NoAction` ante borrado. `RssSource.id` será un `String` UUID estable y `News.sourceId` continuará siendo obligatorio; no se mantendrá como un escalar sin integridad referencial.
+
+No existe producción, la desactivación nunca borra la fuente y el E2E de Sprint 1 necesita una procedencia demostrable. La FK garantiza que cada `News.sourceId` refiera a una fuente estable, evita cascadas y protege contra un borrado físico accidental. Su migración debe coordinarse con la migración pendiente de HU-04; las pruebas que hoy inventen un `sourceId` deberán crear primero su `RssSource`. El schema y la migración siguen pendientes de implementación y no se modifican en este ajuste documental.
 
 ## Risks / Trade-offs
 
-- **[La verificación de accesibilidad HTTP síncrona puede ser lenta ante fuentes que responden con demora]** → Aplicar un timeout finito equivalente al ya aprobado para la captura por fuente en HU-01.
-- **[Una fuente accesible en el alta puede dejar de responder después]** → No se re-verifica fuera de la creación/actualización; HU-01 ya aísla y tolera fallos por fuente en cada ejecución de captura.
-- **[Comparar unicidad sin normalizar puede permitir URLs equivalentes pero no idénticas]** → Documentado como decisión pendiente; no bloquea el comportamiento ya aprobado en `spec.md`.
-- **[Definir aquí el contrato definitivo del límite abstracto obliga a HU-01/HU-02, ya en curso, a adaptar su consumo]** → Coordinar la actualización de esas implementaciones para que consuman el contrato de "fuentes activas" definido en este cambio.
+- **Verificación HTTP y SSRF:** una URL aportada por cliente provoca una solicitud desde el servidor. Los mínimos ya aprobados —solo HTTP/HTTPS, rechazo de credenciales embebidas, parser `URL` estándar y timeout central finito— no bastan para afirmar que el endpoint es seguro para exposición pública. La política completa para loopback, redes privadas, link-local, resolución DNS y cada destino de redirección permanece pendiente y debe resolverse antes de considerarlo seguro para despliegue público.
+- **Disponibilidad cambiante:** una fuente accesible al registrarse puede fallar después. HU-01 aísla los fallos por fuente durante cada captura.
+- **Latencia de validación:** la creación o actualización espera la verificación remota; el timeout común garantiza finalización finita.
+- **Relación con News:** adoptar la FK fortalece integridad y trazabilidad, pero obliga a ordenar fixtures y migraciones para que la fuente exista antes de guardar noticias.
+- **Canales/medios:** la especificación global y la planificación original de HU-15 exigen esta gestión, mientras Issue #16/OpenSpec cubre ahora un slice de fuentes. No se crea `Channel` aquí, pero la capacidad no es opcional: debe registrarse explícitamente en backlog antes del cierre del proyecto y mostrarse como separación de alcance en Sprint Review.
+- **HU-02:** su cambio pendiente aún habla de cualquier fuente registrada y no aclara el comportamiento manual sobre una fuente desactivada. Debe reconciliarse posteriormente sin modificarlo en este paso.
 
 ## Migration Plan
 
-No existe registro previo de fuentes que migrar: este cambio introduce la entidad. La estrategia de despliegue concreta (por ejemplo, si HU-01/HU-02 deben actualizarse en el mismo despliegue o pueden seguir usando un límite abstracto provisional) se definirá al seleccionar la interfaz de entrada y la persistencia, sin alterar el comportamiento ya aprobado en `spec.md`.
+1. Añadir `RssSource` y su restricción única al schema Prisma.
+2. Mantener `News.sourceId` obligatorio y relacionarlo con `RssSource.id` mediante FK con `Restrict`/`NoAction`.
+3. Crear una migración nueva y coordinarla con el cambio de `dedupeKey NOT NULL` pendiente en HU-04.
+4. Verificar la migración desde una base PostgreSQL vacía y adaptar fixtures para crear primero sus fuentes.
+5. Implementar repositorio, casos de uso, API y provider; después ejecutar pruebas unitarias, integración y E2E.
+
+No existe producción que migrar y no se realizará borrado físico de fuentes.
 
 ## Open Questions
 
-- ¿Qué tecnología de persistencia se utilizará para el registro de fuentes?
-- ¿Se normaliza la URL antes de comparar unicidad, y con qué reglas?
-- ¿Qué valor concreto tendrá el timeout de la verificación de accesibilidad HTTP?
-- ¿Qué interfaz de entrada concreta (API/UI/CLI) y qué mecanismo de autorización expondrán estos casos de uso al administrador?
-- ¿Se incorporarán campos administrativos adicionales (por ejemplo, un nombre descriptivo) y con qué validaciones?
+- ¿Qué política completa de protección SSRF se aplicará a loopback, redes privadas, link-local, resolución DNS y redirecciones antes de considerar seguro el despliegue público?
+- ¿Con qué HU/Issue se registrará en backlog la gestión obligatoria pendiente de canales/medios antes del cierre del proyecto y cómo se trazará la separación en Sprint Review?

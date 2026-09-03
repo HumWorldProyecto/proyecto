@@ -1,23 +1,25 @@
 ## Why
 
-HumWorld necesita que un administrador pueda mantener vigente el conjunto de fuentes RSS utilizado por la captura, ya que HU-01 y HU-02 asumen la existencia de "fuentes registradas" sin definir todavía cómo se crean, consultan, actualizan o eliminan. HU-15 cierra ese contrato: define la gestión administrativa (CRUD) de fuentes RSS.
+HumWorld necesita que un administrador pueda mantener vigente el conjunto de fuentes RSS utilizado por la captura. HU-01 y HU-02 consumen fuentes registradas, pero necesitan un contrato estable que permita crearlas, consultarlas, actualizarlas, desactivarlas y reactivarlas sin perder la trazabilidad de las noticias ya almacenadas.
 
 ## What Changes
 
-- Incorporar un caso de uso de creación de fuentes RSS que valide la URL de forma sintáctica (formato válido) y de accesibilidad HTTP antes de aceptar el registro.
-- Rechazar la creación o actualización de una fuente hacia una URL que ya pertenece a otra fuente registrada (la URL es única entre fuentes).
-- Incorporar un caso de uso de consulta que permita obtener una fuente registrada por su identificador y listar el conjunto de fuentes registradas.
-- Incorporar un caso de uso de actualización de los datos de una fuente existente, revalidando la URL (sintaxis y accesibilidad HTTP, y unicidad) cuando esta cambia.
-- Incorporar un caso de uso de eliminación lógica (desactivación) de una fuente existente: la fuente deja de formar parte del conjunto de fuentes registradas que consumen HU-01 y HU-02, pero su registro y las noticias ya almacenadas asociadas a ella (HU-04) se conservan; la desactivación es reversible mediante reactivación.
-- Rechazar las operaciones de consulta, actualización o eliminación dirigidas a un identificador de fuente que no existe.
-- Definir el contrato interno definitivo del "conjunto de fuentes registradas" que HU-01 y HU-02 consumen hoy mediante un límite abstracto, sin comprometer todavía una interfaz de entrada concreta (API, UI u otra).
-- Mantener fuera de este cambio la autorización y el control de acceso del administrador, la interfaz concreta de entrada (API/UI/CLI), la gestión de la periodicidad de captura (HU-18), la ejecución de la captura en sí (HU-01/HU-02) y la persistencia de noticias y sus metadatos (HU-04).
+- Incorporar la gestión de fuentes RSS mediante una API REST JSON documentada con Swagger/OpenAPI bajo `/api/v1/sources`.
+- Permitir crear, listar, consultar por identificador, reemplazar los datos editables, actualizarlos parcialmente, desactivar mediante eliminación lógica y reactivar fuentes RSS.
+- Permitir que el listado se filtre, como mínimo, por estado activo o desactivado.
+- Validar la URL de una fuente tanto sintácticamente como mediante accesibilidad HTTP con timeout finito antes de crearla o cuando una actualización cambia la URL; solo se admiten HTTP/HTTPS y se rechazan credenciales embebidas.
+- Normalizar la URL de manera conservadora antes de almacenarla y exigir que sea única entre todas las fuentes, activas o desactivadas.
+- Persistir las fuentes con PostgreSQL 16, Prisma ORM 6 y Prisma Migrate, usando un modelo mínimo con identificador estable, URL, estado y marcas temporales.
+- Relacionar el `sourceId` obligatorio de cada noticia con el identificador estable de `RssSource` mediante una FK real y restrictiva, sin borrado en cascada.
+- Desactivar sin borrado físico y conservar tanto el registro de la fuente como las noticias previamente asociadas; la desactivación es reversible.
+- Exponer a HU-01 y HU-02 una instantánea formada únicamente por el identificador estable y la URL de las fuentes activas elegibles.
+- Mantener fuera de este slice una UI administrativa, la autenticación de las funcionalidades básicas de Sprint 1, la implementación de canales/medios, la periodicidad (HU-18), la captura (HU-01/HU-02) y la persistencia del contenido de noticias (HU-04). La gestión de canales/medios sigue siendo alcance obligatorio pendiente del producto.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `gestion-crud-rss`: creación, consulta, actualización y desactivación administrativa de fuentes RSS, con validación de URL (sintáctica y de accesibilidad HTTP), unicidad de URL entre fuentes, rechazo de operaciones sobre fuentes inexistentes, y exposición del conjunto de fuentes registradas activas mediante un límite abstracto para HU-01 y HU-02.
+- `gestion-crud-rss`: API REST para la creación, consulta, listado, actualización, desactivación y reactivación de fuentes RSS; validación y unicidad de URL; persistencia relacional; y exposición de fuentes activas elegibles hacia HU-01/HU-02.
 
 ### Modified Capabilities
 
@@ -25,7 +27,9 @@ Ninguna.
 
 ## Impact
 
-- Casos de uso administrativos de gestión de fuentes RSS (crear, consultar, actualizar, desactivar), disparados por un administrador de HumWorld.
-- Contrato interno definitivo del límite abstracto de "conjunto de fuentes registradas" que consumen HU-01 y HU-02; su interfaz de entrada concreta (API/UI) no se define en este cambio.
-- Modelo de datos de la fuente RSS (URL, estado activo/inactivo, y demás campos administrativos); la tecnología concreta de persistencia se aborda en `design.md`.
-- Pruebas de comportamiento para creación con validación de URL, rechazo de duplicados, consulta, actualización con revalidación de URL, desactivación reversible y rechazo de operaciones sobre fuentes inexistentes.
+- Endpoints `POST /api/v1/sources`, `GET /api/v1/sources`, `GET /api/v1/sources/:id`, `PUT /api/v1/sources/:id`, `PATCH /api/v1/sources/:id` y `DELETE /api/v1/sources/:id`.
+- Casos de uso y adaptadores para validar URLs, administrar fuentes y consultar las fuentes elegibles.
+- Modelo `RssSource`, repositorio Prisma y migración de base de datos que deberán implementarse posteriormente.
+- Contrato interno `SourceRegistryPort` (o nombre equivalente) consumido por HU-01 y HU-02.
+- Pruebas unitarias, de integración con PostgreSQL y E2E de la API.
+- La especificación global de HumWorld y la planificación original de HU-15 exigen gestionar canales/medios y las fuentes RSS contenidas en ellos. Issue #16 y este OpenSpec representan actualmente un slice refinado dedicado a fuentes RSS. La gestión de canales/medios sigue siendo alcance obligatorio pendiente: debe registrarse explícitamente en el backlog antes del cierre del proyecto y trazarse en Sprint Review, sin crear silenciosamente una entidad `Channel` en este ajuste.

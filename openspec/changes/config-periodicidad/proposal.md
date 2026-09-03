@@ -1,31 +1,34 @@
 ## Why
 
-HumWorld necesita que un administrador pueda controlar con qué frecuencia se actualizan automáticamente las fuentes RSS. HU-01 (captura automática) ya asume la existencia de "una periodicidad configurada" para calcular su siguiente instante de ejecución, pero no define de dónde sale ese valor ni cómo se administra; su propio diseño deja explícitamente la gestión de periodicidad como responsabilidad de HU-18.
+HumWorld necesita que un administrador controle con qué frecuencia se actualizan automáticamente las fuentes RSS. HU-01 ya define qué hacer con una periodicidad configurada y con el estado sin configurar; HU-18 debe administrar y persistir ese estado, exponerlo mediante REST y notificar sus cambios para que el scheduler se reprograme sin reiniciar la aplicación.
 
 ## What Changes
 
-- Incorporar un caso de uso que permita al administrador configurar la periodicidad de la captura automática, eligiendo entre un catálogo cerrado de valores admitidos (15 min, 30 min, 1 h, 6 h, 12 h, 24 h).
-- Rechazar cualquier valor de periodicidad que no pertenezca a ese catálogo cerrado.
-- Incorporar un caso de uso de consulta que permita obtener el valor de periodicidad actualmente configurado.
-- Definir que la periodicidad es un único valor global, aplicable a todas las fuentes RSS por igual (no existe periodicidad por fuente).
-- Definir el estado inicial: mientras ningún administrador haya configurado un valor, la periodicidad permanece sin configurar y no se dispara ninguna captura automática por ausencia de periodicidad.
-- Definir que, al configurar o cambiar la periodicidad, el sistema recalcula de inmediato el siguiente instante de ejecución, tomando como referencia el momento en que se guarda el nuevo valor (no la última ejecución realizada).
-- Exponer el valor de periodicidad vigente (incluido el estado "sin configurar") mediante un límite abstracto de salida para su consumo por HU-01, sin definir en este cambio el mecanismo concreto de scheduling ni la interfaz de entrada (API, UI u otra).
-- Mantener fuera de este cambio la autorización y el control de acceso del administrador, la interfaz concreta de entrada, la tecnología de scheduling de HU-01, la periodicidad por fuente, y la reacción concreta de HU-01 ante el estado "sin periodicidad configurada" (se gestiona como una actualización aparte sobre el propio change pendiente de `captura-automatica-rss`, fuera del alcance de este delta).
+- Incorporar una API REST JSON documentada con Swagger/OpenAPI: `GET /api/v1/config` para consultar y `PUT /api/v1/config` para configurar o modificar la periodicidad.
+- Mantener un único valor global elegido del catálogo cerrado de 15, 30, 60, 360, 720 o 1440 minutos.
+- Rechazar con `400 Bad Request` cualquier valor ajeno al catálogo, preservando el estado anterior.
+- Mantener un estado inicial sin configurar y sin valor por defecto funcional; la consulta lo representa inequívocamente con `capturePeriodicityMinutes: null`.
+- Persistir una configuración singleton mediante PostgreSQL, Prisma y Prisma Migrate.
+- Exponer hacia HU-01 un estado tipado `configured(minutes)` o `unconfigured`, no un número que confunda ausencia con un valor real.
+- Notificar in-process cada cambio efectivo después de persistirlo, sin añadir `@nestjs/event-emitter`, para que HU-01 cancele/reemplace solo el job futuro y calcule el siguiente instante desde el momento efectivo del cambio.
+- Tratar un PUT que repite el valor vigente como un no-op idempotente: `200 OK`, sin escribir ni cambiar `updatedAt`, notificar o reprogramar.
+- Mantener fuera de este cambio la periodicidad por fuente, una UI administrativa, la autenticación de las funcionalidades básicas de Sprint 1, la interrupción de capturas en curso y la política de solapamiento, ya resuelta en HU-01.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `config-periodicidad`: configuración y consulta administrativa de la periodicidad global de captura automática, con validación contra un catálogo cerrado de valores, estado inicial "sin configurar", recálculo inmediato del siguiente instante ante un cambio, y exposición del valor vigente mediante un límite abstracto para HU-01.
+- `config-periodicidad`: consulta y configuración REST de la periodicidad global, persistencia singleton, representación explícita del estado sin configurar y notificación de cambios hacia HU-01.
 
 ### Modified Capabilities
 
-Ninguna. `captura-automatica-rss` (HU-01) todavía no está archivada en `openspec/specs/`, por lo que no existe un baseline contra el cual aplicar un delta `MODIFIED` formal. El escenario complementario ("sin periodicidad configurada") se añadirá directamente al change pendiente `captura-automatica-rss` como una actualización aparte, no como parte de este cambio.
+Ninguna. HU-01 permanece como cambio no archivado, pero ya contiene el escenario sin periodicidad, el scheduling dinámico con `@nestjs/schedule` y la política de solapamiento aprobada.
 
 ## Impact
 
-- Casos de uso administrativos de configuración y consulta de la periodicidad de captura, disparados por un administrador de HumWorld.
-- Contrato del límite abstracto de "periodicidad configurada" que consume HU-01 para programar su siguiente ejecución; su interfaz de entrada concreta (API/UI) no se define en este cambio.
-- Modelo de datos de la configuración de periodicidad (valor del catálogo, o ausencia de valor); la tecnología concreta de persistencia se aborda en `design.md`.
-- Pruebas de comportamiento para: aceptación de cada valor del catálogo, rechazo de valores fuera del catálogo, estado inicial sin configurar, y recálculo inmediato del siguiente instante desde el momento del cambio.
+- Endpoints `GET /api/v1/config` y `PUT /api/v1/config`, DTOs y documentación Swagger/OpenAPI.
+- Modelo singleton `CaptureConfig`, repositorio Prisma y migración de esquema que deberán implementarse posteriormente.
+- Casos de uso para consulta, validación y persistencia de la periodicidad.
+- Puertos relacionados para leer el estado vigente y suscribirse a cambios.
+- Wiring unidireccional con el scheduler de HU-01, sin dependencia circular entre módulos.
+- Pruebas unitarias, de integración con PostgreSQL y E2E de API/reprogramación.
