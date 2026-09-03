@@ -1,24 +1,24 @@
 ## Why
 
-HumWorld necesita mantener actualizada su información mediante capturas automáticas y periódicas desde las fuentes RSS registradas. HU-01 define la obtención e interpretación de esos feeds hasta producir cero o más ítems RSS interpretados para el flujo posterior, sin incluir su persistencia.
+HumWorld necesita mantener actualizada su información mediante capturas automáticas desde el conjunto de fuentes que HU-15 proporciona como elegible para captura. HU-01 define la obtención e interpretación de esos feeds, cuando HU-18 proporciona una periodicidad, hasta producir cero o más ítems RSS interpretados para el flujo posterior, sin incluir su persistencia.
 
 ## What Changes
 
-- Incorporar la ejecución automática de captura sobre las fuentes RSS registradas en HumWorld.
-- Ejecutar la captura con la periodicidad configurada por la capacidad correspondiente a HU-18.
-- Considerar correctamente capturada una fuente registrada cuando responde con un formato RSS admitido y el sistema puede interpretar su feed para producir cero o más ítems RSS.
+- Incorporar la ejecución automática de captura sobre el conjunto de fuentes que HU-15 proporciona para captura.
+- Ejecutar la captura con la periodicidad configurada por HU-18 y no programar ejecuciones automáticas cuando HU-18 indique que no existe periodicidad configurada.
+- Considerar correctamente capturada una fuente del conjunto proporcionado cuando responde con un formato RSS admitido y el sistema puede interpretar su feed para producir cero o más ítems RSS.
 - Entregar los ítems RSS interpretados a un límite abstracto de salida para el flujo posterior, sin afirmar que hayan sido almacenados.
 - Limitar la captura a RSS, sin admitir Atom ni utilizar técnicas de web scraping.
-- Aislar los fallos y contenidos inválidos por fuente, de modo que no impidan intentar las demás fuentes configuradas.
-- Evitar solicitudes de captura y la incorporación de noticias cuando no existen fuentes RSS configuradas.
-- Excluir del proceso automático cualquier fuente no registrada en HumWorld.
+- Aislar los fallos y contenidos inválidos por fuente, de modo que no impidan intentar las demás fuentes de la instantánea de ejecución.
+- Evitar solicitudes de captura y la producción de ítems cuando el conjunto proporcionado por HU-15 está vacío.
+- Excluir del proceso automático cualquier fuente que no forme parte del conjunto proporcionado por HU-15 para esa ejecución.
 - Mantener fuera de este cambio la gestión y validación administrativa de fuentes, la gestión de periodicidad y la definición de la persistencia, los duplicados, los datos mínimos y la actualización de noticias existentes.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `captura-automatica-rss`: ejecución automática y periódica de intentos de captura sobre las fuentes RSS registradas, interpretación de sus feeds y producción de ítems RSS para un límite abstracto de salida, con aislamiento de fallos por fuente y comportamiento definido cuando no existen fuentes.
+- `captura-automatica-rss`: ejecución automática, cuando existe periodicidad configurada, de intentos de captura sobre las fuentes proporcionadas por HU-15, interpretación exclusiva de RSS y producción de ítems para un límite abstracto de salida, con aislamiento de fallos por fuente y comportamiento definido cuando no existen fuentes elegibles.
 
 ### Modified Capabilities
 
@@ -26,8 +26,10 @@ Ninguna.
 
 ## Impact
 
-- Orquestación del proceso automático de captura RSS.
-- Consumo del conjunto de fuentes registradas que administra HU-15, sin definir su contrato interno definitivo.
-- Consumo de la periodicidad administrada por HU-18, sin definir su contrato interno definitivo.
-- Límite abstracto de salida para entregar ítems RSS interpretados al flujo posterior; su persistencia y el contrato interno definitivo correspondiente pertenecen a HU-04.
-- Pruebas de comportamiento para selección de fuentes, aislamiento de fallos, exclusión de formatos no RSS y ausencia de fuentes configuradas.
+- Reconciliación del módulo de captura existente con la arquitectura NestJS documentada y con los contratos OpenSpec ya definidos por HU-15 y HU-18.
+- Consumo, sin redefinirlo, del conjunto elegible que expone HU-15 como instantánea para cada ejecución.
+- Consumo, sin administrar el valor, de la periodicidad o su ausencia según el contrato de HU-18.
+- Sustitución de los adaptadores provisionales de HTTP, parsing y scheduling por las decisiones técnicas ratificadas en el diseño: `@nestjs/axios`, `rss-parser` y `@nestjs/schedule`, con timeout central configurable y guard RSS-only.
+- Límite abstracto de salida para entregar ítems RSS interpretados a HU-04, cuyo contrato de persistencia e identidad se define en su propio cambio.
+- Integración pendiente de `CaptureModule` en la aplicación cuando estén disponibles las implementaciones de los límites de HU-15 y HU-18.
+- Pruebas de comportamiento para selección de fuentes, aislamiento de fallos, exclusión de formatos no RSS y conjunto proporcionado vacío.

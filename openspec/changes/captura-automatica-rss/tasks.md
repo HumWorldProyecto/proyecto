@@ -1,37 +1,46 @@
-## 1. Límites abstractos de integración
+## 1. Límites y configuración
 
-- [x] 1.1 Definir límites sustituibles para obtener las fuentes registradas, recibir la periodicidad, realizar solicitudes RSS con finalización finita, interpretar feeds RSS y producir ítems hacia el flujo posterior.
-- [x] 1.2 Mantener esos límites independientes de los contratos internos definitivos y de las reglas de gestión pertenecientes a HU-04, HU-15 y HU-18.
+- [ ] 1.1 Adaptar el límite de HU-15 para consumir exactamente el conjunto elegible que esa capacidad proporciona, sin duplicar en HU-01 sus reglas de estado o administración.
+- [ ] 1.2 Adaptar el límite de HU-18 para representar tanto una periodicidad configurada como el estado sin configurar.
+- [x] 1.3 Mantener límites sustituibles y separados para acceso HTTP, interpretación RSS y salida de ítems, independientes de las reglas internas de HU-04, HU-15 y HU-18.
+- [ ] 1.4 Declarar y configurar `@nestjs/axios`, `rss-parser` y `@nestjs/schedule`, junto con una única configuración central `RSS_FETCH_TIMEOUT_MS`, validada y con valor técnico por defecto de `10_000` ms; no añadir una dependencia XML sin aprobación humana.
 
 ## 2. Orquestación de la captura
 
-- [x] 2.1 Implementar el caso de uso que obtiene una instantánea de las fuentes RSS registradas al inicio de cada ejecución.
-- [x] 2.2 Implementar la finalización sin solicitudes externas ni ítems de salida cuando la instantánea de fuentes está vacía.
-- [x] 2.3 Implementar el recorrido secuencial de todas las fuentes incluidas en la instantánea.
-- [x] 2.4 Aislar la descarga e interpretación de cada fuente para que su fallo no impida continuar con las siguientes.
-- [x] 2.5 Entregar cero o más ítems RSS interpretados al límite abstracto de salida sin implementar persistencia, duplicados, datos mínimos ni actualización de noticias existentes.
+- [ ] 2.1 Integrar el caso de uso con el límite definitivo de HU-15 para obtener una instantánea del conjunto elegible al inicio de cada ejecución.
+- [x] 2.2 Finalizar sin solicitudes externas ni ítems de salida cuando la instantánea obtenida está vacía.
+- [x] 2.3 Recorrer secuencialmente todas las fuentes incluidas en la instantánea.
+- [x] 2.4 Aislar la descarga y la interpretación de cada fuente para que su fallo no impida continuar con las siguientes.
+- [x] 2.5 Entregar cero o más ítems interpretados mediante `CaptureOutputPort`, sin incorporar al orquestador reglas de persistencia o identidad.
 
 ## 3. Obtención e interpretación RSS
 
-- [x] 3.1 Implementar un mecanismo finito de timeout o cancelación equivalente para cada intento de acceso a una fuente, sin fijar todavía su valor concreto.
-- [x] 3.2 Implementar la interpretación de formatos RSS admitidos para producir cero o más ítems RSS.
-- [x] 3.3 Rechazar de forma controlada Atom, HTML, RSS inválido y otros contenidos no RSS sin producir ítems para el límite de salida.
+- [ ] 3.1 Sustituir el adaptador basado en `fetch` por `HttpService` de `@nestjs/axios`, usando exclusivamente el timeout central y traduciendo fallos de red, respuestas no satisfactorias y timeout a un fallo aislado de la fuente.
+- [ ] 3.2 Sustituir el parser provisional basado en expresiones regulares por un adaptador de `rss-parser` que produzca los ítems del contrato de salida.
+- [ ] 3.3 Implementar antes o junto al parser un guard RSS-only que rechace Atom, HTML, RSS inválido y otros contenidos no RSS; detenerse para revisión humana si requiere una dependencia XML adicional.
 - [x] 3.4 Evitar solicitudes a las páginas enlazadas por los ítems RSS con el objetivo de extraer su contenido.
-- [x] 3.5 Propagar los ítems interpretados únicamente al límite abstracto de salida y no modificar el registro administrado por HU-15.
+- [x] 3.5 Propagar los ítems únicamente al límite abstracto de salida y no modificar el registro administrado por HU-15.
 
-## 4. Ejecución automática
+## 4. Scheduling y composición
 
-- [x] 4.1 Integrar el disparo automático con la periodicidad proporcionada por HU-18 mediante un límite abstracto, sin implementar su gestión ni comprometer una tecnología concreta de scheduling.
+- [ ] 4.1 Implementar un guard en el disparador automático que mantenga como máximo una captura automática en curso, omita sin encolar las activaciones recibidas mientras esté ocupado y permita una activación normal posterior cuando el guard se haya liberado.
+- [ ] 4.2 Acordar con HU-18 el mecanismo que notificará una primera configuración o un cambio de periodicidad para reprogramar el job dinámico.
+- [ ] 4.3 Integrar `ScheduleModule` y `SchedulerRegistry`, o un mecanismo dinámico equivalente de `@nestjs/schedule`: registrar o reprogramar el job cuando exista periodicidad y no registrarlo cuando HU-18 entregue el estado sin configurar.
+- [ ] 4.4 Importar `CaptureModule` en `AppModule` cuando existan proveedores reales compatibles para HU-15 y HU-18, conservando el binding de salida hacia HU-04 y verificando la resolución de dependencias.
 
-## 5. Pruebas automatizadas
+## 5. Pruebas y verificación
 
-- [x] 5.1 Probar que la periodicidad suministrada determina el siguiente instante y que al alcanzarlo se inicia la ejecución automática.
-- [x] 5.2 Probar que la ejecución utiliza una instantánea de las fuentes registradas, intenta cada una y excluye direcciones no registradas.
-- [x] 5.3 Probar que los cambios de HU-15 durante una ejecución no alteran su instantánea y se reflejan en una ejecución posterior.
-- [x] 5.4 Probar el recorrido secuencial de las fuentes de la instantánea.
-- [x] 5.5 Probar que un RSS válido se interpreta y produce cero o más ítems para el límite abstracto de salida.
-- [x] 5.6 Probar que Atom, HTML y RSS inválido no producen ítems RSS para el límite de salida.
-- [x] 5.7 Probar que una fuente que no responde finaliza mediante timeout o cancelación y no impide procesar una fuente válida posterior.
-- [x] 5.8 Probar que no se realizan solicitudes a las páginas web enlazadas por los ítems RSS para extraer contenido.
-- [x] 5.9 Probar que la ausencia de fuentes evita solicitudes externas y la producción de ítems RSS.
-- [x] 5.10 Ejecutar la suite de pruebas y las verificaciones estáticas del proyecto, y corregir únicamente defectos dentro del alcance de HU-01.
+- [ ] 5.1 Probar con el scheduler definitivo que una periodicidad configurada registra el job, determina la siguiente ejecución y se actualiza al recibir el mecanismo de cambio acordado con HU-18.
+- [ ] 5.2 Probar que el estado sin periodicidad configurada no registra un job automático ni origina solicitudes externas.
+- [ ] 5.3 Probar que se procesa exactamente el conjunto elegible proporcionado por HU-15 y se excluye cualquier fuente ajena a él.
+- [x] 5.4 Probar que los cambios en las fuentes durante una ejecución no alteran su instantánea y solo se reflejan en una ejecución posterior.
+- [x] 5.5 Probar el recorrido secuencial de las fuentes de la instantánea.
+- [ ] 5.6 Probar con el adaptador definitivo de `rss-parser` que un RSS válido con cero, uno o varios ítems se interpreta correctamente.
+- [ ] 5.7 Probar con el guard definitivo que Atom, HTML, RSS inválido y otros contenidos no RSS no producen ítems.
+- [ ] 5.8 Probar el adaptador `HttpService` para respuesta satisfactoria, respuesta no satisfactoria, fallo de red y timeout, incluidos el valor por defecto, su override central y la continuación con una fuente posterior.
+- [x] 5.9 Probar que no se solicitan las páginas web enlazadas por los ítems RSS para extraer contenido.
+- [x] 5.10 Probar que una instantánea elegible vacía evita solicitudes externas y la producción de ítems.
+- [ ] 5.11 Probar la composición NestJS real de `AppModule` y `CaptureModule` con los proveedores de HU-15, HU-18 y HU-04, sin dobles provisionales en el arranque.
+- [ ] 5.12 Añadir un E2E del incremento completo con una respuesta RSS controlada: activación de captura, interpretación, entrega a HU-04, persistencia y consulta mediante `GET /api/v1/news`.
+- [ ] 5.13 Probar que una activación automática recibida durante una captura en curso no inicia una segunda ejecución ni queda encolada, y que al liberar el guard —también tras una ruta de error— una activación normal posterior puede iniciar una nueva captura.
+- [ ] 5.14 Ejecutar build, suite completa y cobertura después de la reparación, y verificar la conformidad con la arquitectura y los ADR vigentes.
