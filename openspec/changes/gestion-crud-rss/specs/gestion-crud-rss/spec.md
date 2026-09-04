@@ -14,7 +14,7 @@ El sistema SHALL exponer la gestión básica de fuentes como JSON bajo la base `
 - **AND** sus cuerpos y respuestas se representan como JSON cuando contienen datos
 
 ### Requirement: Creación de una fuente RSS con URL válida y accesible
-El sistema SHALL validar, al crear una fuente RSS, que la URL indicada tiene un formato sintácticamente válido, usa el esquema HTTP o HTTPS, no contiene credenciales embebidas y responde a una solicitud HTTP dentro de un tiempo finito. Solo cuando todas estas condiciones se cumplen SHALL registrar la fuente con estado activo.
+El sistema SHALL validar, al crear una fuente RSS, que la URL indicada tiene un formato sintácticamente válido, usa el esquema HTTP o HTTPS, no contiene credenciales embebidas, no conduce inicialmente ni mediante redirecciones a un destino de red no permitido para solicitudes salientes desde el servidor y responde a una solicitud HTTP dentro de un tiempo finito. Solo cuando todas estas condiciones se cumplen SHALL registrar la fuente con estado activo.
 
 #### Scenario: Creación con URL válida y accesible
 - **GIVEN** el administrador aporta una URL sintácticamente válida y accesible mediante HTTP
@@ -42,6 +42,12 @@ El sistema SHALL validar, al crear una fuente RSS, que la URL indicada tiene un 
 
 #### Scenario: Rechazo por URL inaccesible
 - **GIVEN** el administrador aporta una URL sintácticamente válida que no responde mediante HTTP dentro del tiempo permitido
+- **WHEN** envía `POST /api/v1/sources` con esa URL
+- **THEN** el sistema responde `400 Bad Request`
+- **AND** no registra ninguna fuente
+
+#### Scenario: Rechazo de un destino de red no permitido
+- **GIVEN** el administrador aporta una URL HTTP o HTTPS cuya dirección inicial o una redirección conduce a un destino local, privado o de propósito especial no admitido
 - **WHEN** envía `POST /api/v1/sources` con esa URL
 - **THEN** el sistema responde `400 Bad Request`
 - **AND** no registra ninguna fuente
@@ -123,7 +129,7 @@ El sistema SHALL permitir reemplazar completamente los datos editables de una fu
 - **AND** no crea ni modifica ninguna fuente
 
 ### Requirement: Revalidación de la URL al actualizarla
-Cuando un `PUT` o `PATCH` modifica la URL, el sistema SHALL aplicar todas las validaciones exigidas en la creación: sintaxis válida, esquema HTTP/HTTPS, ausencia de credenciales embebidas y accesibilidad HTTP dentro del timeout finito.
+Cuando un `PUT` o `PATCH` modifica la URL, el sistema SHALL aplicar todas las validaciones exigidas en la creación: sintaxis válida, esquema HTTP/HTTPS, ausencia de credenciales embebidas, destino de red permitido tanto inicialmente como tras cada redirección y accesibilidad HTTP dentro del tiempo finito.
 
 #### Scenario: Actualización a una URL válida y accesible
 - **GIVEN** una fuente registrada
@@ -134,6 +140,12 @@ Cuando un `PUT` o `PATCH` modifica la URL, el sistema SHALL aplicar todas las va
 #### Scenario: Rechazo de actualización cuando la URL incumple una validación
 - **GIVEN** una fuente registrada
 - **WHEN** se intenta actualizar su URL a una dirección sintácticamente inválida, con esquema no permitido, con credenciales embebidas o inaccesible dentro del timeout
+- **THEN** el sistema responde `400 Bad Request`
+- **AND** conserva la URL y el estado anteriores
+
+#### Scenario: Rechazo de actualización hacia un destino de red no permitido
+- **GIVEN** una fuente registrada
+- **WHEN** se intenta cambiar su URL mediante `PUT` o `PATCH` hacia una dirección inicial o redirección que conduce a un destino local, privado o de propósito especial no admitido
 - **THEN** el sistema responde `400 Bad Request`
 - **AND** conserva la URL y el estado anteriores
 

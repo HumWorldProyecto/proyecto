@@ -11,9 +11,14 @@
 - [ ] 2.1 Implementar la normalización `trim -> URL de Node -> toString()`, aceptando solo HTTP/HTTPS, rechazando credenciales embebidas y conservando path y query.
 - [ ] 2.2 Implementar la validación sintáctica y traducir sus fallos a un error de entrada controlado.
 - [ ] 2.3 Implementar la accesibilidad mediante `@nestjs/axios`/`HttpService`, solicitud GET, respuesta final 2xx y timeout central finito.
-- [ ] 2.4 Reutilizar el timeout configurable con `10_000 ms` por defecto sin añadir otra dependencia HTTP.
-- [ ] 2.5 Definir y aplicar la política SSRF completa para loopback, redes privadas, link-local, resolución DNS y todos los destinos de redirecciones antes de considerar seguro el endpoint para despliegue público.
+- [ ] 2.4 Extraer y reutilizar un provider neutral para `RSS_FETCH_TIMEOUT_MS`, con `10_000 ms` por defecto y validación como entero positivo y finito, sin introducir una dependencia entre `SourcesModule` y `CaptureModule`.
+- [ ] 2.5 Implementar sin dependencia nueva la prevalidación y clasificación SSRF de URL e IP: hostname obligatorio, rechazo de `localhost` y subdominios, protocolos y credenciales aprobados, puertos HTTP/HTTPS explícitos permitidos y exclusión conservadora de rangos IPv4/IPv6 no públicos o especiales.
 - [ ] 2.6 Mantener la verificación de accesibilidad independiente del guard RSS-only de HU-01.
+- [ ] 2.7 Resolver cada hostname una sola vez con todas sus direcciones, exigir un resultado y rechazar el destino completo cuando la instantánea DNS sea mixta o contenga cualquier dirección prohibida.
+- [ ] 2.8 Evitar DNS rebinding fijando cada conexión mediante un Agent efímero cuyo `lookup` no vuelva a DNS y solo entregue una dirección elegida del snapshot validado, conservando hostname, `Host`, SNI y validación TLS.
+- [ ] 2.9 Configurar el transporte con `proxy: false`, `keepAlive: false` y `maxRedirects: 0`, destruir el Agent al terminar y cerrar la respuesta en stream tras obtener estado y headers.
+- [ ] 2.10 Seguir manualmente únicamente redirects 301/302/303/307/308, con máximo tres, detección de ciclos y revalidación completa de cada `Location`.
+- [ ] 2.11 Aplicar `RSS_FETCH_TIMEOUT_MS` como un único deadline para DNS, HTTP y toda la cadena de redirects, sin reiniciarlo por salto.
 
 ## 3. Repositorio de fuentes
 
@@ -59,6 +64,12 @@
 - [ ] 7.6 Probar por separado DELETE sobre fuente activa (desactiva y 204), ya desactivada (sin cambio y 204) e inexistente (404), además de la reactivación.
 - [ ] 7.7 Probar que el provider devuelve solo `id` y `url` de fuentes activas en una instantánea.
 - [ ] 7.8 Probar el mapeo de errores y códigos HTTP del controller.
+- [ ] 7.9 Probar determinísticamente URL pública, `localhost`, IPv4 loopback/privada/link-local/shared/reservada, IPv6 loopback/ULA/link-local/mapped/especial y una URL pública con puerto explícito válido, sin depender de Internet real.
+- [ ] 7.10 Probar resolución DNS pública, privada, mixta, vacía y fallida, verificando el rechazo completo cuando una dirección sea prohibida.
+- [ ] 7.11 Demostrar una única resolución por salto y que el `lookup` fijado solo entrega la IP elegida del snapshot validado; verificar además hostname/Host/SNI, `proxy: false`, ausencia de keep-alive y destrucción del Agent.
+- [ ] 7.12 Probar redirects público a público y público a privado, `Location` relativa o ausente, ciclo, tres redirects permitidos y rechazo del cuarto, revalidando cada destino.
+- [ ] 7.13 Probar el deadline total compartido, credenciales, protocolo inválido, respuesta final `2xx`, respuesta no `2xx`, fallo de red y cierre temprano del body.
+- [ ] 7.14 Probar que cualquier rechazo de URL o accesibilidad en POST/PUT/PATCH responde `400` y no crea ni modifica persistencia, conservando URL y estado previos en actualizaciones rechazadas.
 
 ## 8. Integración PostgreSQL y E2E
 
