@@ -4,12 +4,15 @@ La motivación y el alcance funcional se describen en `proposal.md`; los comport
 
 El backend ya contiene `CaptureModule`, sus límites, el orquestador y adaptadores provisionales. El acceso HTTP actual usa `fetch`, la interpretación usa expresiones regulares y el disparador usa `setTimeout`; esas implementaciones prueban parte de la orquestación, pero no cumplen todavía el stack ratificado ni todos los contratos actuales.
 
-HU-15 ya define un límite de lectura que entrega una instantánea del conjunto elegible para captura. HU-01 consume ese conjunto sin redefinir su estado ni sus reglas administrativas. HU-18 define que su límite entrega una periodicidad configurada o la ausencia de ella. Las implementaciones reales de ambos límites aún no existen y los puertos provisionales de `capture` no expresan completamente esos contratos; por ello `CaptureModule` todavía no está integrado en `AppModule`.
+HU-15 ya define un límite de lectura que entrega una instantánea del conjunto elegible para captura. HU-01 consume ese conjunto sin redefinir su estado ni sus reglas administrativas. HU-18 ya cerró su contrato definitivo: `PeriodicityProviderPort` entrega `configured(minutes)` o `unconfigured`, y `PeriodicityChangeNotifierPort` permite suscribirse a cambios `PeriodicityChange { state, effectiveAt }` posteriores a la persistencia. Las implementaciones reales de esos límites aún no existen y los puertos provisionales de `capture` no expresan completamente los contratos; por ello `CaptureModule` todavía no está integrado en `AppModule`.
 
 HU-01 produce cero o más ítems RSS interpretados mediante `CaptureOutputPort`. HU-04 ya implementa ese lado de salida dentro de `NewsModule`; la identidad y persistencia de noticias continúan perteneciendo al cambio de HU-04.
 
 ```text
-Periodicidad o ausencia (HU-18)
+PeriodicityProviderPort + PeriodicityChangeNotifierPort (HU-18)
+             |
+             v
+ coordinador de scheduling
              |
              v
   job dinámico @nestjs/schedule
@@ -34,6 +37,7 @@ Periodicidad o ausencia (HU-18)
 
 - Separar el scheduling de la ejecución del caso de uso de captura.
 - Consumir los contratos de HU-15 y HU-18 sin duplicar sus reglas de administración.
+- Sincronizar el job futuro con el estado inicial y los cambios efectivos de periodicidad sin interrumpir una captura en curso.
 - Aislar la descarga y la interpretación de cada fuente y garantizar una finalización finita.
 - Aplicar el stack de captura ratificado y una única configuración central de timeout.
 - Garantizar RSS-only antes o junto al parsing, aunque la biblioteca también sea capaz de interpretar Atom.
@@ -85,9 +89,39 @@ Antes o como complemento del parser existirá un guard independiente que verifiq
 
 #### Usar `@nestjs/schedule` para el job dinámico
 
-El scheduling se integrará mediante `ScheduleModule` y `SchedulerRegistry`, o un mecanismo dinámico equivalente propio de `@nestjs/schedule`. Cuando HU-18 proporcione una periodicidad configurada, se registrará o reprogramará el job con ese valor. Cuando proporcione ausencia, no se registrará un job automático y no se producirán solicitudes por una activación automática inexistente.
+El scheduling se integrará mediante `ScheduleModule` y `SchedulerRegistry`, o un mecanismo dinámico equivalente propio de `@nestjs/schedule`. El coordinador mantendrá como máximo un job automático futuro coherente con el estado vigente de HU-18.
 
-HU-01 solo consume el valor o su ausencia. El catálogo y la acción administrativa que cambia la periodicidad permanecen en HU-18.
+HU-01 solo consume el estado y sus cambios; el catálogo, la persistencia y la acción administrativa que cambia la periodicidad permanecen en HU-18.
+
+#### Consumir el contrato definitivo de periodicidad de HU-18
+
+`CaptureModule` consumirá dos puertos ya aprobados por HU-18:
+
+- `PeriodicityProviderPort`, para leer durante el arranque el estado vigente `configured(minutes)` o `unconfigured`;
+- `PeriodicityChangeNotifierPort`, para registrar un listener de cambios posteriores. Cada `PeriodicityChange` contiene `state` y `effectiveAt`.
+
+Durante el arranque, el coordinador:
+
+1. registra el listener en `PeriodicityChangeNotifierPort` y conserva la función de desuscripción;
+2. obtiene el estado vigente mediante `PeriodicityProviderPort`;
+3. si recibe `configured(minutes)`, registra exactamente un job futuro con esa periodicidad;
+4. si recibe `unconfigured`, garantiza que no exista ningún job automático;
+5. completa la inicialización solo después de reconciliar ese estado, manteniendo la suscripción activa antes de que la aplicación quede disponible para tráfico externo.
+
+Este orden evita una ventana sin listener entre la lectura inicial y la habilitación del tráfico. Cualquier entrega equivalente se absorbe mediante la idempotencia definida para el listener.
+
+Ante una notificación:
+
+- `configured(minutes)`: cancela o reemplaza únicamente el job futuro y calcula el siguiente instante mediante `effectiveAt + minutes`;
+- `unconfigured`: retira el job futuro si existe y no crea uno nuevo.
+
+El listener será idempotente: si recibe nuevamente un cambio equivalente —mismo `state` y mismo `effectiveAt`—, no creará jobs duplicados ni desplazará otra vez el siguiente instante. Una ausencia reiterada tolerará que no exista job. HU-18 no notifica cuando un PUT repite el mismo valor vigente, por lo que esa operación tampoco provoca reprogramación desde HU-01.
+
+Reprogramar o retirar el job futuro nunca interrumpe una captura ya en ejecución. El mecanismo es in-process y no usa `@nestjs/event-emitter` ni otra dependencia de eventos.
+
+#### Wiring unidireccional con CaptureConfigModule
+
+`CaptureModule` importa `CaptureConfigModule` e inyecta los tokens de provider y notifier. `CaptureConfigModule` no importa ni inyecta `CaptureModule` o su scheduler. No se usa `forwardRef`. El coordinador conserva la función de desuscripción y la ejecuta al destruirse el módulo.
 
 #### Omitir activaciones automáticas mientras otra captura está en curso
 
@@ -105,25 +139,20 @@ Una fuente RSS válida produce cero o más ítems mediante `CaptureOutputPort`. 
 
 El resultado exigido del guard está aprobado, pero no se aprueba ninguna dependencia XML nueva en este cambio. Si las capacidades ya disponibles no permiten un guard robusto y verificable, la selección de esa dependencia queda pendiente de revisión humana.
 
-#### Notificación de cambios de periodicidad al scheduler
-
-HU-18 exige que un cambio de periodicidad recalcule la siguiente ejecución, pero su contrato actual de lectura no define un evento, comando o notificación para comunicar el cambio a un job ya registrado. Esa coordinación entre HU-18 y HU-01 debe resolverse antes de implementar la reprogramación definitiva, sin trasladar a HU-01 la administración del valor.
-
 ## Risks / Trade-offs
 
 - **[`rss-parser` también admite Atom]** → Mantener el guard RSS-only separado y cubrir RSS, Atom, HTML y contenido inválido con pruebas del adaptador definitivo.
 - **[Una inspección superficial del documento puede producir falsos positivos]** → Exigir una validación robusta y detener la implementación para aprobación si hace falta una dependencia XML nueva.
 - **[El procesamiento secuencial puede prolongar una ejecución]** → Aplicar el timeout por fuente y medir antes de proponer concurrencia.
 - **[Una captura puede continuar cuando llega otra activación automática]** → Aplicar el guard aprobado, omitir esa activación sin encolarla y liberar siempre el guard al finalizar para admitir la siguiente activación normal.
-- **[HU-18 no define cómo notificar una reconfiguración]** → Resolver el límite de coordinación antes de implementar el recálculo inmediato del job.
-- **[Los proveedores de HU-15 y HU-18 aún no están implementados]** → Mantener `CaptureModule` fuera de `AppModule` hasta que la composición pueda resolverse sin dobles provisionales.
+- **[Una misma notificación podría entregarse más de una vez por un defecto de integración]** → Hacer idempotente el listener respecto de `state + effectiveAt` para no duplicar ni desplazar jobs.
+- **[El provider de HU-15 y el provider/notifier de HU-18 aún no están implementados]** → Mantener `CaptureModule` fuera de `AppModule` hasta que la composición pueda resolverse sin dobles provisionales.
 - **[Las dependencias ratificadas aún no están declaradas]** → Mantener pendientes las tareas de dependencias, adaptadores, integración y verificación final.
 
 ## Migration Plan
 
-No se requiere migración de datos. La implementación sustituirá de forma conjunta los adaptadores provisionales de HTTP, parser y scheduling, incorporará la configuración central y el guard de solapamiento, y actualizará los puertos de HU-15/HU-18. La integración raíz se habilitará solo cuando todos sus proveedores sean resolubles. El cambio deberá verificarse con pruebas unitarias, de integración, E2E y build antes de retirar los provisionales.
+No se requiere migración de datos. La implementación sustituirá de forma conjunta los adaptadores provisionales de HTTP, parser y scheduling, incorporará la configuración central y el guard de solapamiento, adaptará el provider de HU-15 e integrará el provider/notifier definitivos de HU-18. La integración raíz se habilitará solo cuando todos sus providers sean resolubles y la suscripción quede activa antes del tráfico externo. El cambio deberá verificarse con pruebas unitarias, de integración, E2E y build antes de retirar los provisionales.
 
 ## Open Questions
 
 - ¿Puede implementarse un guard RSS-only robusto con las capacidades ya aprobadas o debe proponerse una dependencia XML adicional para revisión humana?
-- ¿Qué mecanismo de HU-18 notificará una primera configuración o un cambio de periodicidad al scheduler dinámico de HU-01?
