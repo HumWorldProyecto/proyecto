@@ -7,16 +7,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model RssSource {
+  id        String   @id @default(uuid())
+  url       String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  news News[]
+
+  @@map("rss_sources")
+}
+
+model CaptureConfig {
+  id                        String   @id @default("global")
+  capturePeriodicityMinutes Int?
+  updatedAt                 DateTime @updatedAt
+
+  @@map("capture_config")
+}
+
 model News {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   sourceId    String
   title       String?
   link        String?
   guid        String?
   description String?
   pubDate     DateTime?
-  dedupeKey   String?
-  capturedAt  DateTime @default(now())
+  dedupeKey   String
+  capturedAt  DateTime  @default(now())
+  source      RssSource @relation(fields: [sourceId], references: [id], onDelete: Restrict)
 
   @@unique([sourceId, dedupeKey])
   @@map("news")

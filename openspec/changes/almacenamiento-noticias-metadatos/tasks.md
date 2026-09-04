@@ -10,18 +10,18 @@
 - [x] 2.2 Crear y verificar la migración inicial de la tabla `News`.
 - [x] 2.3 Crear `docker-compose.yml` con PostgreSQL para un entorno local reproducible.
 - [x] 2.4 Crear `.env.example` con `DATABASE_URL` de ejemplo y sin secretos reales.
-- [ ] 2.5 Cambiar el modelo final para que `dedupeKey` sea obligatorio, manteniendo la restricción única `(sourceId, dedupeKey)`.
-- [ ] 2.6 Crear y verificar una migración nueva que aplique `NOT NULL`, trate explícitamente cualquier dato local previo incompatible y conserve la restricción única, sin modificar la migración inicial.
+- [x] 2.5 Cambiar el modelo final para que `dedupeKey` sea obligatorio, manteniendo la restricción única `(sourceId, dedupeKey)`.
+- [x] 2.6 Crear y verificar una migración nueva que aplique `NOT NULL`, trate explícitamente cualquier dato local previo incompatible y conserve la restricción única, sin modificar la migración inicial.
 
 ## 3. Capa de repositorio (`news`)
 
-- [ ] 3.1 Cambiar `NewsRepositoryPort` para recibir un ítem identificado con `sourceId`, `dedupeKey` tipada (`guid:` o `link:`), no vacía y los metadatos disponibles, manteniéndolo independiente de Prisma.
-- [ ] 3.2 Adaptar `PrismaNewsRepository` para persistir la clave tipada no nula, aplicar el upsert por `(sourceId, dedupeKey)` y no escribir cuando el prefijo sea inválido o su valor esté vacío como defensa adicional.
+- [x] 3.1 Cambiar `NewsRepositoryPort` para recibir un ítem identificado con `sourceId`, `dedupeKey` tipada (`guid:` o `link:`), no vacía y los metadatos disponibles, manteniéndolo independiente de Prisma.
+- [x] 3.2 Adaptar `PrismaNewsRepository` para persistir la clave tipada no nula, aplicar el upsert por `(sourceId, dedupeKey)` y no escribir cuando el prefijo sea inválido o su valor esté vacío como defensa adicional.
 
 ## 4. Capa de servicio/dominio (`news`)
 
 - [x] 4.1 Mantener `NewsService.listNews()` delegado al repositorio, con lista vacía y traducción controlada de errores de consulta.
-- [ ] 4.2 Resolver en servicio/dominio la identidad de cada ítem: aplicar únicamente `trim`, priorizar GUID y construir `guid:<valor-normalizado>`, usar enlace como fallback y construir `link:<valor-normalizado>`, no cambiar mayúsculas/minúsculas ni canonicalizar URLs, descartar sin error cuando ambos falten y continuar tras fallos reales de persistencia.
+- [x] 4.2 Resolver en servicio/dominio la identidad de cada ítem: aplicar únicamente `trim`, priorizar GUID y construir `guid:<valor-normalizado>`, usar enlace como fallback y construir `link:<valor-normalizado>`, no cambiar mayúsculas/minúsculas ni canonicalizar URLs, descartar sin error cuando ambos falten y continuar tras fallos reales de persistencia.
 
 ## 5. Wiring de captura → persistencia
 
@@ -43,12 +43,12 @@
 
 ## 8. Pruebas
 
-- [ ] 8.1 Actualizar las pruebas unitarias de servicio/dominio para cubrir `trim` sin otras transformaciones, prioridad del GUID, fallback por enlace, claves `guid:`/`link:`, diferencia entre GUID `abc` y enlace `abc`, GUID sin enlace/título, descarte sin identidad, continuidad del lote y aislamiento de fallos reales de persistencia.
+- [x] 8.1 Actualizar las pruebas unitarias de servicio/dominio para cubrir `trim` sin otras transformaciones, prioridad del GUID, fallback por enlace, claves `guid:`/`link:`, diferencia entre GUID `abc` y enlace `abc`, GUID sin enlace/título, descarte sin identidad, continuidad del lote y aislamiento de fallos reales de persistencia.
 - [x] 8.2 Mantener las pruebas unitarias de `NewsCaptureOutputAdapter` como evidencia de traducción y delegación al servicio, sin atribuirle el aislamiento que corresponde a `NewsService`.
 - [x] 8.3 Mantener las pruebas unitarias de `NewsController` para lista vacía, lista con metadatos y error controlado.
-- [ ] 8.4 Reconciliar las pruebas de integración de `PrismaNewsRepository`: eliminar la expectativa que almacena ítems sin GUID/enlace y cubrir clave tipada no nula, `NOT NULL`, unicidad por fuente, separación `guid:abc`/`link:abc`, independencia entre fuentes y defensa ante una clave inválida.
+- [x] 8.4 Reconciliar las pruebas de integración de `PrismaNewsRepository`: eliminar la expectativa que almacena ítems sin GUID/enlace y cubrir clave tipada no nula, `NOT NULL`, unicidad por fuente, separación `guid:abc`/`link:abc`, independencia entre fuentes y defensa ante una clave inválida.
 - [x] 8.5 Mantener el E2E actual de `GET /api/v1/news` como prueba exclusiva de consulta con datos preparados mediante inserción directa a Prisma; no considerarlo evidencia del flujo de captura.
-- [ ] 8.6 Ejecutar build, suite completa y cobertura después de implementar la reparación, y verificar nuevamente el umbral global del 80 %.
+- [x] 8.6 Ejecutar build, suite completa y cobertura después de implementar la reparación, y verificar nuevamente el umbral global del 80 %.
 - [ ] 8.7 Añadir un E2E real captura → `CaptureOutputPort` → servicio → repositorio → PostgreSQL → `GET /api/v1/news`, sin insertar directamente la noticia demostrada y cubriendo también descarte sin identidad seguido de un ítem válido.
 
 ## 9. Conformidad arquitectónica

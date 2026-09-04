@@ -2,9 +2,9 @@
 
 - [ ] 1.1 Implementar el tipo del catálogo cerrado `15 | 30 | 60 | 360 | 720 | 1440`.
 - [ ] 1.2 Implementar la unión discriminada `configured(minutes) | unconfigured`.
-- [ ] 1.3 Añadir el modelo singleton `CaptureConfig` con ID fijo, periodicidad nullable y `updatedAt`.
-- [ ] 1.4 Crear la migración Prisma correspondiente sin introducir un valor funcional por defecto.
-- [ ] 1.5 Verificar la migración desde una base PostgreSQL vacía sin depender de seed.
+- [x] 1.3 Añadir el modelo singleton `CaptureConfig` con ID fijo, periodicidad nullable y `updatedAt`.
+- [x] 1.4 Crear la migración Prisma correspondiente sin introducir un valor funcional por defecto.
+- [x] 1.5 Verificar la migración desde una base PostgreSQL vacía sin depender de seed.
 
 ## 2. Repositorio y casos de uso
 

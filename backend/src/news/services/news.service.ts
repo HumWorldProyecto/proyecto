@@ -2,6 +2,7 @@ import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestj
 import { NEWS_REPOSITORY_PORT, NewsRepositoryPort } from '../ports/news-repository.port';
 import { News } from '../types/news';
 import { CapturedNewsItem } from '../types/captured-news-item';
+import { resolveCapturedNewsItem } from '../domain/resolve-captured-news-item';
 
 @Injectable()
 export class NewsService {
@@ -20,8 +21,13 @@ export class NewsService {
 
   async saveCapturedItems(items: CapturedNewsItem[]): Promise<void> {
     for (const item of items) {
+      const identifiedItem = resolveCapturedNewsItem(item);
+      if (!identifiedItem) {
+        continue;
+      }
+
       try {
-        await this.repository.upsertCapturedItem(item);
+        await this.repository.upsertCapturedItem(identifiedItem);
       } catch (error) {
         this.logger.error(
           `Fallo al almacenar el ítem capturado de la fuente ${item.sourceId}`,

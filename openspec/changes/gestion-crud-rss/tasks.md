@@ -1,10 +1,10 @@
 ## 1. Modelo Prisma y migración
 
-- [ ] 1.1 Añadir el modelo `RssSource` con UUID estable, URL obligatoria y única, `active=true`, `createdAt` y `updatedAt`.
-- [ ] 1.2 Mantener `News.sourceId` obligatorio y añadir la relación FK real hacia `RssSource.id`.
-- [ ] 1.3 Configurar la FK con `onDelete: Restrict`/`NoAction`, sin borrado en cascada ni borrado físico de fuentes.
-- [ ] 1.4 Crear una migración Prisma nueva, coordinada con la migración pendiente de HU-04.
-- [ ] 1.5 Verificar la migración desde una base PostgreSQL 16 vacía y adaptar fixtures para que toda noticia use una fuente existente.
+- [x] 1.1 Añadir el modelo `RssSource` con UUID estable, URL obligatoria y única, `active=true`, `createdAt` y `updatedAt`.
+- [x] 1.2 Mantener `News.sourceId` obligatorio y añadir la relación FK real hacia `RssSource.id`.
+- [x] 1.3 Configurar la FK con `onDelete: Restrict`/`NoAction`, sin borrado en cascada ni borrado físico de fuentes.
+- [x] 1.4 Crear una migración Prisma nueva, coordinada con la migración pendiente de HU-04.
+- [x] 1.5 Verificar la migración desde una base PostgreSQL 16 vacía y adaptar fixtures para que toda noticia use una fuente existente.
 
 ## 2. Normalización y validación de URL
 
@@ -63,7 +63,7 @@
 ## 8. Integración PostgreSQL y E2E
 
 - [ ] 8.1 Probar con PostgreSQL real la persistencia y la restricción única entre fuentes activas y desactivadas.
-- [ ] 8.2 Probar con PostgreSQL real la FK obligatoria `News.sourceId -> RssSource.id`, la integridad referencial y `Restrict`/`NoAction` sin cascada.
+- [x] 8.2 Probar con PostgreSQL real la FK obligatoria `News.sourceId -> RssSource.id`, la integridad referencial y `Restrict`/`NoAction` sin cascada.
 - [ ] 8.3 Probar E2E POST y GET de colección/detalle, incluidos filtros válidos/inválidos y errores 400/404/409.
 - [ ] 8.4 Probar E2E PUT, PATCH, reactivación y los tres resultados de DELETE: activa -> desactivada/204, ya desactivada -> sin cambio/204 e inexistente -> 404.
 - [ ] 8.5 Probar E2E que desactivar una fuente conserva sus noticias y la excluye de capturas posteriores.

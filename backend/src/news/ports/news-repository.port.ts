@@ -1,5 +1,5 @@
 import { News } from '../types/news';
-import { CapturedNewsItem } from '../types/captured-news-item';
+import { IdentifiedCapturedNewsItem } from '../types/identified-captured-news-item';
 
 /**
  * Abstracción de persistencia de noticias. Los servicios dependen de este
@@ -7,7 +7,7 @@ import { CapturedNewsItem } from '../types/captured-news-item';
  */
 export interface NewsRepositoryPort {
   findAll(): Promise<News[]>;
-  upsertCapturedItem(item: CapturedNewsItem): Promise<void>;
+  upsertCapturedItem(item: IdentifiedCapturedNewsItem): Promise<void>;
 }
 
 export const NEWS_REPOSITORY_PORT = Symbol('NEWS_REPOSITORY_PORT');
