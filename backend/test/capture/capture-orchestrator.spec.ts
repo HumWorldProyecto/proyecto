@@ -32,7 +32,7 @@ describe('CaptureOrchestratorService', () => {
     ];
     const sourceRegistry: SourceRegistryPort = { getEligibleSources: jest.fn().mockResolvedValue(sources) };
     const fetcher: RssFetcherPort = { fetchRaw: jest.fn().mockResolvedValue('<rss><channel></channel></rss>') };
-    const parser: RssParserPort = { parse: jest.fn().mockReturnValue([]) };
+    const parser: RssParserPort = { parse: jest.fn().mockResolvedValue([]) };
     const output: CaptureOutputPort = { emitItems: jest.fn().mockResolvedValue(undefined) };
 
     const orchestrator = buildOrchestrator({ sourceRegistry, fetcher, parser, output });
@@ -61,7 +61,7 @@ describe('CaptureOrchestratorService', () => {
       return '<rss><channel></channel></rss>';
     });
     const fetcher: RssFetcherPort = { fetchRaw };
-    const parser: RssParserPort = { parse: jest.fn().mockReturnValue([]) };
+    const parser: RssParserPort = { parse: jest.fn().mockResolvedValue([]) };
     const output: CaptureOutputPort = { emitItems: jest.fn().mockResolvedValue(undefined) };
 
     const orchestrator = buildOrchestrator({ sourceRegistry, fetcher, parser, output });
@@ -92,7 +92,7 @@ describe('CaptureOrchestratorService', () => {
       return '<rss><channel></channel></rss>';
     });
     const fetcher: RssFetcherPort = { fetchRaw };
-    const parser: RssParserPort = { parse: jest.fn().mockReturnValue([]) };
+    const parser: RssParserPort = { parse: jest.fn().mockResolvedValue([]) };
     const output: CaptureOutputPort = { emitItems: jest.fn().mockResolvedValue(undefined) };
 
     const orchestrator = buildOrchestrator({ sourceRegistry, fetcher, parser, output });
@@ -111,7 +111,7 @@ describe('CaptureOrchestratorService', () => {
     const sourceRegistry: SourceRegistryPort = { getEligibleSources: jest.fn().mockResolvedValue([source]) };
     const fetcher: RssFetcherPort = { fetchRaw: jest.fn().mockResolvedValue('<rss><channel></channel></rss>') };
     const parsedItems: RssItem[] = [{ sourceId: '', title: 'Noticia', link: 'https://a.example.com/1' }];
-    const parser: RssParserPort = { parse: jest.fn().mockReturnValue(parsedItems) };
+    const parser: RssParserPort = { parse: jest.fn().mockResolvedValue(parsedItems) };
     const output: CaptureOutputPort = { emitItems: jest.fn().mockResolvedValue(undefined) };
 
     const orchestrator = buildOrchestrator({ sourceRegistry, fetcher, parser, output });
@@ -127,9 +127,7 @@ describe('CaptureOrchestratorService', () => {
     const sourceRegistry: SourceRegistryPort = { getEligibleSources: jest.fn().mockResolvedValue([source]) };
     const fetcher: RssFetcherPort = { fetchRaw: jest.fn().mockResolvedValue('<html></html>') };
     const parser: RssParserPort = {
-      parse: jest.fn().mockImplementation(() => {
-        throw new RssParseError('no es RSS');
-      }),
+      parse: jest.fn().mockRejectedValue(new RssParseError('no es RSS')),
     };
     const output: CaptureOutputPort = { emitItems: jest.fn().mockResolvedValue(undefined) };
 
@@ -151,7 +149,7 @@ describe('CaptureOrchestratorService', () => {
       .mockResolvedValueOnce('<rss><channel></channel></rss>');
     const fetcher: RssFetcherPort = { fetchRaw };
     const parsedItems: RssItem[] = [{ sourceId: '', title: 'Noticia válida' }];
-    const parser: RssParserPort = { parse: jest.fn().mockReturnValue(parsedItems) };
+    const parser: RssParserPort = { parse: jest.fn().mockResolvedValue(parsedItems) };
     const output: CaptureOutputPort = { emitItems: jest.fn().mockResolvedValue(undefined) };
 
     const orchestrator = buildOrchestrator({ sourceRegistry, fetcher, parser, output });
@@ -170,7 +168,7 @@ describe('CaptureOrchestratorService', () => {
     const parsedItems: RssItem[] = [
       { sourceId: '', title: 'Con enlace', link: 'https://a.example.com/pagina-enlazada' },
     ];
-    const parser: RssParserPort = { parse: jest.fn().mockReturnValue(parsedItems) };
+    const parser: RssParserPort = { parse: jest.fn().mockResolvedValue(parsedItems) };
     const output: CaptureOutputPort = { emitItems: jest.fn().mockResolvedValue(undefined) };
 
     const orchestrator = buildOrchestrator({ sourceRegistry, fetcher, parser, output });

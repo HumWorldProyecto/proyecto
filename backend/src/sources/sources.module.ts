@@ -31,6 +31,12 @@ import { SourcesService } from './services/sources.service';
     PrismaSourceRegistry,
     { provide: SOURCE_REGISTRY_PORT, useExisting: PrismaSourceRegistry },
   ],
-  exports: [SourceUrlNormalizer, SourceAccessibilityChecker, SOURCE_REGISTRY_PORT],
+  exports: [
+    SourceUrlNormalizer,
+    SourceDestinationResolver,
+    PinnedAgentFactory,
+    SourceAccessibilityChecker,
+    SOURCE_REGISTRY_PORT,
+  ],
 })
 export class SourcesModule {}

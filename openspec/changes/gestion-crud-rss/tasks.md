@@ -52,7 +52,7 @@
 - [x] 6.1 Definir `SourceRegistryPort.getEligibleSources()` con una instantánea inmutable de elementos `{ id, url }`.
 - [x] 6.2 Implementar el provider consultando únicamente fuentes activas y excluyendo siempre las desactivadas.
 - [x] 6.3 Registrar y exportar el token desde `SourcesModule` para que los módulos consumidores lo inyecten sin ciclo.
-- [ ] 6.4 Integrar el provider real con HU-01 cuando la composición autorizada de esos módulos se implemente.
+- [x] 6.4 Integrar el provider real con HU-01 cuando la composición autorizada de esos módulos se implemente.
 
 ## 7. Pruebas unitarias
 
@@ -77,8 +77,8 @@
 - [x] 8.2 Probar con PostgreSQL real la FK obligatoria `News.sourceId -> RssSource.id`, la integridad referencial y `Restrict`/`NoAction` sin cascada.
 - [x] 8.3 Probar E2E POST y GET de colección/detalle, incluidos filtros válidos/inválidos y errores 400/404/409.
 - [x] 8.4 Probar E2E PUT, PATCH, reactivación y los tres resultados de DELETE: activa -> desactivada/204, ya desactivada -> sin cambio/204 e inexistente -> 404.
-- [ ] 8.5 Probar E2E que desactivar una fuente conserva sus noticias y la excluye de capturas posteriores.
-- [ ] 8.6 Probar la integración HU-15 -> HU-01 mediante el `SourceRegistryPort` real.
+- [x] 8.5 Probar E2E que desactivar una fuente conserva sus noticias y la excluye de capturas posteriores.
+- [x] 8.6 Probar la integración HU-15 -> HU-01 mediante el `SourceRegistryPort` real.
 - [x] 8.7 Verificar el documento OpenAPI, ejecutar suite, cobertura, build y comprobaciones estáticas del proyecto.
 
 ## 9. Trazabilidad del alcance obligatorio pendiente

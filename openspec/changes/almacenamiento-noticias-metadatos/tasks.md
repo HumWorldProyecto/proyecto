@@ -28,7 +28,7 @@
 - [x] 5.1 Mantener `NewsCaptureOutputAdapter` como implementación de `CaptureOutputPort`, traduciendo los ítems y delegando el lote en `NewsService.saveCapturedItems`.
 - [x] 5.2 Exportar desde `NewsModule` el binding `{ provide: CAPTURE_OUTPUT_PORT, useClass: NewsCaptureOutputAdapter }`.
 - [x] 5.3 Mantener la importación de `NewsModule` en `CaptureModule` para resolver internamente `CAPTURE_OUTPUT_PORT`, sin modificar `CaptureOrchestratorService` ni el contrato del puerto.
-- [ ] 5.4 Importar `CaptureModule` en `AppModule` cuando existan proveedores reales compatibles para HU-15 y HU-18, y verificar la resolución completa de dependencias sin dobles provisionales.
+- [x] 5.4 Importar `CaptureModule` en `AppModule` cuando existan proveedores reales compatibles para HU-15 y HU-18, y verificar la resolución completa de dependencias sin dobles provisionales.
 
 ## 6. Capa API (`news`)
 
@@ -49,10 +49,10 @@
 - [x] 8.4 Reconciliar las pruebas de integración de `PrismaNewsRepository`: eliminar la expectativa que almacena ítems sin GUID/enlace y cubrir clave tipada no nula, `NOT NULL`, unicidad por fuente, separación `guid:abc`/`link:abc`, independencia entre fuentes y defensa ante una clave inválida.
 - [x] 8.5 Mantener el E2E actual de `GET /api/v1/news` como prueba exclusiva de consulta con datos preparados mediante inserción directa a Prisma; no considerarlo evidencia del flujo de captura.
 - [x] 8.6 Ejecutar build, suite completa y cobertura después de implementar la reparación, y verificar nuevamente el umbral global del 80 %.
-- [ ] 8.7 Añadir un E2E real captura → `CaptureOutputPort` → servicio → repositorio → PostgreSQL → `GET /api/v1/news`, sin insertar directamente la noticia demostrada y cubriendo también descarte sin identidad seguido de un ítem válido.
+- [x] 8.7 Añadir un E2E real captura → `CaptureOutputPort` → servicio → repositorio → PostgreSQL → `GET /api/v1/news`, sin insertar directamente la noticia demostrada y cubriendo también descarte sin identidad seguido de un ítem válido.
 
 ## 9. Conformidad arquitectónica
 
-- [ ] 9.1 Verificar después de la reparación que la API no accede a datos, que la identidad y su clave tipada se resuelven en servicio/dominio y que solo el repositorio depende de Prisma.
+- [x] 9.1 Verificar después de la reparación que la API no accede a datos, que la identidad y su clave tipada se resuelven en servicio/dominio y que solo el repositorio depende de Prisma.
 - [x] 9.2 Confirmar que `CaptureOrchestratorService` y el contrato de `CaptureOutputPort` no cambiaron por las reglas internas de HU-04.
-- [ ] 9.3 Verificar el incremento reparado contra `docs/architecture.md`, ADR-002, ADR-003 y el contexto OpenSpec vigente, incluidos esquema, migración, composición, build y pruebas finales.
+- [x] 9.3 Verificar el incremento reparado contra `docs/architecture.md`, ADR-002, ADR-003 y el contexto OpenSpec vigente, incluidos esquema, migración, composición, build y pruebas finales.

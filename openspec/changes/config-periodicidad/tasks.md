@@ -32,9 +32,9 @@
 - [x] 4.3 Construir cada notificación con el estado persistido y `effectiveAt` derivado de `updatedAt`.
 - [x] 4.4 Aplicar y verificar ambas ramas: mismo valor -> 200 sin escritura/notificación/reprogramación; valor nuevo -> validar, persistir, obtener `effectiveAt`, publicar/esperar y reemplazar solo el job futuro.
 - [x] 4.5 Registrar tokens y exports en `CaptureConfigModule` sin importar el módulo de captura y sin usar `forwardRef`.
-- [ ] 4.6 Integrar en HU-01 la suscripción y lectura inicial del estado durante el arranque.
-- [ ] 4.7 Cancelar/reemplazar solo el job futuro y calcular el siguiente instante desde `effectiveAt`.
-- [ ] 4.8 Liberar la suscripción al destruir el módulo y mantener intacta cualquier captura en curso.
+- [x] 4.6 Integrar en HU-01 la suscripción y lectura inicial del estado durante el arranque.
+- [x] 4.7 Cancelar/reemplazar solo el job futuro y calcular el siguiente instante desde `effectiveAt`.
+- [x] 4.8 Liberar la suscripción al destruir el módulo y mantener intacta cualquier captura en curso.
 
 ## 5. Pruebas unitarias
 
@@ -53,6 +53,6 @@
 - [x] 6.2 Probar con PostgreSQL real el estado inicial sin fila y la lectura después de un PUT.
 - [x] 6.3 Probar E2E GET configurado y sin configurar con las representaciones JSON aprobadas.
 - [x] 6.4 Probar E2E PUT con valor nuevo, valor idéntico como no-op y valor inválido, incluida la conservación del estado anterior cuando corresponda.
-- [ ] 6.5 Probar la integración HU-18 -> HU-01 desde el cambio persistido hasta la reprogramación del job futuro.
-- [ ] 6.6 Probar que una captura en curso no se interrumpe y que la integración respeta —sin redefinir— la política de HU-01: una activación solapada se omite, no corre concurrentemente y no se encola.
+- [x] 6.5 Probar la integración HU-18 -> HU-01 desde el cambio persistido hasta la reprogramación del job futuro.
+- [x] 6.6 Probar que una captura en curso no se interrumpe y que la integración respeta —sin redefinir— la política de HU-01: una activación solapada se omite, no corre concurrentemente y no se encola.
 - [x] 6.7 Verificar el documento OpenAPI, ejecutar suite, cobertura, build y comprobaciones estáticas del proyecto.

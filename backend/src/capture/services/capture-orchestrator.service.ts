@@ -39,7 +39,10 @@ export class CaptureOrchestratorService {
 
     let items;
     try {
-      items = this.parser.parse(rawContent).map((item) => ({ ...item, sourceId: source.id }));
+      items = (await this.parser.parse(rawContent)).map((item) => ({
+        ...item,
+        sourceId: source.id,
+      }));
     } catch {
       return;
     }

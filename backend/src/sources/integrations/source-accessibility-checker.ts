@@ -12,20 +12,14 @@ import { SourceUrlNormalizer } from '../domain/source-url-normalizer';
 import { SourceAccessibilityError } from '../errors/source-accessibility.error';
 import { PinnedAgentFactory } from './pinned-agent.factory';
 import { SourceDestinationResolver } from '../security/source-destination-resolver';
+import {
+  getRedirectLocation,
+  MAX_SAFE_HTTP_REDIRECTS,
+  redirectVisitKey,
+  SAFE_HTTP_REDIRECT_STATUSES,
+} from '../security/http-redirect-policy';
 
-const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
-export const MAX_SOURCE_REDIRECTS = 3;
-
-function effectiveUrlKey(url: URL): string {
-  const effective = new URL(url.toString());
-  effective.hash = '';
-  return effective.toString();
-}
-
-function locationHeader(headers: Record<string, unknown>): string | undefined {
-  const location = headers.location;
-  return typeof location === 'string' && location.trim().length > 0 ? location : undefined;
-}
+export const MAX_SOURCE_REDIRECTS = MAX_SAFE_HTTP_REDIRECTS;
 
 @Injectable()
 export class SourceAccessibilityChecker {
@@ -58,7 +52,7 @@ export class SourceAccessibilityChecker {
     let redirectsFollowed = 0;
 
     while (true) {
-      const currentKey = effectiveUrlKey(currentUrl);
+      const currentKey = redirectVisitKey(currentUrl);
       if (visited.has(currentKey)) {
         throw new SourceAccessibilityError('REDIRECT', 'La redirección contiene un ciclo');
       }
@@ -98,21 +92,21 @@ export class SourceAccessibilityChecker {
         return;
       }
 
-      if (!REDIRECT_STATUSES.has(status)) {
+      if (!SAFE_HTTP_REDIRECT_STATUSES.has(status)) {
         throw new SourceAccessibilityError(
           'HTTP_STATUS',
           'La fuente no respondió con un estado HTTP satisfactorio',
         );
       }
 
-      if (redirectsFollowed >= MAX_SOURCE_REDIRECTS) {
+      if (redirectsFollowed >= MAX_SAFE_HTTP_REDIRECTS) {
         throw new SourceAccessibilityError(
           'REDIRECT',
           'La fuente excedió el máximo de redirecciones',
         );
       }
 
-      const location = locationHeader(headers);
+      const location = getRedirectLocation(headers);
       if (!location) {
         throw new SourceAccessibilityError(
           'REDIRECT',
