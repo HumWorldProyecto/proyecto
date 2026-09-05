@@ -1,103 +1,177 @@
 ## Context
 
-La motivación y el alcance funcional se describen en `proposal.md`; los comportamientos verificables están en `specs/config-periodicidad/spec.md`. El repositorio todavía no declara una pila tecnológica ni una implementación previa de persistencia o scheduling.
+HumWorld usa Node.js 24 LTS, TypeScript 5 y NestJS 10.4, con PostgreSQL 16, Prisma ORM 6 y Prisma Migrate. La API obligatoria es REST JSON bajo `/api/v1` y se documenta con Swagger/OpenAPI. HU-01 ya ratificó `@nestjs/schedule`, scheduling dinámico, ausencia de job cuando no hay periodicidad y una política de solapamiento que omite activaciones concurrentes sin encolarlas.
 
-HU-01 (`captura-automatica-rss`) consume la periodicidad que administra este cambio mediante un límite abstracto, sin definir su contrato interno definitivo; a su vez, HU-01 todavía no está archivada en `openspec/specs/`, por lo que este cambio no puede expresar un delta `MODIFIED` formal sobre ella (ver `proposal.md`). El escenario de reacción de HU-01 ante el estado "sin configurar" se gestiona como una actualización aparte sobre el change pendiente `captura-automatica-rss`.
+HU-18 es dueña del estado global de periodicidad. Debe persistirlo, exponerlo y avisar sus cambios; HU-01 es dueña de traducir ese estado a un job futuro.
 
 ```text
-Administrador
-     |
-     v
-Configurar / consultar periodicidad  (este cambio)
-     |
-     v
-Catálogo cerrado (15m, 30m, 1h, 6h, 12h, 24h)
-     |
-     v
-Valor vigente (o "sin configurar")
-     |
-     v
-límite abstracto de periodicidad
-     |
-     v
-Disparador automático de HU-01 (fuera de este cambio)
+GET/PUT /api/v1/config
+          |
+          v
+ servicio de periodicidad
+      |             |
+      v             v
+CaptureConfig   notifier in-process
+ PostgreSQL          |
+      |              v
+      +------> scheduler HU-01
 ```
 
 ## Goals / Non-Goals
 
 **Goals:**
 
-- Restringir la periodicidad a un catálogo cerrado de valores, evitando validación de rangos numéricos libres.
-- Distinguir de forma inequívoca el estado "sin configurar" de cualquier valor del catálogo, para que HU-01 pueda decidir no programar ejecuciones.
-- Garantizar que un cambio de periodicidad recalcule el siguiente instante desde el momento del cambio, de forma determinista y verificable.
-- Mantener el límite abstracto hacia HU-01 desacoplado de la interfaz de entrada concreta y de la tecnología de persistencia.
+- Restringir la periodicidad a un catálogo cerrado y representar sin ambigüedad el estado sin configurar.
+- Fijar la API REST de consulta/configuración y sus respuestas.
+- Persistir una única configuración global mediante un singleton explícito.
+- Proporcionar a HU-01 lectura inicial y notificaciones posteriores sin dependencia nueva ni ciclo entre módulos.
+- Reprogramar solo el siguiente job futuro desde el momento efectivo de cada cambio.
 
 **Non-Goals:**
 
-- Diseñar la interfaz de entrada concreta (API, UI o CLI) que usará el administrador.
-- Diseñar la autenticación o el control de acceso del administrador.
-- Decidir el mecanismo concreto de scheduling de HU-01 ni su política de ejecuciones solapadas.
-- Definir periodicidad por fuente o cualquier forma de configuración distinta de un único valor global.
-- Modificar el spec ya existente de `captura-automatica-rss`; esa actualización se gestiona por separado.
+- Permitir periodicidad por fuente, intervalos libres o expresiones cron proporcionadas por el cliente.
+- Crear una UI administrativa o exigir autenticación para las funcionalidades básicas de Sprint 1.
+- Interrumpir una captura ya en curso o redefinir la política de solapamiento de HU-01.
+- Añadir `@nestjs/event-emitter`, mensajería distribuida o coordinación entre múltiples réplicas.
+- Registrar quién realizó cada cambio; la auditoría administrativa queda para un incremento futuro.
+- Añadir una operación para volver deliberadamente al estado sin configurar; `null` representa el estado inicial en este incremento.
 
 ## Decisions
 
-Las decisiones aprobadas son elecciones técnicas de este cambio y no añaden requisitos funcionales a `spec.md`. Las decisiones pendientes se documentan como alternativas o preguntas abiertas y no constituyen compromisos de implementación.
-
 ### Decisiones APROBADAS
 
-#### Catálogo cerrado de valores en vez de intervalo libre o cron
+#### Catálogo cerrado y valor global
 
-La periodicidad admite únicamente 15 min, 30 min, 1 h, 6 h, 12 h o 24 h. Se descartó un intervalo numérico libre (exige validar rangos y evita periodicidades absurdas o excesivamente agresivas para las fuentes RSS) y una expresión cron completa (sobredimensionada frente a la necesidad real y más difícil de validar y comunicar al administrador).
+El dominio admite únicamente `15 | 30 | 60 | 360 | 720 | 1440` minutos, equivalentes a 15 min, 30 min, 1 h, 6 h, 12 h y 24 h. Un solo estado global rige todas las fuentes. No se usa intervalo libre, expresión cron pública ni valor funcional por defecto.
 
-#### Periodicidad global única
+#### API REST JSON
 
-Un solo valor rige la captura automática de todas las fuentes RSS registradas. Se descartó una periodicidad por fuente para mantener el contrato con HU-01 simple (un valor, no un mapa de valores) y porque la redacción original de HU-01 ya asume un único valor global.
+`CaptureConfigController` expondrá:
 
-#### Sin valor por defecto
+| Operación | Endpoint | Respuesta |
+| --- | --- | --- |
+| Consultar | `GET /api/v1/config` | `200 OK` |
+| Configurar/reemplazar | `PUT /api/v1/config` | `200 OK` |
 
-El sistema no asume ningún valor de periodicidad antes de la primera configuración administrativa; el estado inicial es explícitamente "sin configurar". Se prefirió evitar un valor "mágico" implícito que el administrador no eligió.
+La representación única de lectura y respuesta exitosa es:
 
-#### Recálculo inmediato desde el momento del cambio
+```json
+{ "capturePeriodicityMinutes": 30 }
+```
 
-Al configurar o cambiar la periodicidad, el siguiente instante de ejecución se recalcula usando como referencia el momento en que se guarda el nuevo valor, no la última ejecución realizada. Esto evita que un cambio hacia un intervalo más corto que el tiempo transcurrido desde la última ejecución produzca un instante ya pasado.
+Cuando no existe configuración:
 
-#### Exposición mediante límite abstracto
+```json
+{ "capturePeriodicityMinutes": null }
+```
 
-El valor vigente (incluido "sin configurar") se expone a HU-01 mediante un límite abstracto, siguiendo el mismo patrón ya usado entre HU-01 y HU-15 para el conjunto de fuentes registradas. Este cambio no define el contrato interno definitivo de HU-01 ni su mecanismo de scheduling.
+El DTO de PUT exige `capturePeriodicityMinutes` numérico y perteneciente al catálogo. `null`, valores de otro tipo o valores ajenos al catálogo producen `400 Bad Request`, no cambian la persistencia y no emiten notificación. Un PUT válido devuelve la representación vigente. Si repite el mismo valor ya configurado, es idempotente: responde `200`, no actualiza `updatedAt`, no notifica y no desplaza el siguiente instante. Ambos endpoints usan JSON, se documentan con Swagger/OpenAPI y no requieren autenticación en Sprint 1.
 
-### Decisiones PENDIENTES
+#### Singleton persistente explícito
 
-#### Persistencia concreta de la configuración
+La persistencia usa PostgreSQL y Prisma. El estado objetivo es:
 
-No se ha seleccionado la tecnología de almacenamiento para el valor de periodicidad vigente. La elección permanece abierta y no condiciona el comportamiento definido en `spec.md`.
+```text
+CaptureConfig
+- id: String fijo y estable ("global")
+- capturePeriodicityMinutes: Int nullable
+- updatedAt: DateTime
+```
 
-#### Interfaz de entrada concreta
+El repositorio encapsula el identificador fijo; ningún controller ni caso de uso recibe un ID. No se necesita seed: una fila ausente y una fila cuyo valor sea `null` se mapean al mismo estado de dominio `unconfigured`. El primer PUT válido realiza un `upsert`; un PUT posterior con un valor diferente actualiza esa misma fila. Si el valor coincide con el vigente, el servicio devuelve el estado actual sin escribir. Esta estrategia conserva el estado inicial sin inventar un valor, evita depender de datos precargados y mantiene la idempotencia del PUT.
 
-No se ha decidido si el administrador configurará la periodicidad mediante una API, una UI web u otro mecanismo. Queda fuera de este cambio.
+Se requiere una migración de esquema para crear la tabla, aunque no existe información histórica que transformar.
 
-#### Interacción con una ejecución de HU-01 en curso
+#### Estado tipado hacia HU-01
 
-Este cambio garantiza que el siguiente instante se recalcula de inmediato, pero no decide si ese recálculo debe interrumpir una ejecución de captura ya en curso en HU-01. Esa decisión depende de la política de ejecuciones solapadas que HU-01 dejó pendiente en su propio diseño.
+Un número simple no representa la ausencia de configuración. El límite usa una unión discriminada:
 
-#### Auditoría de cambios de periodicidad
+```ts
+type PeriodicityState =
+  | Readonly<{ kind: 'configured'; minutes: 15 | 30 | 60 | 360 | 720 | 1440 }>
+  | Readonly<{ kind: 'unconfigured' }>;
 
-No se ha aprobado registrar quién ni cuándo cambió la periodicidad. Podría evaluarse en un incremento posterior si surge una necesidad de trazabilidad administrativa.
+interface PeriodicityProviderPort {
+  getCurrentState(): Promise<PeriodicityState>;
+}
+```
+
+El adaptador lee el singleton y traduce tanto fila ausente como valor nulo a `unconfigured`.
+
+#### Notificación in-process después de persistir
+
+Se añade un puerto relacionado, no una dependencia externa:
+
+```ts
+type PeriodicityChange = Readonly<{
+  state: PeriodicityState;
+  effectiveAt: Date;
+}>;
+
+type PeriodicityChangeListener =
+  (change: PeriodicityChange) => void | Promise<void>;
+
+interface PeriodicityChangeNotifierPort {
+  subscribe(listener: PeriodicityChangeListener): () => void;
+}
+
+interface PeriodicityChangePublisherPort {
+  publish(change: PeriodicityChange): Promise<void>;
+}
+```
+
+Un único mediador singleton implementa publicación y suscripción. El token de suscripción se exporta a HU-01; el token de publicación permanece interno a HU-18. Así el caso de uso puede emitir sin dar a los consumidores capacidad para publicar.
+
+El caso de uso valida el valor y lo compara con el estado vigente para elegir una de dos ramas inequívocas.
+
+Si el PUT repite el mismo valor ya configurado:
+
+1. responde `200 OK` con el estado vigente;
+2. no escribe ni cambia `updatedAt`;
+3. no publica ninguna notificación;
+4. no cancela, reemplaza ni reprograma el job futuro.
+
+Si el PUT establece el primer valor o uno diferente:
+
+1. valida el valor;
+2. lo persiste;
+3. obtiene `effectiveAt` desde el `updatedAt` confirmado por la persistencia;
+4. publica `PeriodicityChange { state, effectiveAt }` después de persistir;
+5. HU-01 reemplaza únicamente el job futuro y conserva cualquier captura en ejecución;
+6. espera al listener de Sprint 1 antes de responder `200 OK`.
+
+Si la validación o persistencia falla, no se notifica. No se incorpora `@nestjs/event-emitter`.
+
+Para un estado válido, el listener aplica operaciones idempotentes sobre el registro del scheduler: tolera que no exista un job anterior y solo resuelve cuando el job futuro coincide con el estado recibido. Los defectos inesperados de infraestructura o programación no constituyen una respuesta funcional alternativa de este contrato.
+
+#### Reprogramación y ejecución en curso
+
+Al arrancar, HU-01 se suscribe a cambios y lee el estado mediante `PeriodicityProviderPort`. Si obtiene `unconfigured`, no registra job. Si obtiene `configured`, programa el siguiente instante.
+
+Ante una notificación, el coordinador de scheduling de HU-01 cancela o reemplaza únicamente el job futuro registrado en `SchedulerRegistry` (o mecanismo equivalente) y calcula el siguiente instante como `effectiveAt + minutes`. No interrumpe una captura ya en ejecución. HU-18 no redefine la política de overlap: si llega una activación mientras otra sigue activa, se aplica la regla propiedad de HU-01, que la omite, no la ejecuta concurrentemente y no la encola.
+
+#### Wiring NestJS sin dependencia circular
+
+Un módulo funcional `CaptureConfigModule` —nombre distinto del `ConfigModule` técnico de `@nestjs/config`— contiene controller, caso de uso, repositorio y mediador de cambios. Exporta tokens para `PeriodicityProviderPort` y `PeriodicityChangeNotifierPort`; el token de `PeriodicityChangePublisherPort` solo se inyecta en el caso de uso interno.
+
+`CaptureModule` importa `CaptureConfigModule`, registra un coordinador que se suscribe durante el arranque y elimina la suscripción al destruirse. `CaptureConfigModule` nunca importa ni inyecta `CaptureModule` o su scheduler: solo mantiene listeners del puerto neutral. Esta dirección única evita `forwardRef` y ciclos.
 
 ## Risks / Trade-offs
 
-- **[El catálogo cerrado limita la flexibilidad del administrador]** → Es una restricción deliberada para evitar periodicidades arbitrariamente agresivas frente a las fuentes RSS; puede ampliarse más adelante si se demuestra la necesidad.
-- **[Sin valor por defecto, HU-01 podría implementarse sin contemplar el estado "sin configurar"]** → Se registra explícitamente en `proposal.md` como una actualización aparte y pendiente sobre el change `captura-automatica-rss`, para no dejarlo como una brecha silenciosa.
-- **[El recálculo inmediato puede coincidir con una ejecución de HU-01 en curso]** → No se resuelve en este cambio; queda ligado a la política de solapamientos pendiente en el diseño de HU-01.
-- **[El contrato interno definitivo con HU-01 todavía no está definido en ambos sentidos]** → Mantener el límite abstracto y evitar decidir aquí reglas que pertenecen a HU-01.
+- **Una sola instancia:** el callback in-process es suficiente para el monolito de Sprint 1, pero no propaga cambios entre réplicas futuras. Una topología distribuida exigirá otro ADR y un mecanismo compartido.
+- **Ventana persistir/notificar:** una caída del proceso después del commit y antes de notificar puede dejar temporalmente el job anterior. El siguiente arranque se recupera leyendo PostgreSQL; no se añade outbox para Sprint 1.
+- **Sin operación de desconfiguración:** `null` permite representar el estado inicial, pero PUT no acepta `null`. Volver voluntariamente a `unconfigured` requiere un requisito futuro.
+- **Sin autenticación básica:** es una decisión global de Sprint 1; el control administrativo deberá incorporarse antes de una exposición productiva.
+- **Catálogo cerrado:** reduce flexibilidad deliberadamente y puede ampliarse mediante una evolución posterior del contrato.
 
 ## Migration Plan
 
-No se requiere migración de datos; es una capacidad nueva. La estrategia concreta de persistencia y activación se definirá cuando se seleccione la tecnología correspondiente, sin alterar el comportamiento funcional definido en `spec.md`.
+1. Añadir `CaptureConfig` al schema Prisma con el identificador singleton y campo nullable.
+2. Crear una migración de esquema nueva; no se requiere migración ni seed de datos históricos.
+3. Implementar repositorio, caso de uso y API GET/PUT.
+4. Implementar provider/notifier y el wiring unidireccional con HU-01.
+5. Verificar estado ausente/configurado, orden persistir-notificar y reprogramación con pruebas unitarias, PostgreSQL real y E2E.
 
 ## Open Questions
 
-- ¿Qué tecnología concreta de persistencia se usará para guardar la periodicidad configurada?
-- ¿Qué interfaz de entrada concreta (API/UI/CLI) usará el administrador para configurarla?
-- ¿Debe el recálculo inmediato interrumpir una ejecución de HU-01 en curso, o solo afectar al siguiente instante futuro?
-- ¿Se incorporará auditoría de cambios de periodicidad (quién y cuándo) en un incremento posterior?
+No quedan decisiones funcionales o técnicas de HU-18 que bloqueen la implementación de Sprint 1. La auditoría de cambios y la coordinación entre múltiples réplicas son evoluciones futuras, no decisiones abiertas de este incremento.

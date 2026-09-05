@@ -12,12 +12,12 @@ Antes de proponer, diseñar, implementar o revisar un cambio:
 
 `docs/architecture.md` es la fuente de verdad arquitectónica. `openspec/config.yaml` aporta el contexto y las reglas permanentes para crear y aplicar cambios. Los artefactos de cada cambio OpenSpec definen su alcance y las decisiones específicas aprobadas.
 
-Ante una diferencia, distinguir entre restricciones obligatorias, baseline tecnológico provisional y decisiones del cambio. Ningún agente puede convertir una propuesta provisional en requisito ni alterar una restricción del proyecto.
+Ante una diferencia, distinguir entre restricciones obligatorias, baseline tecnológico ratificado y decisiones del cambio. Ningún agente puede convertir una decisión tecnológica en requisito funcional ni alterar una restricción del proyecto.
 
 ## Arquitectura
 
 - Mantener una aplicación web modular con separación clara entre presentación, API, servicios/lógica de negocio y repositorios/datos.
-- El baseline de estilo es un monolito modular pendiente de ratificación; no introducir microservicios sin el proceso formal de cambio arquitectónico.
+- El baseline de estilo ratificado es un monolito modular; no introducir microservicios sin el proceso formal de cambio arquitectónico.
 - El frontend consume exclusivamente la API y nunca accede directamente al sistema gestor de datos.
 - La API valida el contrato HTTP e invoca servicios; no contiene consultas directas a datos ni concentra la lógica de negocio.
 - Los servicios implementan casos de uso y coordinan repositorios e integraciones mediante abstracciones.
@@ -27,20 +27,22 @@ Ante una diferencia, distinguir entre restricciones obligatorias, baseline tecno
 
 Los módulos conceptuales iniciales son `sources`, `capture`, `news`, `sentiment`, `dictionary`, `classification`, `analytics`, `purge` y `config`. No crear módulos, carpetas ni código que no sean necesarios para un cambio aprobado.
 
-## Tecnologías provisionales
+## Tecnologías ratificadas y frontend previsto
 
-El baseline tecnológico está **pendiente de ratificación definitiva del Equipo 5**:
+El Equipo 5 ha ratificado el siguiente baseline tecnológico:
 
-- Backend: Python, FastAPI y Uvicorn.
-- Frontend: React, TypeScript y Vite.
-- Persistencia: PostgreSQL, SQLAlchemy y Alembic.
-- RSS: `httpx` y `feedparser`.
-- Scheduling: APScheduler como candidato inicial.
-- Visualización: Leaflet y Chart.js.
-- Pruebas: pytest; Vitest y React Testing Library.
+- Backend actual: Node.js, TypeScript y NestJS.
+- Persistencia: PostgreSQL, Prisma ORM y Prisma Migrate.
+- Pruebas del backend: Jest.
+- Frontend previsto, todavía no implementado: React, TypeScript y Vite.
+- Captura RSS: `@nestjs/axios` para HTTP y `rss-parser` para interpretación.
+- Scheduling: `@nestjs/schedule`.
+- Timeout HTTP RSS: obtenido de una única configuración, con 10 segundos como valor técnico por defecto.
+- Visualización prevista para el frontend: Leaflet y Chart.js.
+- Pruebas previstas para el frontend: Vitest y React Testing Library.
 - DevOps/calidad: Docker, Docker Compose, GitHub Actions y SonarQube. Docker y GitHub Actions son además restricciones obligatorias del proyecto; sus detalles siguen sujetos al diseño.
 
-Estas tecnologías son propuestas actuales, no requisitos del negocio ni imposiciones del enunciado. No cambiar el stack, las librerías principales, la persistencia, el método de sentimiento, el scheduling, la infraestructura o el despliegue sin análisis de impacto y aprobación humana.
+Estas tecnologías son decisiones del equipo, no requisitos del negocio ni imposiciones del enunciado. El nombre de la clave, la validación y el mecanismo de override del timeout pertenecen al `design.md` correspondiente; el valor de 10 segundos no debe trasladarse a `spec.md` como requisito funcional. No cambiar el stack, las librerías principales, la persistencia, el método de sentimiento, el scheduling, la infraestructura o el despliegue sin análisis de impacto y aprobación humana.
 
 ## Desarrollo con OpenSpec
 
@@ -48,7 +50,7 @@ Estas tecnologías son propuestas actuales, no requisitos del negocio ni imposic
 - No implementar una historia de usuario sin una especificación OpenSpec revisada.
 - Implementar únicamente el alcance y las tareas aprobadas del cambio.
 - Mantener trazabilidad desde la historia y los escenarios hasta el diseño, las tareas y las pruebas.
-- Reservar para `design.md` las decisiones específicas: endpoints, DTO, validaciones, entidades, timeout, reintentos, backoff, concurrencia, deduplicación, logging, índices, consultas, valores de configuración y algoritmos concretos.
+- Reservar para `design.md` las decisiones específicas: endpoints, DTO, validaciones, entidades, clave y mecanismo de override del timeout, tratamiento de valores inválidos, reintentos, backoff, concurrencia, deduplicación, logging, índices, consultas, valores de configuración no ratificados y algoritmos concretos.
 - No inferir para la HU-17 una relación con el motor de sentimiento que no haya sido aprobada funcionalmente.
 - No marcar tareas completadas sin verificar la implementación y las pruebas.
 
@@ -90,7 +92,11 @@ Codex, Copilot y otros agentes no pueden cambiar unilateralmente el estilo, el s
 - No colocar consultas de datos directamente en componentes frontend.
 - No acceder directamente a datos desde la API ni concentrar allí la lógica de negocio.
 - No cambiar el stack sin aprobación humana.
+- No sustituir unilateralmente `@nestjs/axios`, `rss-parser` ni `@nestjs/schedule` como tecnologías ratificadas para la captura.
 - No introducir tecnologías o dependencias sin justificar su necesidad y obtener aprobación.
+- No utilizar un parser RSS basado en expresiones regulares como implementación final.
+- No utilizar un scheduler principal artesanal basado en un ciclo recursivo con `setTimeout`.
+- No dispersar valores de timeout como números mágicos en distintos componentes.
 - No implementar una historia de usuario sin OpenSpec revisado.
 - No modificar especificaciones silenciosamente para adaptar el código.
 - No inventar requisitos, endpoints, relaciones funcionales ni configuraciones.

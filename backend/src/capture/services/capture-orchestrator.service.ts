@@ -1,9 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { SOURCE_REGISTRY_PORT, SourceRegistryPort } from '../ports/source-registry.port';
+import {
+  EligibleSource,
+  SOURCE_REGISTRY_PORT,
+  SourceRegistryPort,
+} from '../../sources/ports/source-registry.port';
 import { RSS_FETCHER_PORT, RssFetcherPort } from '../ports/rss-fetcher.port';
 import { RSS_PARSER_PORT, RssParserPort } from '../ports/rss-parser.port';
 import { CAPTURE_OUTPUT_PORT, CaptureOutputPort } from '../ports/capture-output.port';
-import { RssSource } from '../types/rss-source';
 
 @Injectable()
 export class CaptureOrchestratorService {
@@ -15,7 +18,7 @@ export class CaptureOrchestratorService {
   ) {}
 
   async runCapture(): Promise<void> {
-    const sourcesSnapshot = await this.sourceRegistry.getRegisteredSources();
+    const sourcesSnapshot = await this.sourceRegistry.getEligibleSources();
 
     if (sourcesSnapshot.length === 0) {
       return;
@@ -26,7 +29,7 @@ export class CaptureOrchestratorService {
     }
   }
 
-  private async captureSource(source: RssSource): Promise<void> {
+  private async captureSource(source: EligibleSource): Promise<void> {
     let rawContent: string;
     try {
       rawContent = await this.fetcher.fetchRaw(source.url);
@@ -36,7 +39,10 @@ export class CaptureOrchestratorService {
 
     let items;
     try {
-      items = this.parser.parse(rawContent).map((item) => ({ ...item, sourceId: source.id }));
+      items = (await this.parser.parse(rawContent)).map((item) => ({
+        ...item,
+        sourceId: source.id,
+      }));
     } catch {
       return;
     }

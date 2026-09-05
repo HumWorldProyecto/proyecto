@@ -1,23 +1,25 @@
 ## Why
 
-La captura automática RSS (HU-01, `captura-automatica-rss`) ya interpreta feeds y entrega ítems mediante un límite abstracto de salida (`CaptureOutputPort`), pero ese límite no tiene todavía ninguna implementación: los ítems capturados se descartan y no existe manera de consultarlos. HU-04 cierra ese vacío: persiste cada noticia capturada junto con sus metadatos RSS y la expone mediante la API REST para que pueda consultarse.
+La captura automática RSS (HU-01, `captura-automatica-rss`) entrega ítems interpretados mediante `CaptureOutputPort`, y HU-04 es responsable de almacenar las noticias identificables con sus metadatos y exponerlas para consulta. El backend ya contiene `NewsModule`, el adaptador de salida, PostgreSQL/Prisma y `GET /api/v1/news`; esta reconciliación corrige la identidad observable porque la implementación actual todavía almacena ítems sin GUID ni enlace y no demuestra el flujo completo integrado.
 
 ## What Changes
 
-- Añadir el módulo `news` (capa API + servicios + repositorio) que persiste noticias capturadas con sus metadatos RSS: título, enlace, fecha de publicación, fuente de origen, GUID y descripción.
-- Implementar el adaptador que conecta `CaptureOutputPort` (ya definido por HU-01) con la persistencia de `news`, sin modificar el contrato ni el comportamiento de la captura.
+- Mantener el módulo `news` organizado en las capas API, servicios y repositorio para persistir noticias capturadas con los metadatos RSS disponibles: título, enlace, fecha de publicación, fuente de origen, GUID y descripción.
+- Resolver la identidad antes de persistir: normalizar GUID y enlace, usar primero un GUID no vacío, usar el enlace no vacío como fallback y descartar sin error los ítems que no tengan ninguno.
+- Evitar una segunda noticia cuando una misma fuente entrega la misma identidad y permitir registros independientes cuando fuentes diferentes entregan esa identidad.
+- Mantener el adaptador que conecta `CaptureOutputPort` con la persistencia de `news`, sin introducir en HU-01 reglas de almacenamiento o identidad.
 - Exponer `GET /api/v1/news` para consultar las noticias almacenadas, devolviendo `200` con lista vacía (`[]`) cuando no existan noticias.
-- Introducir la primera capa de persistencia del proyecto: PostgreSQL + Prisma ORM + Prisma Migrate (baseline confirmado en `docs/architecture.md` §4), con su esquema y migraciones para la entidad de noticia.
-- Arrancar la primera aplicación NestJS ejecutable (`main.ts`, módulo raíz) con prefijo `/api/v1` y documentación OpenAPI/Swagger, ya que hoy el repositorio solo contiene el módulo `capture` sin aplicación arrancable.
-- Añadir la infraestructura mínima de Docker Compose (servicio PostgreSQL) y extender el workflow de CI para poder ejecutar pruebas de integración contra una base de datos real, dado que ninguna existe todavía.
-- Manejo de errores controlado en el límite de la API y en el repositorio (fallos de persistencia, ítems inválidos) sin filtrar detalles internos ni interrumpir la captura de otras fuentes.
+- Mantener PostgreSQL + Prisma ORM + Prisma Migrate como capa de persistencia conforme a la arquitectura vigente.
+- Mantener la aplicación NestJS ejecutable, su prefijo `/api/v1` y la documentación OpenAPI/Swagger. `AppModule` expone hoy `NewsModule`; la integración raíz de `CaptureModule` queda pendiente de los proveedores reales de HU-15 y HU-18.
+- Mantener el entorno PostgreSQL reproducible y las pruebas de integración, y añadir la prueba E2E real captura → persistencia → consulta cuando la composición completa esté disponible.
+- Tratar en el servicio el descarte sin identidad como flujo normal, aislar por ítem los fallos reales de persistencia, mantener una defensa adicional en el repositorio y responder de forma controlada en la API sin exponer detalles internos.
 
 **Fuera de alcance** (no se implementa en este cambio):
 - CRUD administrativo de noticias (alta/edición/borrado manual).
 - Filtros, paginación, ordenación o búsqueda en `GET /api/v1/news` más allá del listado simple.
 - Caducidad o purgado de noticias (pertenece a HU futura de `purge`).
 - Clasificación, sentimiento o agregaciones sobre las noticias almacenadas.
-- Nombre legible de la fuente: hoy `RssSource` (HU-15, pendiente) solo expone `id` y `url`; la metadata "fuente" se persiste como referencia (`sourceId`), no como nombre de fuente.
+- Nombre legible de la fuente: el contrato actual de HU-15 no lo proporciona; la metadata "fuente" se mantiene como referencia estable (`sourceId`), no como URL ni como nombre.
 
 ## Capabilities
 
@@ -29,10 +31,8 @@ _Ninguna._ La captura automática (`captura-automatica-rss`) no cambia su compor
 
 ## Impact
 
-- **Nuevo:** `backend/src/news/**` (controller, service, repository, DTOs, adaptador de `CaptureOutputPort`).
-- **Nuevo:** `backend/prisma/schema.prisma` y migraciones Prisma para la entidad de noticia.
-- **Nuevo:** `backend/src/main.ts` y módulo raíz de la aplicación (prefijo `/api/v1`, `ValidationPipe`, Swagger) — primera vez que la aplicación es arrancable.
-- **Nuevo:** `docker-compose.yml` (servicio PostgreSQL) y `.env.example` (sin secretos, solo variables de conexión).
-- **Modificado:** `backend/src/capture/capture.module.ts` u orquestación de módulos para proveer `CAPTURE_OUTPUT_PORT` con la nueva implementación (sin tocar `CaptureOrchestratorService` ni el contrato del puerto).
-- **Modificado:** `.github/workflows/ci.yml` para instalar dependencias, ejecutar pruebas (unitarias + integración) contra un servicio PostgreSQL y comprobar cobertura.
-- **Modificado:** `backend/package.json` — nuevas dependencias: `@nestjs/platform-express`, `@nestjs/swagger`, `@nestjs/config`, `prisma`, `@prisma/client`, y `class-validator`/`class-transformer` (requeridas en tiempo de ejecución por `ValidationPipe`).
+- `backend/src/news/**`: resolución de identidad en servicio/dominio, contrato de repositorio para ítems identificados y defensa adicional del adaptador Prisma.
+- `backend/prisma/schema.prisma`: el modelo e índice compuesto ya existen; el objetivo aprobado hace `dedupeKey` obligatorio y requerirá una migración nueva durante la implementación, sin modificar el esquema ni crear esa migración en esta revisión documental.
+- `backend/src/capture/capture.module.ts`: el binding de `CAPTURE_OUTPUT_PORT` hacia `NewsModule` ya existe y se conserva.
+- `backend/src/app.module.ts`: la composición completa con `CaptureModule` permanece pendiente hasta que HU-15 y HU-18 aporten proveedores compatibles.
+- `backend/test/news/**` y pruebas E2E: deben ajustarse a la identidad aprobada y demostrar por separado la API existente y el flujo completo captura → persistencia → consulta.

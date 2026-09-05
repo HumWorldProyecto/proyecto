@@ -2,7 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NewsRepositoryPort } from '../ports/news-repository.port';
 import { News } from '../types/news';
-import { CapturedNewsItem } from '../types/captured-news-item';
+import {
+  IdentifiedCapturedNewsItem,
+  NewsDedupeKey,
+} from '../types/identified-captured-news-item';
+
+function isValidDedupeKey(value: unknown): value is NewsDedupeKey {
+  if (typeof value !== 'string') {
+    return false;
+  }
+
+  const prefix = value.startsWith('guid:') ? 'guid:' : value.startsWith('link:') ? 'link:' : null;
+  return prefix !== null && value.slice(prefix.length).trim().length > 0;
+}
 
 @Injectable()
 export class PrismaNewsRepository implements NewsRepositoryPort {
@@ -25,8 +37,11 @@ export class PrismaNewsRepository implements NewsRepositoryPort {
     }));
   }
 
-  async upsertCapturedItem(item: CapturedNewsItem): Promise<void> {
-    const dedupeKey = item.guid ?? item.link ?? null;
+  async upsertCapturedItem(item: IdentifiedCapturedNewsItem): Promise<void> {
+    if (!isValidDedupeKey(item.dedupeKey)) {
+      return;
+    }
+
     const pubDate = item.pubDate ? new Date(item.pubDate) : null;
     const data = {
       sourceId: item.sourceId,
@@ -35,20 +50,12 @@ export class PrismaNewsRepository implements NewsRepositoryPort {
       guid: item.guid ?? null,
       description: item.description ?? null,
       pubDate,
-      dedupeKey,
+      dedupeKey: item.dedupeKey,
     };
-
-    if (dedupeKey === null) {
-      // Prisma no admite `null` en un where de clave única compuesta: un
-      // ítem sin GUID ni enlace no puede identificarse, así que se crea
-      // siempre como noticia nueva (caso borde documentado en design.md).
-      await this.prisma.news.create({ data });
-      return;
-    }
 
     await this.prisma.news.upsert({
       where: {
-        sourceId_dedupeKey: { sourceId: item.sourceId, dedupeKey },
+        sourceId_dedupeKey: { sourceId: item.sourceId, dedupeKey: item.dedupeKey },
       },
       update: {},
       create: data,

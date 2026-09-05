@@ -1,22 +1,23 @@
-import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { CAPTURE_TRIGGER_PORT, CaptureTriggerPort } from '../ports/capture-trigger.port';
+import { Injectable } from '@nestjs/common';
 import { CaptureOrchestratorService } from '../services/capture-orchestrator.service';
 
-/**
- * Job: dispara el caso de uso de captura y no duplica su lógica de negocio.
- */
 @Injectable()
-export class AutomaticCaptureJob implements OnModuleInit, OnModuleDestroy {
-  constructor(
-    @Inject(CAPTURE_TRIGGER_PORT) private readonly trigger: CaptureTriggerPort,
-    private readonly orchestrator: CaptureOrchestratorService,
-  ) {}
+export class AutomaticCaptureJob {
+  private running = false;
 
-  onModuleInit(): void {
-    this.trigger.start(() => this.orchestrator.runCapture());
-  }
+  constructor(private readonly orchestrator: CaptureOrchestratorService) {}
 
-  onModuleDestroy(): void {
-    this.trigger.stop();
+  async run(): Promise<boolean> {
+    if (this.running) {
+      return false;
+    }
+
+    this.running = true;
+    try {
+      await this.orchestrator.runCapture();
+      return true;
+    } finally {
+      this.running = false;
+    }
   }
 }

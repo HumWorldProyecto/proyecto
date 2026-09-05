@@ -1,56 +1,87 @@
-## 1. Modelo de datos y validación de URL
+## 1. Modelo Prisma y migración
 
-- [ ] 1.1 Definir la entidad fuente RSS con identificador, URL y estado (activa/desactivada), según el modelo mínimo aprobado en `design.md`.
-- [ ] 1.2 Implementar la validación del formato sintáctico de la URL.
-- [ ] 1.3 Implementar la verificación de accesibilidad HTTP de la URL con finalización finita (timeout).
-- [ ] 1.4 Implementar la verificación de unicidad de la URL contra el conjunto completo de fuentes registradas, activas y desactivadas.
+- [x] 1.1 Añadir el modelo `RssSource` con UUID estable, URL obligatoria y única, `active=true`, `createdAt` y `updatedAt`.
+- [x] 1.2 Mantener `News.sourceId` obligatorio y añadir la relación FK real hacia `RssSource.id`.
+- [x] 1.3 Configurar la FK con `onDelete: Restrict`/`NoAction`, sin borrado en cascada ni borrado físico de fuentes.
+- [x] 1.4 Crear una migración Prisma nueva, coordinada con la migración pendiente de HU-04.
+- [x] 1.5 Verificar la migración desde una base PostgreSQL 16 vacía y adaptar fixtures para que toda noticia use una fuente existente.
 
-## 2. Caso de uso de creación
+## 2. Normalización y validación de URL
 
-- [ ] 2.1 Implementar la creación de una fuente aplicando validación sintáctica, accesibilidad HTTP y unicidad antes de registrarla.
-- [ ] 2.2 Rechazar la creación cuando la URL es sintácticamente inválida, sin registrar la fuente.
-- [ ] 2.3 Rechazar la creación cuando la URL no responde a una solicitud HTTP, sin registrar la fuente.
-- [ ] 2.4 Rechazar la creación cuando la URL ya pertenece a otra fuente registrada.
-- [ ] 2.5 Registrar la fuente como activa cuando todas las validaciones se cumplen.
+- [x] 2.1 Implementar la normalización `trim -> URL de Node -> toString()`, aceptando solo HTTP/HTTPS, rechazando credenciales embebidas y conservando path y query.
+- [x] 2.2 Implementar la validación sintáctica y traducir sus fallos a un error de entrada controlado.
+- [x] 2.3 Implementar la accesibilidad mediante `@nestjs/axios`/`HttpService`, solicitud GET, respuesta final 2xx y timeout central finito.
+- [x] 2.4 Extraer y reutilizar un provider neutral para `RSS_FETCH_TIMEOUT_MS`, con `10_000 ms` por defecto y validación como entero positivo y finito, sin introducir una dependencia entre `SourcesModule` y `CaptureModule`.
+- [x] 2.5 Implementar sin dependencia nueva la prevalidación y clasificación SSRF de URL e IP: hostname obligatorio, rechazo de `localhost` y subdominios, protocolos y credenciales aprobados, puertos HTTP/HTTPS explícitos permitidos y exclusión conservadora de rangos IPv4/IPv6 no públicos o especiales.
+- [x] 2.6 Mantener la verificación de accesibilidad independiente del guard RSS-only de HU-01.
+- [x] 2.7 Resolver cada hostname una sola vez con todas sus direcciones, exigir un resultado y rechazar el destino completo cuando la instantánea DNS sea mixta o contenga cualquier dirección prohibida.
+- [x] 2.8 Evitar DNS rebinding fijando cada conexión mediante un Agent efímero cuyo `lookup` no vuelva a DNS y solo entregue una dirección elegida del snapshot validado, conservando hostname, `Host`, SNI y validación TLS.
+- [x] 2.9 Configurar el transporte con `proxy: false`, `keepAlive: false` y `maxRedirects: 0`, destruir el Agent al terminar y cerrar la respuesta en stream tras obtener estado y headers.
+- [x] 2.10 Seguir manualmente únicamente redirects 301/302/303/307/308, con máximo tres, detección de ciclos y revalidación completa de cada `Location`.
+- [x] 2.11 Aplicar `RSS_FETCH_TIMEOUT_MS` como un único deadline para DNS, HTTP y toda la cadena de redirects, sin reiniciarlo por salto.
 
-## 3. Caso de uso de consulta
+## 3. Repositorio de fuentes
 
-- [ ] 3.1 Implementar la consulta de una fuente registrada por su identificador, incluyendo su estado.
-- [ ] 3.2 Rechazar la consulta cuando el identificador no corresponde a ninguna fuente registrada.
-- [ ] 3.3 Implementar el listado del conjunto completo de fuentes registradas, activas y desactivadas, con su estado.
+- [x] 3.1 Definir el puerto de repositorio para crear, consultar, listar/filtrar, reemplazar, actualizar y cambiar el estado de fuentes.
+- [x] 3.2 Implementar el adaptador Prisma sobre PostgreSQL sin operaciones de borrado físico.
+- [x] 3.3 Consultar y hacer cumplir la unicidad sobre la URL normalizada entre fuentes activas y desactivadas.
+- [x] 3.4 Traducir una colisión concurrente de la restricción única a un conflicto de dominio/API.
+- [x] 3.5 Garantizar que los cambios de estado no modifican las noticias asociadas.
 
-## 4. Caso de uso de actualización
+## 4. Servicios y casos de uso
 
-- [ ] 4.1 Implementar la actualización de los datos de una fuente existente.
-- [ ] 4.2 Rechazar la actualización cuando el identificador no corresponde a ninguna fuente registrada.
-- [ ] 4.3 Revalidar la URL (sintaxis, accesibilidad HTTP y unicidad) cuando la actualización la modifica, reutilizando las validaciones del caso de uso de creación.
-- [ ] 4.4 Rechazar la actualización cuando la nueva URL no cumple alguna validación, conservando la URL original de la fuente.
+- [x] 4.1 Implementar la creación, dejando activa la fuente después de superar normalización, sintaxis, accesibilidad y unicidad.
+- [x] 4.2 Implementar la consulta por identificador y el error de fuente inexistente.
+- [x] 4.3 Implementar el listado completo y el filtro simple por estado activo/desactivado.
+- [x] 4.4 Implementar el reemplazo completo de la URL mediante PUT y revalidarla antes de persistir.
+- [x] 4.5 Implementar la actualización parcial de URL o estado mediante PATCH, exigiendo al menos un cambio.
+- [x] 4.6 Implementar DELETE: fuente activa pasa a desactivada con 204, fuente ya desactivada permanece igual con 204 e identificador inexistente responde 404, siempre sin borrado físico.
+- [x] 4.7 Implementar la reactivación sin revalidar la URL cuando esta no cambia.
 
-## 5. Caso de uso de desactivación y reactivación
+## 5. API REST y Swagger
 
-- [ ] 5.1 Implementar la desactivación de una fuente activa mediante la transición de su estado a desactivada.
-- [ ] 5.2 Rechazar la desactivación cuando el identificador no corresponde a ninguna fuente registrada.
-- [ ] 5.3 Implementar la reactivación de una fuente desactivada mediante la transición de su estado a activa.
-- [ ] 5.4 Garantizar que desactivar o reactivar una fuente no elimina ni modifica su registro ni las noticias ya almacenadas asociadas a ella.
+- [x] 5.1 Crear DTOs para POST, PUT, PATCH, filtro de listado y respuesta, con validación y ejemplos OpenAPI.
+- [x] 5.2 Implementar `SourcesController` con los seis endpoints aprobados bajo `/api/v1/sources`.
+- [x] 5.3 Responder 201 en POST, 200 en GET/PUT/PATCH, 204 sin cuerpo al desactivar o repetir DELETE sobre una fuente existente y 404 si el identificador de DELETE no existe.
+- [x] 5.4 Mapear entrada o accesibilidad inválida a 400, identificador inexistente a 404 y URL duplicada a 409.
+- [x] 5.5 Documentar rutas, parámetros, cuerpos y respuestas mediante Swagger/OpenAPI.
+- [x] 5.6 Verificar que las operaciones básicas funcionan sin autenticación en Sprint 1.
 
-## 6. Contrato del límite abstracto de fuentes activas
+## 6. Provider para HU-01/HU-02 y wiring
 
-- [ ] 6.1 Definir el límite abstracto de solo lectura que entrega una instantánea del conjunto de fuentes registradas activas para HU-01 y HU-02.
-- [ ] 6.2 Excluir del límite abstracto las fuentes desactivadas.
-- [ ] 6.3 Mantener el límite abstracto independiente de la interfaz de entrada concreta (API/UI) y de la autorización, todavía no definidas.
+- [x] 6.1 Definir `SourceRegistryPort.getEligibleSources()` con una instantánea inmutable de elementos `{ id, url }`.
+- [x] 6.2 Implementar el provider consultando únicamente fuentes activas y excluyendo siempre las desactivadas.
+- [x] 6.3 Registrar y exportar el token desde `SourcesModule` para que los módulos consumidores lo inyecten sin ciclo.
+- [x] 6.4 Integrar el provider real con HU-01 cuando la composición autorizada de esos módulos se implemente.
 
-## 7. Pruebas automatizadas
+## 7. Pruebas unitarias
 
-- [ ] 7.1 Probar la creación con URL sintácticamente válida y accesible.
-- [ ] 7.2 Probar el rechazo de creación por URL sintácticamente inválida.
-- [ ] 7.3 Probar el rechazo de creación por URL inaccesible.
-- [ ] 7.4 Probar el rechazo de creación y de actualización por URL duplicada.
-- [ ] 7.5 Probar la consulta de una fuente existente y el rechazo por identificador inexistente.
-- [ ] 7.6 Probar el listado de fuentes activas e inactivas junto con su estado.
-- [ ] 7.7 Probar la actualización exitosa de una fuente existente y el rechazo por identificador inexistente.
-- [ ] 7.8 Probar la revalidación de la URL al actualizarla, tanto el caso exitoso como el rechazo.
-- [ ] 7.9 Probar la desactivación de una fuente activa y el rechazo por identificador inexistente.
-- [ ] 7.10 Probar la reactivación de una fuente desactivada.
-- [ ] 7.11 Probar que las noticias ya almacenadas asociadas a una fuente permanecen sin cambios tras desactivarla.
-- [ ] 7.12 Probar que el límite abstracto de fuentes activas excluye las fuentes desactivadas.
-- [ ] 7.13 Ejecutar la suite de pruebas y las verificaciones estáticas del proyecto, y corregir únicamente defectos dentro del alcance de HU-15.
+- [x] 7.1 Probar normalización, protocolos admitidos, rechazo de credenciales embebidas y conservación de path/query.
+- [x] 7.2 Probar sintaxis inválida, respuesta HTTP no satisfactoria y timeout.
+- [x] 7.3 Probar creación exitosa y rechazos por URL inválida, inaccesible o duplicada.
+- [x] 7.4 Probar consulta, listado completo, filtros por ambos estados y rechazo de un filtro inválido.
+- [x] 7.5 Probar PUT/PATCH y todas las validaciones al cambiar URL —sintaxis, esquema, credenciales, accesibilidad y timeout—, incluida la conservación del estado ante rechazo.
+- [x] 7.6 Probar por separado DELETE sobre fuente activa (desactiva y 204), ya desactivada (sin cambio y 204) e inexistente (404), además de la reactivación.
+- [x] 7.7 Probar que el provider devuelve solo `id` y `url` de fuentes activas en una instantánea.
+- [x] 7.8 Probar el mapeo de errores y códigos HTTP del controller.
+- [x] 7.9 Probar determinísticamente URL pública, `localhost`, IPv4 loopback/privada/link-local/shared/reservada, IPv6 loopback/ULA/link-local/mapped/especial y una URL pública con puerto explícito válido, sin depender de Internet real.
+- [x] 7.10 Probar resolución DNS pública, privada, mixta, vacía y fallida, verificando el rechazo completo cuando una dirección sea prohibida.
+- [x] 7.11 Demostrar una única resolución por salto y que el `lookup` fijado solo entrega la IP elegida del snapshot validado; verificar además hostname/Host/SNI, `proxy: false`, ausencia de keep-alive y destrucción del Agent.
+- [x] 7.12 Probar redirects público a público y público a privado, `Location` relativa o ausente, ciclo, tres redirects permitidos y rechazo del cuarto, revalidando cada destino.
+- [x] 7.13 Probar el deadline total compartido, credenciales, protocolo inválido, respuesta final `2xx`, respuesta no `2xx`, fallo de red y cierre temprano del body.
+- [x] 7.14 Probar que cualquier rechazo de URL o accesibilidad en POST/PUT/PATCH responde `400` y no crea ni modifica persistencia, conservando URL y estado previos en actualizaciones rechazadas.
+
+## 8. Integración PostgreSQL y E2E
+
+- [x] 8.1 Probar con PostgreSQL real la persistencia y la restricción única entre fuentes activas y desactivadas.
+- [x] 8.2 Probar con PostgreSQL real la FK obligatoria `News.sourceId -> RssSource.id`, la integridad referencial y `Restrict`/`NoAction` sin cascada.
+- [x] 8.3 Probar E2E POST y GET de colección/detalle, incluidos filtros válidos/inválidos y errores 400/404/409.
+- [x] 8.4 Probar E2E PUT, PATCH, reactivación y los tres resultados de DELETE: activa -> desactivada/204, ya desactivada -> sin cambio/204 e inexistente -> 404.
+- [x] 8.5 Probar E2E que desactivar una fuente conserva sus noticias y la excluye de capturas posteriores.
+- [x] 8.6 Probar la integración HU-15 -> HU-01 mediante el `SourceRegistryPort` real.
+- [x] 8.7 Verificar el documento OpenAPI, ejecutar suite, cobertura, build y comprobaciones estáticas del proyecto.
+
+## 9. Trazabilidad del alcance obligatorio pendiente
+
+- [ ] 9.1 Registrar explícitamente en el backlog, antes del cierre del proyecto, la gestión obligatoria de canales/medios y sus fuentes RSS, sin crear el Issue durante este ajuste OpenSpec.
+- [ ] 9.2 Mostrar en Sprint Review la separación entre el slice actual de fuentes RSS y la capacidad obligatoria pendiente de canales/medios.

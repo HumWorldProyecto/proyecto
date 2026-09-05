@@ -1,43 +1,58 @@
-## 1. Modelo de datos y catálogo de valores
+## 1. Catálogo, estado y modelo Prisma
 
-- [ ] 1.1 Definir el catálogo cerrado de valores de periodicidad admitidos: 15 min, 30 min, 1 h, 6 h, 12 h y 24 h.
-- [ ] 1.2 Definir el modelo de la configuración de periodicidad: un único valor global vigente, o el estado explícito "sin configurar".
-- [ ] 1.3 Implementar la validación de que un valor propuesto pertenece al catálogo admitido.
+- [x] 1.1 Implementar el tipo del catálogo cerrado `15 | 30 | 60 | 360 | 720 | 1440`.
+- [x] 1.2 Implementar la unión discriminada `configured(minutes) | unconfigured`.
+- [x] 1.3 Añadir el modelo singleton `CaptureConfig` con ID fijo, periodicidad nullable y `updatedAt`.
+- [x] 1.4 Crear la migración Prisma correspondiente sin introducir un valor funcional por defecto.
+- [x] 1.5 Verificar la migración desde una base PostgreSQL vacía sin depender de seed.
 
-## 2. Caso de uso de configuración
+## 2. Repositorio y casos de uso
 
-- [ ] 2.1 Implementar la configuración de la periodicidad con un valor del catálogo admitido, guardándolo como el valor vigente.
-- [ ] 2.2 Rechazar la configuración cuando el valor propuesto no pertenece al catálogo admitido, conservando el valor vigente previo.
-- [ ] 2.3 Aplicar el mismo caso de uso tanto a la primera configuración (desde el estado "sin configurar") como a un cambio posterior del valor vigente.
+- [x] 2.1 Definir el puerto de repositorio singleton sin exponer su identificador fijo a los casos de uso.
+- [x] 2.2 Implementar el adaptador Prisma que mapea fila ausente o valor nulo a `unconfigured`.
+- [x] 2.3 Implementar el `upsert` del único registro global y devolver su `updatedAt`.
+- [x] 2.4 Implementar la consulta del estado vigente.
+- [x] 2.5 Implementar la configuración/reemplazo con validación estricta contra el catálogo.
+- [x] 2.6 Garantizar que un valor inválido conserva el estado previo y no emite notificación.
+- [x] 2.7 Tratar un PUT con el valor ya vigente como no-op idempotente, sin escribir, cambiar `updatedAt`, notificar ni reprogramar.
 
-## 3. Caso de uso de consulta
+## 3. API REST y Swagger
 
-- [ ] 3.1 Implementar la consulta del valor de periodicidad vigente.
-- [ ] 3.2 Devolver explícitamente el estado "sin configurar" cuando ningún administrador ha configurado un valor todavía.
+- [x] 3.1 Crear DTOs de PUT y respuesta para `capturePeriodicityMinutes`, incluidos ejemplos OpenAPI.
+- [x] 3.2 Implementar `GET /api/v1/config` con número configurado o `null` y respuesta 200.
+- [x] 3.3 Implementar `PUT /api/v1/config` con respuesta 200 para valores admitidos.
+- [x] 3.4 Mapear valores nulos, de tipo incorrecto o fuera del catálogo a 400.
+- [x] 3.5 Documentar GET, PUT, cuerpos y respuestas mediante Swagger/OpenAPI.
+- [x] 3.6 Verificar que GET y PUT funcionan sin autenticación en Sprint 1.
 
-## 4. Recálculo del siguiente instante de ejecución
+## 4. Provider, notifier y scheduler
 
-- [ ] 4.1 Implementar el recálculo del siguiente instante de ejecución al configurar o cambiar la periodicidad, usando como referencia el momento en que se guarda el nuevo valor.
-- [ ] 4.2 Verificar que el recálculo no toma como referencia la última ejecución realizada, sino el momento del cambio.
+- [x] 4.1 Implementar `PeriodicityProviderPort.getCurrentState()` con estados configured/unconfigured.
+- [x] 4.2 Implementar `PeriodicityChangeNotifierPort.subscribe()` y el publisher interno asíncrono, incluida la función de desuscripción, sin dependencias nuevas.
+- [x] 4.3 Construir cada notificación con el estado persistido y `effectiveAt` derivado de `updatedAt`.
+- [x] 4.4 Aplicar y verificar ambas ramas: mismo valor -> 200 sin escritura/notificación/reprogramación; valor nuevo -> validar, persistir, obtener `effectiveAt`, publicar/esperar y reemplazar solo el job futuro.
+- [x] 4.5 Registrar tokens y exports en `CaptureConfigModule` sin importar el módulo de captura y sin usar `forwardRef`.
+- [x] 4.6 Integrar en HU-01 la suscripción y lectura inicial del estado durante el arranque.
+- [x] 4.7 Cancelar/reemplazar solo el job futuro y calcular el siguiente instante desde `effectiveAt`.
+- [x] 4.8 Liberar la suscripción al destruir el módulo y mantener intacta cualquier captura en curso.
 
-## 5. Límite abstracto para HU-01
+## 5. Pruebas unitarias
 
-- [ ] 5.1 Definir el límite abstracto de solo lectura que entrega el valor de periodicidad vigente (incluido el estado "sin configurar") para HU-01.
-- [ ] 5.2 Mantener el límite abstracto independiente de la interfaz de entrada concreta (API/UI) y de la autorización, todavía no definidas.
-- [ ] 5.3 Mantener el límite abstracto independiente del mecanismo de scheduling concreto de HU-01, que sigue siendo una decisión pendiente de esa historia.
+- [x] 5.1 Probar todos los valores admitidos y el rechazo de valores fuera del catálogo o de tipo inválido.
+- [x] 5.2 Probar que el rechazo conserva la configuración anterior y no notifica.
+- [x] 5.3 Probar el mapeo de fila ausente y valor nulo a `unconfigured`.
+- [x] 5.4 Probar primera configuración y cambios posteriores sobre el mismo singleton.
+- [x] 5.5 Probar estados configured/unconfigured del provider.
+- [x] 5.6 Probar suscripción, notificación posterior al commit, `effectiveAt` y desuscripción.
+- [x] 5.7 Probar DTOs, respuestas JSON y códigos 200/400 del controller.
+- [x] 5.8 Probar que repetir el valor vigente devuelve 200 sin escribir, modificar `updatedAt`, notificar ni cancelar/reemplazar/reprogramar el job futuro.
 
-## 6. Pruebas automatizadas
+## 6. Integración PostgreSQL y E2E
 
-- [ ] 6.1 Probar la configuración exitosa con cada uno de los valores del catálogo admitido.
-- [ ] 6.2 Probar el rechazo de la configuración con un valor fuera del catálogo, verificando que el valor vigente previo no cambia.
-- [ ] 6.3 Probar que un único valor de periodicidad aplica a todas las fuentes RSS registradas.
-- [ ] 6.4 Probar la consulta del valor vigente cuando existe una configuración previa.
-- [ ] 6.5 Probar la consulta del estado "sin configurar" cuando no existe ninguna configuración previa.
-- [ ] 6.6 Probar el recálculo inmediato del siguiente instante de ejecución al cambiar la periodicidad, tomando como referencia el momento del cambio.
-- [ ] 6.7 Probar el cálculo del primer siguiente instante de ejecución al configurar la periodicidad por primera vez.
-- [ ] 6.8 Probar que el límite abstracto entrega el estado "sin configurar" cuando corresponde, sin confundirlo con un valor del catálogo.
-- [ ] 6.9 Ejecutar la suite de pruebas y las verificaciones estáticas del proyecto, y corregir únicamente defectos dentro del alcance de HU-18.
-
-## 7. Seguimiento fuera de este cambio
-
-- [ ] 7.1 Registrar como pendiente, fuera de este cambio, la actualización del spec pendiente de `captura-automatica-rss` para que contemple el escenario "sin periodicidad configurada" (ver `proposal.md` y `design.md`).
+- [x] 6.1 Probar con PostgreSQL real que siempre se actualiza el único registro lógico.
+- [x] 6.2 Probar con PostgreSQL real el estado inicial sin fila y la lectura después de un PUT.
+- [x] 6.3 Probar E2E GET configurado y sin configurar con las representaciones JSON aprobadas.
+- [x] 6.4 Probar E2E PUT con valor nuevo, valor idéntico como no-op y valor inválido, incluida la conservación del estado anterior cuando corresponda.
+- [x] 6.5 Probar la integración HU-18 -> HU-01 desde el cambio persistido hasta la reprogramación del job futuro.
+- [x] 6.6 Probar que una captura en curso no se interrumpe y que la integración respeta —sin redefinir— la política de HU-01: una activación solapada se omite, no corre concurrentemente y no se encola.
+- [x] 6.7 Verificar el documento OpenAPI, ejecutar suite, cobertura, build y comprobaciones estáticas del proyecto.
