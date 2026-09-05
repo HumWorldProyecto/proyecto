@@ -17,17 +17,23 @@ Este repositorio no conserva actualmente el guion de P1, por lo que no se recons
 
 ## P2 — Agentes IA
 
-Hecho registrado para el proyecto:
+Se configuró un entorno de apoyo con IA compuesto por:
 
-- Proyecto de ChatGPT **«Product Owner y Arquitecto Equipo 5»**, utilizado como apoyo para backlog, historias, decisiones de arquitectura, ADR, OpenSpec y planificación.
+- Gem de Gemini **«Mentor HumWorld - Equipo 5»**;
+- proyecto ChatGPT **«Product Owner y Arquitecto Equipo 5»**;
+- NotebookLM colaborativo del proyecto.
 
-Pendiente de confirmación o evidencia del equipo:
+Las herramientas fueron compartidas con el equipo.
 
-- Gem **«Mentor HumWorld - Equipo 5»**.
-- NotebookLM colaborativo.
-- Evidencia de compartición de estas herramientas con todos los integrantes.
+El proyecto ChatGPT ha sido utilizado como apoyo para:
 
-Estos tres puntos no se presentan como realizados mientras no exista evidencia.
+- backlog;
+- refinamiento de historias;
+- planificación;
+- decisiones de arquitectura;
+- ADR;
+- OpenSpec;
+- revisión técnica.
 
 ## P3 — Planificación
 
