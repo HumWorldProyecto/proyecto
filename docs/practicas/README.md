@@ -45,7 +45,12 @@ La planificación documenta:
 - Sprint Goals;
 - fecha de verificación formal: **02-11-2026**;
 - Definition of Done formalizada en esta rama documental;
-- Planning Poker de Sprint 1 pendiente de una sesión real del equipo.
+- Planning Poker de Sprint 1 completado con escala Fibonacci;
+- **31 Story Points** totales para Sprint 1;
+- HU-15: 8 SP;
+- HU-18: 5 SP;
+- HU-01: 13 SP;
+- HU-04: 5 SP.
 
 La evidencia consolidada está en [docs/planificacion](../planificacion/).
 
