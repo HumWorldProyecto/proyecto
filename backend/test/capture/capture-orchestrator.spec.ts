@@ -1,9 +1,11 @@
 import { CaptureOrchestratorService } from '../../src/capture/services/capture-orchestrator.service';
-import { SourceRegistryPort } from '../../src/capture/ports/source-registry.port';
+import {
+  EligibleSource,
+  SourceRegistryPort,
+} from '../../src/sources/ports/source-registry.port';
 import { RssFetcherPort } from '../../src/capture/ports/rss-fetcher.port';
 import { RssParserPort } from '../../src/capture/ports/rss-parser.port';
 import { CaptureOutputPort } from '../../src/capture/ports/capture-output.port';
-import { RssSource } from '../../src/capture/types/rss-source';
 import { RssItem } from '../../src/capture/types/rss-item';
 import { RssFetchError } from '../../src/capture/errors/rss-fetch.error';
 import { RssParseError } from '../../src/capture/errors/rss-parse.error';
@@ -24,11 +26,11 @@ function buildOrchestrator(overrides: {
 
 describe('CaptureOrchestratorService', () => {
   it('intenta la captura de cada fuente registrada en la instantánea y excluye direcciones no registradas', async () => {
-    const sources: RssSource[] = [
+    const sources: EligibleSource[] = [
       { id: 'a', url: 'https://a.example.com/feed.xml' },
       { id: 'b', url: 'https://b.example.com/feed.xml' },
     ];
-    const sourceRegistry: SourceRegistryPort = { getRegisteredSources: jest.fn().mockResolvedValue(sources) };
+    const sourceRegistry: SourceRegistryPort = { getEligibleSources: jest.fn().mockResolvedValue(sources) };
     const fetcher: RssFetcherPort = { fetchRaw: jest.fn().mockResolvedValue('<rss><channel></channel></rss>') };
     const parser: RssParserPort = { parse: jest.fn().mockReturnValue([]) };
     const output: CaptureOutputPort = { emitItems: jest.fn().mockResolvedValue(undefined) };
@@ -43,16 +45,16 @@ describe('CaptureOrchestratorService', () => {
   });
 
   it('no altera su instantánea con cambios de HU-15 durante la ejecución; los refleja en una ejecución posterior', async () => {
-    const firstSnapshot: RssSource[] = [{ id: 'a', url: 'https://a.example.com/feed.xml' }];
-    const secondSnapshot: RssSource[] = [
+    const firstSnapshot: EligibleSource[] = [{ id: 'a', url: 'https://a.example.com/feed.xml' }];
+    const secondSnapshot: EligibleSource[] = [
       { id: 'a', url: 'https://a.example.com/feed.xml' },
       { id: 'b', url: 'https://b.example.com/feed.xml' },
     ];
-    const getRegisteredSources = jest
+    const getEligibleSources = jest
       .fn()
       .mockResolvedValueOnce(firstSnapshot)
       .mockResolvedValueOnce(secondSnapshot);
-    const sourceRegistry: SourceRegistryPort = { getRegisteredSources };
+    const sourceRegistry: SourceRegistryPort = { getEligibleSources };
 
     const fetchRaw = jest.fn().mockImplementation(async () => {
       // Simula que HU-15 registra una nueva fuente mientras la ejecución está en curso.
@@ -76,11 +78,11 @@ describe('CaptureOrchestratorService', () => {
   });
 
   it('recorre las fuentes de la instantánea de forma secuencial', async () => {
-    const sources: RssSource[] = [
+    const sources: EligibleSource[] = [
       { id: 'a', url: 'https://a.example.com/feed.xml' },
       { id: 'b', url: 'https://b.example.com/feed.xml' },
     ];
-    const sourceRegistry: SourceRegistryPort = { getRegisteredSources: jest.fn().mockResolvedValue(sources) };
+    const sourceRegistry: SourceRegistryPort = { getEligibleSources: jest.fn().mockResolvedValue(sources) };
 
     const events: string[] = [];
     const fetchRaw = jest.fn().mockImplementation(async (url: string) => {
@@ -105,8 +107,8 @@ describe('CaptureOrchestratorService', () => {
   });
 
   it('interpreta un RSS válido y produce cero o más ítems para el límite de salida', async () => {
-    const source: RssSource = { id: 'a', url: 'https://a.example.com/feed.xml' };
-    const sourceRegistry: SourceRegistryPort = { getRegisteredSources: jest.fn().mockResolvedValue([source]) };
+    const source: EligibleSource = { id: 'a', url: 'https://a.example.com/feed.xml' };
+    const sourceRegistry: SourceRegistryPort = { getEligibleSources: jest.fn().mockResolvedValue([source]) };
     const fetcher: RssFetcherPort = { fetchRaw: jest.fn().mockResolvedValue('<rss><channel></channel></rss>') };
     const parsedItems: RssItem[] = [{ sourceId: '', title: 'Noticia', link: 'https://a.example.com/1' }];
     const parser: RssParserPort = { parse: jest.fn().mockReturnValue(parsedItems) };
@@ -121,8 +123,8 @@ describe('CaptureOrchestratorService', () => {
   });
 
   it('no produce ítems para el límite de salida cuando el contenido no es RSS (Atom/HTML/inválido)', async () => {
-    const source: RssSource = { id: 'a', url: 'https://a.example.com/feed.xml' };
-    const sourceRegistry: SourceRegistryPort = { getRegisteredSources: jest.fn().mockResolvedValue([source]) };
+    const source: EligibleSource = { id: 'a', url: 'https://a.example.com/feed.xml' };
+    const sourceRegistry: SourceRegistryPort = { getEligibleSources: jest.fn().mockResolvedValue([source]) };
     const fetcher: RssFetcherPort = { fetchRaw: jest.fn().mockResolvedValue('<html></html>') };
     const parser: RssParserPort = {
       parse: jest.fn().mockImplementation(() => {
@@ -138,10 +140,10 @@ describe('CaptureOrchestratorService', () => {
   });
 
   it('aísla el fallo de una fuente (timeout) y continúa procesando una fuente válida posterior', async () => {
-    const failingSource: RssSource = { id: 'a', url: 'https://a.example.com/feed.xml' };
-    const workingSource: RssSource = { id: 'b', url: 'https://b.example.com/feed.xml' };
+    const failingSource: EligibleSource = { id: 'a', url: 'https://a.example.com/feed.xml' };
+    const workingSource: EligibleSource = { id: 'b', url: 'https://b.example.com/feed.xml' };
     const sourceRegistry: SourceRegistryPort = {
-      getRegisteredSources: jest.fn().mockResolvedValue([failingSource, workingSource]),
+      getEligibleSources: jest.fn().mockResolvedValue([failingSource, workingSource]),
     };
     const fetchRaw = jest
       .fn()
@@ -161,8 +163,8 @@ describe('CaptureOrchestratorService', () => {
   });
 
   it('no realiza solicitudes a las páginas enlazadas por los ítems RSS', async () => {
-    const source: RssSource = { id: 'a', url: 'https://a.example.com/feed.xml' };
-    const sourceRegistry: SourceRegistryPort = { getRegisteredSources: jest.fn().mockResolvedValue([source]) };
+    const source: EligibleSource = { id: 'a', url: 'https://a.example.com/feed.xml' };
+    const sourceRegistry: SourceRegistryPort = { getEligibleSources: jest.fn().mockResolvedValue([source]) };
     const fetchRaw = jest.fn().mockResolvedValue('<rss><channel></channel></rss>');
     const fetcher: RssFetcherPort = { fetchRaw };
     const parsedItems: RssItem[] = [
@@ -179,7 +181,7 @@ describe('CaptureOrchestratorService', () => {
   });
 
   it('no realiza solicitudes externas ni produce ítems cuando no existen fuentes registradas', async () => {
-    const sourceRegistry: SourceRegistryPort = { getRegisteredSources: jest.fn().mockResolvedValue([]) };
+    const sourceRegistry: SourceRegistryPort = { getEligibleSources: jest.fn().mockResolvedValue([]) };
     const fetcher: RssFetcherPort = { fetchRaw: jest.fn() };
     const parser: RssParserPort = { parse: jest.fn() };
     const output: CaptureOutputPort = { emitItems: jest.fn() };
