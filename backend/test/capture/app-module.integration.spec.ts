@@ -11,6 +11,10 @@ import { CaptureScheduler } from '../../src/capture/jobs/capture-scheduler';
 import { CAPTURE_OUTPUT_PORT } from '../../src/capture/ports/capture-output.port';
 import { RSS_FETCHER_PORT } from '../../src/capture/ports/rss-fetcher.port';
 import { RSS_PARSER_PORT } from '../../src/capture/ports/rss-parser.port';
+import { ManualSourceCaptureController } from '../../src/capture/controllers/manual-source-capture.controller';
+import { ManualSourceCaptureService } from '../../src/capture/services/manual-source-capture.service';
+import { SourceCaptureGuard } from '../../src/capture/services/source-capture-guard';
+import { SourceCaptureService } from '../../src/capture/services/source-capture.service';
 import { NewsCaptureOutputAdapter } from '../../src/news/integrations/news-capture-output.adapter';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { PrismaSourceRegistry } from '../../src/sources/integrations/prisma-source-registry';
@@ -44,6 +48,14 @@ describe('AppModule productivo (integración PostgreSQL real)', () => {
     expect(moduleRef.get(CAPTURE_OUTPUT_PORT)).toBeInstanceOf(NewsCaptureOutputAdapter);
     expect(moduleRef.get(RSS_FETCHER_PORT)).toBeInstanceOf(HttpRssFetcher);
     expect(moduleRef.get(RSS_PARSER_PORT)).toBeInstanceOf(RssOnlyParser);
+    expect(moduleRef.get(SourceCaptureGuard)).toBeInstanceOf(SourceCaptureGuard);
+    expect(moduleRef.get(SourceCaptureService)).toBeInstanceOf(SourceCaptureService);
+    expect(moduleRef.get(ManualSourceCaptureService)).toBeInstanceOf(
+      ManualSourceCaptureService,
+    );
+    expect(moduleRef.get(ManualSourceCaptureController)).toBeInstanceOf(
+      ManualSourceCaptureController,
+    );
     expect(moduleRef.get(CaptureScheduler)).toBeInstanceOf(CaptureScheduler);
   });
 });

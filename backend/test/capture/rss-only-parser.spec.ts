@@ -64,9 +64,9 @@ describe('RssOnlyParser', () => {
   });
 
   it('rechaza RSS malformado aunque la raíz sea rss', async () => {
-    await expect(parser.parse('<rss><channel><item></rss>')).rejects.toBeInstanceOf(
-      RssParseError,
-    );
+    await expect(
+      parser.parse('<rss><channel><item></rss>').catch((error) => error),
+    ).resolves.toMatchObject({ code: 'parse/invalid-rss', cause: expect.any(Error) });
   });
 
   it('no busca una etiqueta rss arbitraria dentro del documento', () => {

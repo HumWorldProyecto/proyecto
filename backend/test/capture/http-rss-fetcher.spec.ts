@@ -77,18 +77,19 @@ describe('HttpRssFetcher', () => {
   it('rechaza un status final no 2xx y destruye el Agent', async () => {
     httpGet.mockReturnValue(response(503, 'unavailable'));
 
-    await expect(fetcher.fetchRaw('https://example.com/feed')).rejects.toBeInstanceOf(
-      RssFetchError,
-    );
+    await expect(
+      fetcher.fetchRaw('https://example.com/feed').catch((error) => error),
+    ).resolves.toMatchObject({ code: 'fetch/upstream' });
     expect(agentDestroys[0]).toHaveBeenCalledTimes(1);
   });
 
   it('traduce un fallo de red y destruye el Agent', async () => {
-    httpGet.mockReturnValue(throwError(() => new Error('ECONNRESET interno')));
+    const cause = new Error('ECONNRESET interno');
+    httpGet.mockReturnValue(throwError(() => cause));
 
-    await expect(fetcher.fetchRaw('https://example.com/feed')).rejects.toBeInstanceOf(
-      RssFetchError,
-    );
+    await expect(
+      fetcher.fetchRaw('https://example.com/feed').catch((error) => error),
+    ).resolves.toMatchObject({ code: 'fetch/upstream', cause });
     expect(agentDestroys[0]).toHaveBeenCalledTimes(1);
   });
 
@@ -97,9 +98,9 @@ describe('HttpRssFetcher', () => {
     async (code) => {
       httpGet.mockReturnValue(throwError(() => new AxiosError('timeout', code)));
 
-      await expect(fetcher.fetchRaw('https://example.com/feed')).rejects.toThrow(
-        'expiró',
-      );
+      await expect(
+        fetcher.fetchRaw('https://example.com/feed').catch((error) => error),
+      ).resolves.toMatchObject({ code: 'timeout' });
       expect(agentDestroys[0]).toHaveBeenCalledTimes(1);
     },
   );

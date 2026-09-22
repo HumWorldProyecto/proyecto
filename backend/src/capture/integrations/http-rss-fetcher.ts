@@ -39,7 +39,7 @@ export class HttpRssFetcher implements RssFetcherPort {
       if (error instanceof RssFetchError) {
         throw error;
       }
-      throw new RssFetchError('No se pudo obtener la fuente RSS', error);
+      throw new RssFetchError('fetch/upstream', 'No se pudo obtener la fuente RSS', error);
     } finally {
       deadline.dispose();
     }
@@ -56,7 +56,10 @@ export class HttpRssFetcher implements RssFetcherPort {
     while (true) {
       const currentKey = redirectVisitKey(currentUrl);
       if (visited.has(currentKey)) {
-        throw new RssFetchError('La fuente RSS contiene un ciclo de redirección');
+        throw new RssFetchError(
+          'fetch/upstream',
+          'La fuente RSS contiene un ciclo de redirección',
+        );
       }
       visited.add(currentKey);
 
@@ -94,22 +97,34 @@ export class HttpRssFetcher implements RssFetcherPort {
 
       if (status >= 200 && status < 300) {
         if (typeof body !== 'string') {
-          throw new RssFetchError('La fuente RSS no devolvió contenido de texto');
+          throw new RssFetchError(
+            'fetch/upstream',
+            'La fuente RSS no devolvió contenido de texto',
+          );
         }
         return body;
       }
 
       if (!SAFE_HTTP_REDIRECT_STATUSES.has(status)) {
-        throw new RssFetchError('La fuente RSS no respondió con un estado HTTP satisfactorio');
+        throw new RssFetchError(
+          'fetch/upstream',
+          'La fuente RSS no respondió con un estado HTTP satisfactorio',
+        );
       }
 
       if (redirectsFollowed >= MAX_SAFE_HTTP_REDIRECTS) {
-        throw new RssFetchError('La fuente RSS excedió el máximo de redirecciones');
+        throw new RssFetchError(
+          'fetch/upstream',
+          'La fuente RSS excedió el máximo de redirecciones',
+        );
       }
 
       const location = getRedirectLocation(headers);
       if (!location) {
-        throw new RssFetchError('La redirección RSS no contiene un destino válido');
+        throw new RssFetchError(
+          'fetch/upstream',
+          'La redirección RSS no contiene un destino válido',
+        );
       }
 
       currentUrl = this.normalizeRedirect(location, currentUrl);
@@ -121,7 +136,7 @@ export class HttpRssFetcher implements RssFetcherPort {
     try {
       return this.normalizer.normalize(new URL(location, currentUrl).toString());
     } catch (error) {
-      throw new RssFetchError('La redirección RSS no es válida', error);
+      throw new RssFetchError('fetch/upstream', 'La redirección RSS no es válida', error);
     }
   }
 
@@ -136,13 +151,17 @@ export class HttpRssFetcher implements RssFetcherPort {
       (error instanceof AxiosError &&
         ['ECONNABORTED', 'ETIMEDOUT', 'ERR_CANCELED'].includes(error.code ?? ''))
     ) {
-      return new RssFetchError('La descarga de la fuente RSS expiró', error);
+      return new RssFetchError('timeout', 'La descarga de la fuente RSS expiró', error);
     }
 
     if (error instanceof SourceAccessibilityError) {
-      return new RssFetchError('El destino de la fuente RSS no está permitido o disponible', error);
+      return new RssFetchError(
+        'fetch/upstream',
+        'El destino de la fuente RSS no está permitido o disponible',
+        error,
+      );
     }
 
-    return new RssFetchError('No se pudo descargar la fuente RSS', error);
+    return new RssFetchError('fetch/upstream', 'No se pudo descargar la fuente RSS', error);
   }
 }

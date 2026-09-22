@@ -1,5 +1,11 @@
+export type RssFetchErrorCode = 'timeout' | 'fetch/upstream';
+
 export class RssFetchError extends Error {
-  constructor(message: string, readonly cause?: unknown) {
+  constructor(
+    readonly code: RssFetchErrorCode,
+    message: string,
+    readonly cause?: unknown,
+  ) {
     super(message);
     this.name = 'RssFetchError';
   }

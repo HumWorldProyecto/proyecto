@@ -3,6 +3,8 @@ import { CaptureOutputPort } from '../../src/capture/ports/capture-output.port';
 import { RssFetcherPort } from '../../src/capture/ports/rss-fetcher.port';
 import { RssParserPort } from '../../src/capture/ports/rss-parser.port';
 import { CaptureOrchestratorService } from '../../src/capture/services/capture-orchestrator.service';
+import { SourceCaptureGuard } from '../../src/capture/services/source-capture-guard';
+import { SourceCaptureService } from '../../src/capture/services/source-capture.service';
 import { PrismaSourceRegistry } from '../../src/sources/integrations/prisma-source-registry';
 import { PrismaSourceRepository } from '../../src/sources/repositories/prisma-source.repository';
 
@@ -42,7 +44,13 @@ describe('HU-15 -> HU-01 (integración PostgreSQL real)', () => {
     const fetcher: RssFetcherPort = { fetchRaw };
     const parser: RssParserPort = { parse: jest.fn().mockResolvedValue([]) };
     const output: CaptureOutputPort = { emitItems: jest.fn() };
-    const orchestrator = new CaptureOrchestratorService(registry, fetcher, parser, output);
+    const sourceCapture = new SourceCaptureService(
+      fetcher,
+      parser,
+      output,
+      new SourceCaptureGuard(),
+    );
+    const orchestrator = new CaptureOrchestratorService(registry, sourceCapture);
 
     await orchestrator.runCapture();
 
