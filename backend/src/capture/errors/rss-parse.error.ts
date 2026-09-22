@@ -1,5 +1,7 @@
 export class RssParseError extends Error {
-  constructor(message: string) {
+  readonly code = 'parse/invalid-rss' as const;
+
+  constructor(message: string, readonly cause?: unknown) {
     super(message);
     this.name = 'RssParseError';
   }

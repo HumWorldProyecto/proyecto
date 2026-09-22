@@ -82,7 +82,7 @@ export class RssOnlyParser implements RssParserPort {
       if (error instanceof RssParseError) {
         throw error;
       }
-      throw new RssParseError('El contenido no es un RSS válido');
+      throw new RssParseError('El contenido no es un RSS válido', error);
     }
   }
 }
