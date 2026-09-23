@@ -1,85 +1,84 @@
-# ADR-002 — Stack Node.js, NestJS, Prisma y Jest
+# ADR-002: Adoptar Node.js, TypeScript, NestJS, PostgreSQL, Prisma y Jest
 
-**Estado:** Aceptado
+- **Estado:** Aceptado
+- **Fecha:** 2026-09-02; formalización P9: 2026-09-23
+- **Responsables:** Equipo 5
+- **Relacionado con:** [ADR-004](ADR-004-monolito-modular-y-separacion-de-responsabilidades.md), [ADR-005](ADR-005-estrategia-combinada-de-pruebas.md), [ADR-006](ADR-006-reevaluacion-nestjs-10-vs-11.md), P6 y P9
 
-**Fecha:** 2026-09-02
+## Problema, elemento de arquitectura sobre el que decidir
 
-## Contexto
+HumWorld necesita un baseline tecnológico único para implementar, probar y operar el backend sin mantener contextos incompatibles. Al tomar la decisión coexistían una propuesta provisional basada en Python y una implementación del equipo basada en Node.js. También debía decidirse si introducir una migración mayor del framework antes del cierre de Sprint 1 o estabilizar primero el incremento existente.
 
-HumWorld necesita un baseline tecnológico único, coherente y reproducible para orientar su arquitectura, documentación, especificaciones e implementación.
+La selección debía preservar la arquitectura modular, la API REST, la persistencia relacional, las migraciones versionadas y las pruebas automatizadas. Estas restricciones son independientes de una tecnología concreta.
 
-El contexto inicial conservaba como propuesta provisional un backend basado en Python, FastAPI, Uvicorn, SQLAlchemy, Alembic y pytest. El Equipo 5 ha sustituido expresamente esa propuesta por un stack basado en Node.js, TypeScript y NestJS.
+## Opciones consideradas
 
-La auditoría de versiones previa al cierre de Sprint 1 confirmó Node.js 24 LTS como runtime oficial y verificó que los paquetes principales de NestJS están técnicamente alineados en la línea 10.4, con 10.4.22 como versión objetivo actual. El equipo quiere conservar esa línea durante el cierre del Sprint para no introducir una migración major inmediatamente antes de la Sprint Review.
+### A. Mantener Python, FastAPI, SQLAlchemy, Alembic y pytest
 
-Esta decisión tecnológica no constituye un requisito funcional del producto. Las restricciones obligatorias, como la arquitectura modular, la separación entre presentación, negocio y datos, la API `/api/v1`, Docker, GitHub Actions y OpenSpec, mantienen su origen independiente.
+Conservar el baseline provisional original y realinear la implementación y documentación con ese stack.
+
+### B. Adoptar Node.js, TypeScript, NestJS 10, PostgreSQL, Prisma y Jest
+
+Reconocer como baseline el stack ya ratificado e implementado por el equipo, manteniendo temporalmente NestJS 10 durante el cierre de Sprint 1.
+
+### C. Adoptar el stack Node.js y migrar inmediatamente a NestJS 11
+
+Mantener Node.js, TypeScript, PostgreSQL, Prisma y Jest, pero asumir antes del cierre del Sprint la migración conjunta de los paquetes principales de NestJS.
+
+## Matriz de decisión
+
+La matriz utiliza una valoración cualitativa del equipo. **Alta**, **Media** y **Baja** expresan adecuación relativa al criterio, no mediciones cuantitativas.
+
+| Criterio | Importancia | A. Python | B. Node + NestJS 10 | C. Node + NestJS 11 |
+| --- | --- | --- | --- | --- |
+| Alineación con la implementación existente | Alta | Baja | Alta | Media |
+| Coherencia de documentación y herramientas | Alta | Baja | Alta | Media |
+| Estructura modular e inyección de dependencias | Alta | Media | Alta | Alta |
+| Coste y riesgo inmediato de migración | Alta | Baja | Alta | Baja |
+| Continuidad para cerrar Sprint 1 | Alta | Baja | Alta | Baja |
+| Seguridad y horizonte de soporte | Alta | Media | Baja | Alta |
+| Ecosistema para PostgreSQL y pruebas | Media | Alta | Alta | Alta |
 
 ## Decisión
 
-El Equipo 5 adopta el siguiente baseline tecnológico para Sprint 1:
+Adoptar Node.js 24 LTS, TypeScript 5 y NestJS 10.4 como baseline temporal del backend de Sprint 1; PostgreSQL 16 con Prisma ORM 6 y Prisma Migrate para persistencia; y Jest 29 como herramienta de pruebas del backend.
 
-- Backend: Node.js 24 LTS como runtime oficial, TypeScript 5 y NestJS 10.4 como baseline temporal, con NestJS 10.4.22 como versión técnica objetivo actual.
-- Persistencia: PostgreSQL 16, Prisma ORM 6 y Prisma Migrate.
-- Pruebas del backend: Jest 29.
-- Estilo de aplicación: monolito modular con separación entre API, lógica de negocio, integraciones y persistencia.
+La organización interna se documenta en [ADR-004](ADR-004-monolito-modular-y-separacion-de-responsabilidades.md). Los niveles y responsabilidades de prueba se documentan en [ADR-005](ADR-005-estrategia-combinada-de-pruebas.md).
 
-La integración continua se alineará posteriormente con Node.js 24.20.0. La modificación del workflow queda fuera del alcance de este paso documental.
+La decisión histórica aceptó temporalmente NestJS 10.4.22 aun cuando @nestjs/core estaba incluido en el aviso moderado [GHSA-36xv-jgw5-4q75](https://github.com/nestjs/nest/security/advisories/GHSA-36xv-jgw5-4q75). HumWorld no utilizaba SSE, por lo que el flujo afectado no formaba parte de Sprint 1, pero esta ausencia no eliminaba el riesgo de la dependencia.
 
-React, TypeScript y Vite se mantienen como el frontend previsto. Esta decisión no implica que el frontend ya esté implementado ni autoriza su implementación al margen de una especificación OpenSpec aprobada.
+## Por qué se elige frente a las demás
 
-El baseline anterior basado en Python, FastAPI, Uvicorn, SQLAlchemy, Alembic y pytest deja de formar parte del contexto tecnológico activo.
+La opción B permitió cerrar Sprint 1 con un único contexto tecnológico y sin reescribir la implementación ni introducir una migración mayor inmediatamente antes de la revisión. La opción A era técnicamente viable, pero contradecía el código y las decisiones ya ratificadas. La opción C mejoraba el horizonte de soporte, pero exigía una migración y una revalidación extensas en un momento de alto riesgo para el Sprint.
 
-Cualquier sustitución futura de estas tecnologías requiere análisis de impacto, aprobación humana, un nuevo ADR y sincronización de la documentación arquitectónica y del contexto de los agentes.
-
-## Riesgo conocido y aceptación temporal
-
-`@nestjs/core` 10.4.22 está incluido en el aviso moderado [GHSA-36xv-jgw5-4q75](https://github.com/nestjs/nest/security/advisories/GHSA-36xv-jgw5-4q75), relacionado con la neutralización insuficiente de ciertos campos en Server-Sent Events (SSE). El primer parche publicado para ese aviso pertenece a NestJS 11.1.18; no existe un parche equivalente en la línea 10.4.
-
-HumWorld no utiliza actualmente SSE. Por ello, el flujo afectado por el aviso no forma parte de la superficie funcional implementada en Sprint 1. Esta ausencia reduce el alcance actual del riesgo, pero no convierte NestJS 10.4.22 en un baseline seguro definitivo ni elimina la vulnerabilidad presente en la dependencia.
-
-El Equipo 5 acepta temporalmente este riesgo para cerrar Sprint 1 sin introducir una migración major justo antes de la Sprint Review. Esta aceptación está limitada al baseline temporal del Sprint.
-
-## Condición de reevaluación
-
-Después de Sprint 1, el equipo deberá reevaluar mediante un nuevo ADR la migración conjunta de los paquetes principales de NestJS a una línea soportada y parcheada.
-
-Una eventual migración deberá mantener alineados, como mínimo, `@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express` y `@nestjs/testing`. No se permite actualizar únicamente `@nestjs/core` dejando los demás paquetes principales en otro major.
-
-## Alternativas consideradas
-
-### Mantener el baseline provisional basado en Python
-
-Se descartó porque el Equipo 5 ratificó el stack Node.js y mantener ambos baselines produciría una contradicción entre arquitectura, instrucciones, especificaciones e implementación.
-
-### Mantener ambos stacks como opciones simultáneas
-
-Se descartó porque impediría determinar qué herramientas, convenciones y dependencias están autorizadas. HumWorld necesita un único baseline activo; las alternativas futuras deberán proponerse mediante el proceso formal de cambio arquitectónico.
-
-### Migrar inmediatamente el stack NestJS a otro major
-
-Se pospone hasta después de Sprint 1 para evitar introducir cambios de compatibilidad, regresiones y trabajo de revalidación inmediatamente antes de la Sprint Review. Esta postergación no rechaza la migración: establece una condición explícita de reevaluación y exige que el cambio futuro abarque conjuntamente los paquetes principales del framework.
-
-### Migrar únicamente `@nestjs/core`
-
-Se descarta porque dejaría los paquetes principales de NestJS en majors distintos, rompería la coherencia del stack y podría incumplir sus contratos de compatibilidad. Una migración futura deberá abordarlos conjuntamente.
+Esta elección fue temporal respecto de NestJS 10. ADR-002 no resuelve la reevaluación posterior: [ADR-006](ADR-006-reevaluacion-nestjs-10-vs-11.md) la registra como propuesta pendiente de revisión humana.
 
 ## Consecuencias
 
 ### Positivas
 
-- La documentación y la implementación pueden usar un contexto tecnológico único.
-- Node.js 24 LTS establece un runtime oficial común para desarrollo y futura integración continua.
-- NestJS proporciona una estructura modular y mecanismos explícitos de inyección de dependencias.
-- Prisma y Prisma Migrate unifican el acceso a PostgreSQL y la evolución versionada del esquema.
-- Jest constituye la herramienta común para las pruebas del backend.
-- TypeScript puede compartirse entre el backend y el frontend previsto.
+- Existe un solo stack activo para documentación, implementación y CI.
+- TypeScript y NestJS proporcionan módulos, contratos e inyección de dependencias.
+- Prisma y Prisma Migrate mantienen el acceso a PostgreSQL y la evolución versionada del esquema.
+- Jest integra las pruebas del backend con el mismo ecosistema.
+- Node.js 24 LTS queda establecido como runtime oficial.
 
-### Costes y limitaciones
+### Negativas y deuda aceptada
 
 - El equipo debe mantener el toolchain y las dependencias del ecosistema Node.js.
-- NestJS 10.4.22 conserva un aviso moderado conocido y solo se acepta como baseline temporal de Sprint 1.
-- Después de Sprint 1 debe reevaluarse mediante ADR una migración conjunta a una línea soportada y parcheada.
-- Los paquetes principales de NestJS deben conservar el mismo major durante cualquier actualización.
-- La documentación que todavía describa el baseline Python debe actualizarse.
-- React, TypeScript y Vite continúan siendo una previsión arquitectónica; este ADR no declara que exista un frontend implementado.
-- Este ADR no autoriza historias de usuario ni sustituye sus artefactos OpenSpec.
+- NestJS 10.4.22 conserva el riesgo conocido registrado en esta decisión.
+- La aceptación temporal generó la deuda explícita de reevaluar conjuntamente los paquetes principales después de Sprint 1.
+- No se permite actualizar solo @nestjs/core; una migración debe mantener alineados @nestjs/common, @nestjs/core, @nestjs/platform-express y @nestjs/testing.
+- React, Vite y las herramientas frontend siguen siendo previsiones; este ADR no declara un frontend implementado.
+
+## Trazabilidad y sincronización
+
+- Arquitectura: [docs/architecture.md](../architecture.md)
+- Evidencia P9: [docs/practicas/p9-adrs.md](../practicas/p9-adrs.md)
+- Contexto de agentes: [openspec/config.yaml](../../openspec/config.yaml)
+- OpenSpec relacionado: [captura automática](../../openspec/changes/captura-automatica-rss/design.md), [almacenamiento](../../openspec/changes/almacenamiento-noticias-metadatos/design.md), [periodicidad](../../openspec/changes/config-periodicidad/design.md), [fuentes](../../openspec/changes/gestion-crud-rss/design.md) y [actualización manual](../../openspec/changes/actualizacion-manual-rss/design.md)
+- Dependencias: [backend/package.json](../../backend/package.json)
+- Persistencia: [backend/prisma/schema.prisma](../../backend/prisma/schema.prisma)
+- Pruebas: [backend/jest.config.js](../../backend/jest.config.js)
+- Integración continua: [.github/workflows/ci.yml](../../.github/workflows/ci.yml)
+- Reevaluación posterior propuesta: [ADR-006](ADR-006-reevaluacion-nestjs-10-vs-11.md)
