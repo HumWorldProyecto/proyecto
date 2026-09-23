@@ -316,16 +316,8 @@ Codex, Copilot y otros agentes no pueden cambiar unilateralmente la arquitectura
 
 ## 20. Decisiones de arquitectura
 
-HumWorld mantiene un monolito modular con un único despliegue y límites entre API, servicios o casos de uso, repositorios, integraciones y jobs. El backend vigente utiliza Node.js, TypeScript y NestJS; persiste en PostgreSQL mediante Prisma; captura exclusivamente RSS; expone REST bajo /api/v1 con OpenAPI; y combina pruebas unitarias, integración PostgreSQL y E2E con una cobertura global mínima del 80 %.
+HumWorld ya está construido como un monolito modular y mantendremos esta arquitectura mientras responda al alcance del proyecto. Nos permite separar sources, capture, news y config sin agregar la complejidad operacional de un sistema distribuido. El backend mantiene separadas la API, los servicios, las integraciones y el acceso a datos.
 
-El razonamiento, las alternativas y las consecuencias se consultan en el [índice de ADR](adr/README.md):
+Seguimos trabajando con Node.js, TypeScript, NestJS, PostgreSQL y Prisma. La captura usa solo RSS y la estrategia de pruebas combina unitarias, integración con PostgreSQL y E2E.
 
-- [ADR-002](adr/ADR-002-stack-node-nest-prisma-jest.md): stack y persistencia.
-- [ADR-003](adr/ADR-003-captura-rss-y-scheduling.md): HTTP, parser RSS, scheduling y timeout central.
-- [ADR-004](adr/ADR-004-monolito-modular-y-separacion-de-responsabilidades.md): monolito modular y responsabilidades.
-- [ADR-005](adr/ADR-005-estrategia-combinada-de-pruebas.md): estrategia combinada de pruebas.
-- [ADR-006](adr/ADR-006-reevaluacion-nestjs-10-vs-11.md): propuesta pendiente de revisión humana sobre NestJS 10 y 11.
-
-RSS-only, la prohibición de scraping, Docker, GitHub Actions, OpenSpec, REST/OpenAPI y la cobertura mínima son restricciones del proyecto. Los detalles funcionales y técnicos específicos permanecen en el design.md aplicable.
-
-Todo cambio que contradiga un ADR aceptado debe detenerse para revisión humana. Si el equipo modifica una decisión arquitectónica aceptada, debe aprobar un ADR posterior y sincronizar este documento, OpenSpec, las instrucciones permanentes y los diseños afectados. Ningún agente puede cambiar el estado de un ADR ni resolver una alternativa propuesta sin esa revisión.
+Las decisiones principales y su razonamiento están en el [índice de ADR](adr/README.md). Los ADR aceptados deben respetarse. Si una decisión necesita cambiar, el Equipo 5 debe revisarla y registrar el cambio en un nuevo ADR. Un ADR propuesto, como ADR-006, no cambia el baseline hasta que el equipo elija una alternativa. Los detalles propios de cada historia permanecen en su design.md.
