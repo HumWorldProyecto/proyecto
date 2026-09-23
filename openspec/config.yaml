@@ -6,6 +6,7 @@ githubCopilot:
 context: |
   HumWorld es una aplicación web modular desarrollada mediante OpenSpec como metodología SDD.
   docs/architecture.md es la fuente de verdad de la arquitectura y debe leerse antes de propose, design o apply, junto con los artefactos vigentes del cambio.
+  Las decisiones arquitectónicas vigentes están indexadas en docs/adr/README.md. Consultar los ADR aplicables y respetar los Aceptados; un ADR Propuesto no autoriza a elegir una alternativa ni a cambiar su estado sin revisión humana.
 
   Distinguir siempre tres niveles: (1) restricciones obligatorias del proyecto, (2) baseline tecnológico ratificado por el Equipo 5 y (3) decisiones específicas que pertenecen al design.md de cada cambio.
   Una tecnología ratificada no es un requisito del negocio ni una imposición del enunciado. No cambiar tecnologías, dependencias principales ni decisiones arquitectónicas sin análisis de impacto, aprobación humana y ADR cuando corresponda.
@@ -25,6 +26,7 @@ rules:
     - Definir con claridad el objetivo y el alcance del cambio.
     - Identificar explícitamente lo que queda fuera de alcance.
     - Indicar el impacto arquitectónico y las capas o módulos previsiblemente afectados.
+    - Identificar los ADR afectados o declarar que no aplica ninguno.
     - No introducir tecnologías o dependencias nuevas sin análisis y aprobación humana.
   specs:
     - Expresar los escenarios con Given/When/Then.
@@ -33,15 +35,18 @@ rules:
     - No inventar requisitos ni ampliar silenciosamente una historia de usuario.
   design:
     - Leer docs/architecture.md antes de diseñar.
+    - Indicar los ADR aplicables y cómo se respetan.
     - Indicar las capas y los módulos afectados.
     - Distinguir decisiones aprobadas, provisionales y pendientes.
     - Identificar los archivos que se prevé modificar.
     - Explicar la estrategia y los niveles de pruebas aplicables.
     - Justificar cualquier desviación de la arquitectura y detenerse hasta obtener aprobación si existe contradicción.
+    - Proponer un ADR nuevo si el cambio modifica una decisión arquitectónica aceptada.
   tasks:
     - Dividir el trabajo en tareas pequeñas y verificables.
     - Derivar cada tarea de la especificación y el diseño aprobados.
     - Incluir las pruebas y verificaciones correspondientes.
+    - Incluir la sincronización de ADR, arquitectura e instrucciones cuando corresponda.
     - No incluir funcionalidad fuera de alcance.
     - Incluir una comprobación final de conformidad con la arquitectura.
 

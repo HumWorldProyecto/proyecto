@@ -15,20 +15,21 @@ HumWorld captura noticias exclusivamente mediante fuentes RSS y las almacena par
 
 ## Estado actual
 
-El incremento de Sprint 1 está integrado en `main` mediante el [PR #29](https://github.com/HumWorldProyecto/proyecto/pull/29), con CI post-merge verde.
+El incremento de Sprint 1 está integrado en `main` mediante el [PR #29](https://github.com/HumWorldProyecto/proyecto/pull/29), con CI post-merge verde. La actualización manual individual de HU-02 se integró posteriormente mediante el [PR #31](https://github.com/HumWorldProyecto/proyecto/pull/31).
 
 Capacidades implementadas actualmente:
 
 - Gestión CRUD y desactivación lógica/reactivación de fuentes RSS.
 - Configuración global de periodicidad.
 - Captura automática RSS.
+- Actualización manual individual mediante `POST /api/v1/sources/:id/capture`.
 - Almacenamiento y deduplicación de noticias.
 - Consulta de noticias mediante `GET /api/v1/news`.
 - Documentación Swagger/OpenAPI.
 - Persistencia PostgreSQL con Prisma.
 - Pruebas automáticas e integración continua.
 
-El análisis de sentimiento, los dashboards, el frontend, Channel/Media, el diccionario, el purgado y las demás capacidades futuras todavía no están implementados.
+La actualización manual múltiple de HU-03, el análisis de sentimiento, los dashboards, el frontend, Channel/Media, el diccionario, el purgado y las demás capacidades futuras todavía no están implementados.
 
 ## Stack actual
 

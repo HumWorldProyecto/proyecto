@@ -314,43 +314,18 @@ Cualquier cambio relevante del estilo arquitectónico, backend, frontend, sistem
 
 Codex, Copilot y otros agentes no pueden cambiar unilateralmente la arquitectura ni convertir una propuesta futura en una obligación sin pasar por este proceso.
 
-## 20. Decisiones ratificadas y puntos abiertos
+## 20. Decisiones de arquitectura
 
-El Equipo 5 ha revisado y **ratificado** las siguientes decisiones del baseline tecnológico (sección 4):
+HumWorld mantiene un monolito modular con un único despliegue y límites entre API, servicios o casos de uso, repositorios, integraciones y jobs. El backend vigente utiliza Node.js, TypeScript y NestJS; persiste en PostgreSQL mediante Prisma; captura exclusivamente RSS; expone REST bajo /api/v1 con OpenAPI; y combina pruebas unitarias, integración PostgreSQL y E2E con una cobertura global mínima del 80 %.
 
-- El monolito modular como estilo inicial, con exclusión de microservicios en esta etapa.
-- Node.js 24 LTS como runtime oficial, TypeScript 5 y NestJS 10.4 como baseline temporal para cerrar Sprint 1.
-- React, TypeScript y Vite para el frontend previsto, todavía no implementado.
-- PostgreSQL 16, Prisma ORM 6 y Prisma Migrate para persistencia y migraciones.
-- `@nestjs/axios` para HTTP y `rss-parser` para interpretación RSS.
-- `@nestjs/schedule` para scheduling.
-- Un timeout HTTP RSS centralizado y configurable, con 10 segundos como valor técnico por defecto.
-- Leaflet y Chart.js previstos para la visualización del frontend todavía no implementado.
-- Jest 29 para las pruebas del backend; Vitest y React Testing Library previstos para el frontend todavía no implementado.
-- Docker Compose para entorno local y SonarQube para calidad.
+El razonamiento, las alternativas y las consecuencias se consultan en el [índice de ADR](adr/README.md):
 
-Permanece **deliberadamente abierto**:
+- [ADR-002](adr/ADR-002-stack-node-nest-prisma-jest.md): stack y persistencia.
+- [ADR-003](adr/ADR-003-captura-rss-y-scheduling.md): HTTP, parser RSS, scheduling y timeout central.
+- [ADR-004](adr/ADR-004-monolito-modular-y-separacion-de-responsabilidades.md): monolito modular y responsabilidades.
+- [ADR-005](adr/ADR-005-estrategia-combinada-de-pruebas.md): estrategia combinada de pruebas.
+- [ADR-006](adr/ADR-006-reevaluacion-nestjs-10-vs-11.md): propuesta pendiente de revisión humana sobre NestJS 10 y 11.
 
-- El método definitivo de análisis de sentimiento.
+RSS-only, la prohibición de scraping, Docker, GitHub Actions, OpenSpec, REST/OpenAPI y la cobertura mínima son restricciones del proyecto. Los detalles funcionales y técnicos específicos permanecen en el design.md aplicable.
 
-Continúan perteneciendo al `design.md` de cada cambio y no quedan decididos por este documento:
-
-- Los reintentos y el backoff de captura.
-- La observabilidad avanzada.
-- La política detallada de solapamientos y concurrencia.
-- La clave, el mecanismo de override y la validación concreta de la configuración del timeout.
-
-Docker, GitHub Actions, RSS exclusivo, la prohibición de scraping, la API REST `/api/v1`, OpenAPI/Swagger, OpenSpec, las pruebas y la cobertura global mínima del 80 % son restricciones del proyecto, no decisiones del equipo, y por tanto no forman parte de este proceso de confirmación.
-
-Las decisiones de stack backend, persistencia, pruebas backend, frontend previsto y captura RSS ratificadas en este paso están registradas en ADR-002 y ADR-003 conforme al proceso de la sección 19.
-
-La aceptación temporal de NestJS 10.4 no elimina su riesgo conocido ni autoriza mezclar majors entre los paquetes principales de NestJS. La reevaluación posterior a Sprint 1 y una eventual migración conjunta deberán registrarse mediante un ADR nuevo.
-
-## 21. Referencias a ADR
-
-Los ADR se almacenan en `docs/adr/` y registran decisiones arquitectónicas relevantes junto con su contexto, alternativas, decisión, consecuencias y estado. Las decisiones de stack y captura RSS ratificadas en este paso están documentadas en:
-
-- [ADR-002 — Stack Node.js, NestJS, Prisma y Jest](adr/ADR-002-stack-node-nest-prisma-jest.md).
-- [ADR-003 — Captura RSS y scheduling](adr/ADR-003-captura-rss-y-scheduling.md).
-
-Cada ADR futuro deberá enlazarse desde esta sección o desde un índice dentro de `docs/adr/`. Si un ADR sustituye una decisión anterior, este documento y el contexto permanente de los agentes deberán actualizarse en el mismo cambio de gobierno arquitectónico.
+Todo cambio que contradiga un ADR aceptado debe detenerse para revisión humana. Si el equipo modifica una decisión arquitectónica aceptada, debe aprobar un ADR posterior y sincronizar este documento, OpenSpec, las instrucciones permanentes y los diseños afectados. Ningún agente puede cambiar el estado de un ADR ni resolver una alternativa propuesta sin esa revisión.
