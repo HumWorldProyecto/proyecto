@@ -1,14 +1,14 @@
 ## Context
 
-Véase `proposal.md` para la motivación. La arquitectura vigente es un monolito modular y en capas. El módulo `capture` ya dispone de los siguientes flujos reutilizables:
+Véase `proposal.md` para la motivación y `spec.md` para el contrato observable. La arquitectura vigente es un monolito modular y en capas. El módulo `capture` ya dispone de los siguientes flujos reutilizables:
 
 - HU-01 obtiene una instantánea de fuentes activas mediante `SourceRegistryPort` y `CaptureOrchestratorService` las procesa secuencialmente.
 - HU-02 expone la captura manual de una fuente. `ManualSourceCaptureService` resuelve `missing`, `inactive` o `eligible` mediante `SourceRegistryPort` y delega la captura elegible a `SourceCaptureService`.
 - `SourceCaptureService` es la unidad compartida de descarga, parsing y emisión. Usa `SourceCaptureGuard` por `sourceId` y libera el guard en `finally`.
-- HU-04 implementa `CaptureOutputPort` para persistir y deduplicar noticias por fuente; una recaptura no duplica registros.
-- Los errores tipados actuales distinguen timeout, upstream/red, RSS inválido, fuente inexistente, inactiva, ocupada e inesperado.
+- HU-04 implementa `CaptureOutputPort` para persistir y deduplicar noticias por fuente.
+- `SourceCaptureError` ya representa las categorías estables aprobadas para captura.
 
-Las restricciones aplicables son API REST bajo `/api/v1`, JSON, Swagger/OpenAPI, RSS sin scraping, separación controller-servicio-puerto-adaptador, cobertura global mínima de 80 % y ausencia de nuevas dependencias o cambios de persistencia sin aprobación. ADR-002 y ADR-003 continúan vigentes.
+Las restricciones aplicables son API REST bajo `/api/v1`, JSON, Swagger/OpenAPI, RSS sin scraping, separación controller-servicio-puerto-adaptador, cobertura global mínima de 80 % y ausencia de nuevas dependencias o cambios de persistencia. ADR-002 y ADR-003 continúan vigentes.
 
 ## Goals / Non-Goals
 
@@ -16,145 +16,160 @@ Las restricciones aplicables son API REST bajo `/api/v1`, JSON, Swagger/OpenAPI,
 
 - Componer una operación manual múltiple sobre el caso de uso unitario existente.
 - Mantener un único camino para seleccionar, descargar, interpretar y persistir cada fuente.
-- Conservar el aislamiento por `sourceId` frente a solapamientos con HU-01, HU-02 u otra solicitud múltiple.
-- Hacer verificable el resultado de cada fuente una vez aprobado el contrato A-D.
-- Identificar con precisión los archivos y niveles de prueba previsibles.
+- Validar la selección completa antes de iniciar capturas.
+- Conservar aislamiento por fuente y resultados deterministas en orden estable.
+- Reutilizar el guard por `sourceId` frente a solapamientos con HU-01, HU-02 u otra solicitud múltiple.
 
 **Non-Goals:**
 
 - Cambiar HU-01, el scheduler o la periodicidad.
-- Reemplazar el endpoint unitario de HU-02.
+- Reemplazar `POST /api/v1/sources/:id/capture`.
 - Cambiar el esquema Prisma, migraciones, deduplicación o persistencia de HU-04.
-- Añadir dependencias, colas, paralelismo configurable, retries o backoff.
+- Añadir dependencias, colas, paralelismo, retries o backoff.
 - Incorporar frontend, autenticación, autorización, Atom o scraping.
 
 ## Decisions
 
-### 1. Composición arquitectónica aprobada
+### 1. Endpoint batch y coexistencia con HU-02
 
-El nuevo coordinador múltiple compondrá el caso de uso unitario en lugar de repetir su lógica:
+El controller batch expondrá:
 
-```text
-Controller/DTO múltiple
-  -> ManualMultipleSourceCaptureService
-     -> ManualSourceCaptureService (una vez por sourceId)
+~~~http
+POST /api/v1/sources/capture
+Content-Type: application/json
+
+{
+  "sourceIds": ["id-1", "id-2"]
+}
+~~~
+
+La ruta coexistirá con `POST /api/v1/sources/:id/capture`; no se crea `/source-captures` ni otro body. El controller delegará la coordinación a `MultipleSourceCaptureService`.
+
+### 2. Validación en dos niveles
+
+El DTO validará antes de entrar al controller:
+
+- `sourceIds` requerido;
+- valor de tipo array;
+- cada elemento de tipo string;
+- cada string no vacío.
+
+No se configura un máximo de elementos. La regla semántica se aplica en `MultipleSourceCaptureService`: deduplicar con `Set` preservando el orden de primera aparición y exigir al menos dos identificadores efectivos. Una selección con menos de dos lanza un error de input batch específico; el controller lo traduce a `400 Bad Request`.
+
+Toda validación global ocurre antes de invocar `ManualSourceCaptureService.capture`, por lo que un request inválido produce cero capturas. No se rechaza un request solo porque el array original tenga duplicados.
+
+### 3. Composición arquitectónica
+
+El coordinador múltiple compondrá el caso de uso unitario:
+
+~~~text
+MultipleSourceCaptureController + DTOs
+  -> MultipleSourceCaptureService
+     -> ManualSourceCaptureService.capture(sourceId)
         -> SourceRegistryPort.findForCapture
         -> SourceCaptureService
            -> SourceCaptureGuard
            -> RssFetcherPort
            -> RssParserPort
            -> CaptureOutputPort (HU-04)
-```
+~~~
 
-El coordinador conocerá identificadores y resultados, no Prisma, `SourcesService`, HTTP RSS ni persistencia. `ManualSourceCaptureService` ya encapsula la selección `missing`/`inactive`/`eligible`; `SourceCaptureService` sigue siendo la única unidad de captura. No se amplía `SourceRegistryPort` mientras sus operaciones actuales satisfagan el caso de uso.
+`MultipleSourceCaptureService` conocerá identificadores, resultados y `SourceCaptureError`; no accederá a Prisma, `SourcesService`, `HttpRssFetcher`, `RssOnlyParser`, repositorios ni persistencia. No se modifica `SourceRegistryPort`: `ManualSourceCaptureService` ya ofrece toda la semántica individual necesaria.
 
-Alternativa descartada: copiar en el coordinador la consulta de fuentes y la descarga. Duplicaría reglas ya probadas y permitiría divergencias con HU-01/HU-02.
+### 4. Secuencialidad, aislamiento y guard
 
-### 2. A - Endpoint batch (recomendación pendiente de aprobación)
+El servicio recorrerá los identificadores efectivos con `for...of` y `await`. No usará `Promise.all`, `Promise.allSettled` ni un mecanismo nuevo de concurrencia. La siguiente captura comenzará solo después de que la anterior se haya resuelto.
 
-**Recomendación:** `POST /api/v1/sources/capture` con JSON:
+Cada iteración tendrá su propio aislamiento:
 
-```json
-{
-  "sourceIds": ["<uuid-1>", "<uuid-2>"]
-}
-```
+1. invocar `ManualSourceCaptureService.capture(sourceId)`;
+2. convertir el éxito a un resultado `completed`;
+3. capturar cualquier error de esa fuente;
+4. convertir un `SourceCaptureError` a su misma categoría estable;
+5. convertir cualquier error no tipado a `unexpected`;
+6. agregar el resultado y continuar.
 
-La ruta representa una acción sobre una colección de fuentes y mantiene proximidad semántica con `POST /api/v1/sources/:id/capture`. No sustituye el endpoint unitario.
+`SourceCaptureGuard` no se replica ni se manipula desde el coordinador. El `SourceCaptureService` existente continúa protegiendo solapamientos por fuente con todos los flujos.
 
-**Alternativa razonable:** `POST /api/v1/source-captures` con el mismo cuerpo. Modela la solicitud como creación de un recurso de captura, pero introduce una nueva familia de rutas sin que exista persistencia ni consulta posterior de ese recurso. `POST /api/v1/sources/batch-capture` es más explícito, aunque agrega vocabulario RPC innecesario.
+### 5. Contrato de respuesta
 
-Estado: pendiente de aprobación humana; ninguna ruta queda autorizada para implementación por este documento.
+Un request batch válido responde siempre `200 OK`:
 
-### 3. B - Respuesta y aislamiento por fuente (recomendación pendiente de aprobación)
-
-**Recomendación:** para un request estructuralmente válido, responder `200 OK` con un resultado por identificador efectivo, conservando el orden de entrada:
-
-```json
+~~~json
 {
   "results": [
-    { "sourceId": "<uuid-1>", "status": "completed", "itemsParsed": 3 },
-    { "sourceId": "<uuid-2>", "status": "failed", "error": { "code": "source-inactive" } }
+    {
+      "sourceId": "id-1",
+      "status": "completed",
+      "itemsParsed": 3
+    },
+    {
+      "sourceId": "id-2",
+      "status": "failed",
+      "errorCode": "source-inactive"
+    }
   ]
 }
-```
+~~~
 
-El coordinador capturaría el error tipado de cada fuente, registraría un resultado sanitizado y continuaría con las demás. Las categorías candidatas son las ya existentes: `source-not-found`, `source-inactive`, `source-busy`, `fetch/upstream`, `timeout`, `parse/invalid-rss` y `unexpected`. Un éxito conservaría `itemsParsed` con el significado aprobado en HU-02: ítems interpretados, no cantidad persistida.
+La unión discriminada contiene:
 
-La recomendación evita que una fuente inexistente, inactiva, ocupada, con fallo upstream o con timeout convierta en fallo global los resultados de fuentes exitosas. Los errores de forma/cardinalidad del request sí producirían un error HTTP global de validación. Los detalles internos no se expondrían.
+- éxito: `sourceId`, `status: "completed"`, `itemsParsed`;
+- fallo: `sourceId`, `status: "failed"`, `errorCode`.
 
-**Alternativas:**
+`itemsParsed` conserva el significado de HU-02: cantidad de ítems RSS interpretados, no cantidad persistida. `errorCode` solo admite `source-not-found`, `source-inactive`, `source-busy`, `fetch/upstream`, `parse/invalid-rss`, `timeout` y `unexpected`.
 
-- `207 Multi-Status`: expresa multiplicidad, pero está asociado a WebDAV y aporta poca ventaja frente a un body tipado.
-- fail-fast con el primer error: simplifica la respuesta, pero impide satisfacer de forma robusta la incorporación de noticias disponibles de las demás fuentes.
-- estado HTTP derivado del peor resultado: hace inestable el significado global y obliga al cliente a interpretar simultáneamente HTTP y body.
+Los resultados conservan el orden de los identificadores efectivos. No se serializan `Error.message`, stack, URL de fuente, DNS/IP ni detalles upstream.
 
-Estado: se debe aprobar tanto la continuidad ante fallos como la forma exacta del resultado, los códigos públicos y el `200 OK` antes de incorporarlos a la spec normativa.
+Los errores individuales no se traducen a respuestas HTTP globales `404`, `409`, `502` o `504`. `400` queda reservado para input batch inválido. `500` solo puede representar un fallo global realmente inesperado fuera del aislamiento por fuente.
 
-### 4. C - Identificadores duplicados (recomendación pendiente de aprobación)
+### 6. Swagger/OpenAPI
 
-**Recomendación:** normalizar la lista eliminando duplicados antes de ejecutar, preservar la primera aparición y devolver un resultado por identificador único. Esto evita una segunda captura autogenerada que terminaría como `source-busy` o repetiría trabajo sin valor.
+El controller y los DTO documentarán:
 
-**Alternativa:** rechazar todo el request como error de validación. Es más estricto y ayuda al cliente a corregir entradas, pero hace fallar una selección por un error recuperable.
+- requestBody requerido y `sourceIds`;
+- response `200` con wrapper `results`;
+- respuesta discriminada mediante `oneOf` para éxito y fallo;
+- response `400` para input inválido;
+- coexistencia sin regresión del path `/api/v1/sources/{id}/capture`.
 
-Estado: pendiente de aprobación humana. La cantidad y correspondencia de resultados depende de esta decisión.
+Las clases DTO usarán los decoradores Swagger ya instalados. No se añade dependencia.
 
-### 5. D - Cardinalidad mínima (recomendación pendiente de aprobación)
+### 7. Archivos previstos
 
-**Recomendación:** exigir al menos dos identificadores efectivos, porque HU-03 trata una actualización múltiple y HU-02 ya cubre exactamente uno. Cero o uno producirían un error global de validación.
+Nuevos:
 
-**Alternativa:** aceptar uno para que el cliente use siempre el mismo endpoint. Reduce lógica cliente, pero solapa dos contratos y debilita la distinción funcional entre HU-02 y HU-03.
+- `backend/src/capture/services/multiple-source-capture.service.ts`
+- `backend/src/capture/controllers/multiple-source-capture.controller.ts`
+- `backend/src/capture/dto/multiple-source-capture-request.dto.ts`
+- `backend/src/capture/dto/multiple-source-capture-response.dto.ts`
+- `backend/src/capture/errors/multiple-source-capture-input.error.ts`
+- `backend/test/capture/multiple-source-capture.service.spec.ts`
+- `backend/test/capture/multiple-source-capture.controller.spec.ts`
+- `backend/test/capture/multiple-source-capture.e2e.spec.ts`
 
-Estado: pendiente de aprobación humana. Si se aprueba deduplicar, la cardinalidad se validaría sobre los identificadores efectivos para impedir que `[A, A]` cuente como múltiple.
-
-### 6. E - Estrategia de ejecución (recomendación pendiente de aprobación)
-
-**Recomendación:** ejecutar secuencialmente los identificadores efectivos. Coincide con HU-01, mantiene orden determinista, limita consumo de red y base de datos y no requiere introducir límites de concurrencia. Un `try/catch` por iteración proporciona aislamiento funcional sin fail-fast.
-
-`SourceCaptureGuard` sigue protegiendo cada fuente frente a solapamientos externos: captura automática, endpoint HU-02 u otra operación HU-03. El guard no sustituye la política de duplicados internos.
-
-**Alternativa:** ejecutar fuentes distintas en paralelo con `Promise.allSettled`. Puede reducir latencia total y el guard actual lo permite, pero incrementa carga simultánea, complica orden y observabilidad y exige aprobar un límite de concurrencia; HU-03 no lo requiere.
-
-Estado: pendiente de aprobación humana.
-
-### 7. Archivos previstos tras la aprobación
-
-Nuevos, sujetos al contrato aprobado:
-
-- `backend/src/capture/services/manual-multiple-source-capture.service.ts`
-- `backend/src/capture/controllers/manual-multiple-source-capture.controller.ts`
-- `backend/src/capture/dto/manual-multiple-source-capture-request.dto.ts`
-- `backend/src/capture/dto/manual-multiple-source-capture-response.dto.ts`
-- `backend/test/capture/manual-multiple-source-capture.service.spec.ts`
-- `backend/test/capture/manual-multiple-source-capture.controller.spec.ts`
-- `backend/test/capture/manual-multiple-source-capture.e2e.spec.ts`
-
-Modificados previsibles:
+Modificado:
 
 - `backend/src/capture/capture.module.ts` para wiring.
-- Documentación Swagger asociada al nuevo controller/DTO.
 
-No se prevé modificar `schema.prisma`, migraciones, adaptadores de `sources` o `news`, dependencias ni workflows. Si la implementación demostrara que alguno es necesario, se detendrá y se solicitará una nueva aprobación.
+No se modifican `schema.prisma`, migraciones, adaptadores de `sources` o `news`, dependencias, workflows, scheduler ni periodicidad.
 
-### 8. Estrategia de pruebas prevista
+### 8. Estrategia de pruebas
 
-- Unitarias del coordinador: orden, alcance, continuación tras cada error tipado, resultado exitoso y políticas A-E aprobadas.
-- Unitarias de controller/DTO: delegación, validación, serialización y sanitización.
-- Integración/E2E con PostgreSQL real: varias fuentes, persistencia de noticias de las exitosas, deduplicación existente, mezcla de resultados y solapamiento protegido.
-- Regresión: suites de HU-01, HU-02, HU-04, scheduler, SSRF y suite completa con cobertura global mínima de 80 %.
+- Unitarias del coordinador: deduplicación, cardinalidad, orden, secuencialidad explícita, dos éxitos, continuidad tras cada error tipado, `unexpected` tipado y error desconocido.
+- Unitarias del controller/DTO: delegación, `400`, `200`, serialización y sanitización.
+- E2E con `AppModule` y PostgreSQL real: parser/output/HU-04 reales, fuentes seleccionadas, exclusión de no seleccionadas, deduplicación de IDs y noticias, éxito parcial y guard ocupado.
+- OpenAPI: nuevo path, body requerido, schemas `200`/`400`, unión discriminada y permanencia del path HU-02.
+- Regresión: HU-01, HU-02, HU-04, scheduler, guard, suite completa, build, Prisma y cobertura global mínima de 80 %.
 
 ## Risks / Trade-offs
 
-- [La operación síncrona puede tardar la suma de los tiempos de varias fuentes] → mantener alcance acotado, reutilizar el timeout por fuente y documentar la semántica; no introducir procesamiento asíncrono sin otro cambio aprobado.
-- [Un resultado parcial puede ser interpretado como éxito total si el cliente mira solo HTTP] → documentar y tipar `results`, y probar cada categoría aprobada.
-- [Dos solicitudes concurrentes pueden obtener `source-busy` para la misma fuente] → conservar `SourceCaptureGuard` y representar ese resultado sin bloquear las demás fuentes.
-- [La deduplicación silenciosa puede ocultar un error del cliente] → hacer explícita la política en OpenAPI y en escenarios una vez aprobada.
-- [La ejecución secuencial aumenta latencia] → privilegiar previsibilidad en HU-03; evaluar concurrencia acotada en un cambio posterior si existen mediciones que lo justifiquen.
+- [La operación síncrona tarda la suma de las capturas] → reutilizar el timeout existente por fuente y mantener secuencialidad determinista.
+- [El cliente podría mirar solo el `200`] → documentar y tipar cada elemento de `results`.
+- [Solicitudes concurrentes pueden obtener `source-busy`] → conservar `SourceCaptureGuard` y aislar ese resultado sin bloquear otras fuentes.
+- [Deduplicar puede ocultar un error del cliente] → documentar que la primera aparición define el orden y que cada fuente se captura una vez.
+- [Un array muy grande puede prolongar la operación] → no inventar un máximo en HU-03; cualquier límite futuro requerirá requisitos y aprobación propios.
 
 ## Migration Plan
 
-No hay migración de datos ni despliegue especial. Tras la aprobación A-E, se actualizará primero la spec normativa, se implementará el flujo aditivo, se ejecutará la regresión completa y se podrá desplegar junto al endpoint HU-02 existente. El rollback consiste en retirar el nuevo controller/coordinador y su wiring; los datos persistidos correctamente por HU-04 conservan su validez.
-
-## Approval Gate
-
-La implementación no debe comenzar hasta que una revisión humana resuelva A, B, C, D y E. Después de esa decisión se actualizarán `spec.md`, `design.md` y `tasks.md` para eliminar alternativas, fijar el contrato y agregar todos los escenarios normativos de errores y validación.
+No hay migración de datos ni despliegue especial. La implementación es aditiva y conserva el endpoint HU-02. Tras completar las pruebas y regresiones, puede desplegarse junto al módulo `capture` existente. El rollback consiste en retirar el controller, servicio, DTOs, error de input y wiring nuevos; los datos ya persistidos correctamente por HU-04 conservan su validez.
