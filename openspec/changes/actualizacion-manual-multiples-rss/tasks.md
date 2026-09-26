@@ -1,0 +1,92 @@
+## 1. Preparación y contrato
+
+- [ ] 1.1 Obtener aprobación humana explícita para las decisiones A-E: endpoint, respuesta/aislamiento, duplicados, cardinalidad y estrategia de ejecución.
+- [ ] 1.2 Actualizar `spec.md` con el contrato aprobado y escenarios normativos para éxito, inexistente, inactiva, ocupada, upstream, timeout, RSS inválido, duplicados y cardinalidad.
+- [ ] 1.3 Actualizar `design.md` para convertir las recomendaciones aprobadas en decisiones y retirar alternativas no elegidas.
+- [ ] 1.4 Revisar esta lista para que cada tarea coincida con las decisiones A-E aprobadas, sin conservar supuestos incompatibles.
+- [ ] 1.5 Ejecutar `openspec validate actualizacion-manual-multiples-rss --strict` y corregir los artefactos antes de modificar código.
+
+## 2. Caso de uso múltiple
+
+- [ ] 2.1 Definir los tipos internos de entrada y resultado del caso de uso múltiple conforme al contrato aprobado.
+- [ ] 2.2 Crear `ManualMultipleSourceCaptureService` sin dependencias directas de Prisma, `SourcesService`, HTTP RSS ni persistencia.
+- [ ] 2.3 Aplicar en un único punto la política aprobada de identificadores duplicados y verificar el orden resultante.
+- [ ] 2.4 Aplicar la estrategia de ejecución aprobada sobre los identificadores efectivos.
+- [ ] 2.5 Agregar un resultado observable por fuente conforme al contrato aprobado y preservar la correspondencia con la entrada efectiva.
+
+## 3. Reutilización del flujo existente
+
+- [ ] 3.1 Delegar cada identificador efectivo a `ManualSourceCaptureService` en vez de repetir la selección de HU-02.
+- [ ] 3.2 Verificar que la selección continúa pasando por `SourceRegistryPort.findForCapture`.
+- [ ] 3.3 Verificar que toda fuente elegible continúa pasando por `SourceCaptureService` como única unidad de captura.
+- [ ] 3.4 Verificar que la salida continúa pasando exclusivamente por `CaptureOutputPort` hacia la persistencia/deduplicación de HU-04.
+- [ ] 3.5 Confirmar mediante revisión de diff que no se duplicaron lógica de descarga, parsing RSS, persistencia ni consulta de fuentes.
+
+## 4. Endpoint, DTO y validación
+
+- [ ] 4.1 Crear el DTO de request con `sourceIds` y las reglas de forma/cardinalidad aprobadas.
+- [ ] 4.2 Crear DTOs de respuesta para resultados exitosos y fallidos sin exponer detalles internos.
+- [ ] 4.3 Crear el controller en la ruta aprobada bajo `/api/v1` y delegar toda la coordinación al caso de uso.
+- [ ] 4.4 Separar errores globales de validación de los resultados individuales según el contrato aprobado.
+- [ ] 4.5 Conservar en los éxitos el significado de `itemsParsed` aprobado por HU-02, sin introducir `storedCount`.
+- [ ] 4.6 Registrar controller y servicio en `CaptureModule` reutilizando los providers existentes.
+
+## 5. Aislamiento de fallos y SourceCaptureGuard
+
+- [ ] 5.1 Aislar el procesamiento de cada fuente para evitar fail-fast cuando así lo establezca el contrato aprobado.
+- [ ] 5.2 Transformar `source-not-found` e `source-inactive` en resultados por fuente conforme al contrato aprobado.
+- [ ] 5.3 Transformar `source-busy` sin reintentar, encolar ni bloquear el procesamiento de las demás fuentes.
+- [ ] 5.4 Transformar upstream/red, timeout y RSS inválido en categorías públicas sanitizadas conforme al contrato aprobado.
+- [ ] 5.5 Aplicar la política aprobada para fallos inesperados sin filtrar stack traces, URLs internas ni mensajes sensibles.
+- [ ] 5.6 Reutilizar el mismo `SourceCaptureGuard` compartido por HU-01, HU-02 y HU-03 sin crear un guard paralelo.
+- [ ] 5.7 Confirmar que una fuente sin ítems nuevos sigue usando la semántica exitosa heredada de HU-02/HU-04.
+
+## 6. Pruebas unitarias
+
+- [ ] 6.1 Probar que el coordinador procesa todas las fuentes seleccionadas cuando todas resultan exitosas.
+- [ ] 6.2 Probar que el coordinador no solicita captura para una fuente no seleccionada.
+- [ ] 6.3 Probar que un fallo individual no impide procesar las fuentes restantes cuando el aislamiento esté aprobado.
+- [ ] 6.4 Cubrir en el coordinador cada categoría tipada aprobada: inexistente, inactiva, ocupada, upstream, timeout, RSS inválido e inesperado.
+- [ ] 6.5 Probar la política aprobada de duplicados, incluidos el orden y la cantidad de resultados.
+- [ ] 6.6 Probar la cardinalidad mínima y los casos límite del request.
+- [ ] 6.7 Probar la estrategia aprobada de ejecución y el orden observable de resultados.
+- [ ] 6.8 Probar que el controller delega una sola vez y serializa exactamente el contrato aprobado.
+- [ ] 6.9 Probar que los errores globales del DTO/controller no inician capturas.
+
+## 7. Pruebas de integración y E2E
+
+- [ ] 7.1 Probar con PostgreSQL real la captura de al menos dos fuentes activas seleccionadas en una operación.
+- [ ] 7.2 Verificar que las noticias de cada fuente exitosa se persisten con su `sourceId` correcto.
+- [ ] 7.3 Repetir la operación y verificar que la deduplicación existente no crea noticias duplicadas.
+- [ ] 7.4 Probar una mezcla de fuente exitosa, inexistente e inactiva y verificar los resultados aprobados.
+- [ ] 7.5 Probar una mezcla de fuente exitosa con upstream, timeout y RSS inválido sin perder el resultado exitoso cuando el aislamiento esté aprobado.
+- [ ] 7.6 Probar un solapamiento real con HU-01, HU-02 u otra operación HU-03 y verificar `SourceCaptureGuard` por `sourceId`.
+- [ ] 7.7 Verificar que fuentes no seleccionadas no reciben solicitudes HTTP durante la operación.
+- [ ] 7.8 Verificar que los enlaces incluidos en los ítems RSS no se descargan ni se someten a scraping.
+- [ ] 7.9 Cubrir E2E la política aprobada de duplicados y cardinalidad.
+
+## 8. Swagger y documentación del contrato
+
+- [ ] 8.1 Documentar en Swagger la ruta, el request y las restricciones aprobadas de `sourceIds`.
+- [ ] 8.2 Documentar el resultado exitoso por fuente, `itemsParsed` y todas las categorías fallidas aprobadas.
+- [ ] 8.3 Documentar la semántica HTTP de resultados parciales y errores globales de validación.
+- [ ] 8.4 Agregar ejemplos coherentes para éxito total, resultado parcial, duplicados y cardinalidad según las decisiones aprobadas.
+- [ ] 8.5 Verificar que la documentación no prometa scraping, paralelismo, reintentos ni cantidades persistidas.
+
+## 9. Regresión y calidad
+
+- [ ] 9.1 Ejecutar las pruebas de HU-01 y confirmar que la captura automática y su ejecución secuencial no cambiaron.
+- [ ] 9.2 Ejecutar las pruebas de HU-02 y confirmar que `POST /api/v1/sources/:id/capture` conserva su contrato.
+- [ ] 9.3 Ejecutar las pruebas de HU-04 y confirmar persistencia, identidad y deduplicación sin regresiones.
+- [ ] 9.4 Ejecutar las pruebas de scheduler, configuración, fuentes y protecciones SSRF relacionadas.
+- [ ] 9.5 Ejecutar lint, build y la suite backend completa.
+- [ ] 9.6 Verificar cobertura global mínima de 80 % y cubrir cualquier rama nueva relevante.
+
+## 10. Verificación final
+
+- [ ] 10.1 Ejecutar `openspec validate actualizacion-manual-multiples-rss --strict` sobre los artefactos finales.
+- [ ] 10.2 Confirmar en el diff que no cambiaron `schema.prisma`, migraciones, dependencias, workflows, scheduler ni periodicidad.
+- [ ] 10.3 Confirmar conformidad con `docs/architecture.md`, ADR-002, ADR-003 y el flujo controller-servicio-puerto-adaptador.
+- [ ] 10.4 Confirmar que no existe acceso directo desde el nuevo controller/coordinador a Prisma, `SourcesService` o adaptadores de persistencia.
+- [ ] 10.5 Confirmar que HU-03 captura exclusivamente RSS y que todas las tareas permanecen dentro del alcance aprobado.
+- [ ] 10.6 Registrar evidencia de comandos, pruebas y cobertura para la revisión humana previa al merge.
