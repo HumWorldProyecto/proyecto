@@ -145,12 +145,15 @@ Nuevos:
 - `backend/src/capture/dto/multiple-source-capture-response.dto.ts`
 - `backend/src/capture/errors/multiple-source-capture-input.error.ts`
 - `backend/test/capture/multiple-source-capture.service.spec.ts`
+- `backend/test/capture/multiple-source-capture-request.dto.spec.ts`
 - `backend/test/capture/multiple-source-capture.controller.spec.ts`
 - `backend/test/capture/multiple-source-capture.e2e.spec.ts`
 
-Modificado:
+Modificados:
 
-- `backend/src/capture/capture.module.ts` para wiring.
+- `backend/src/capture/capture.module.ts`
+- `backend/src/capture/types/source-capture-result.ts`
+- `backend/test/capture/app-module.integration.spec.ts`
 
 No se modifican `schema.prisma`, migraciones, adaptadores de `sources` o `news`, dependencias, workflows, scheduler ni periodicidad.
 
