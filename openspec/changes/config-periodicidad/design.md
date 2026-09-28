@@ -1,5 +1,7 @@
 ## Context
 
+**ADR aplicables:** [ADR-002](../../../docs/adr/ADR-002-stack-node-nest-prisma-jest.md), [ADR-003](../../../docs/adr/ADR-003-captura-rss-y-scheduling.md), [ADR-004](../../../docs/adr/ADR-004-monolito-modular-y-separacion-de-responsabilidades.md) y [ADR-005](../../../docs/adr/ADR-005-estrategia-combinada-de-pruebas.md).
+
 HumWorld usa Node.js 24 LTS, TypeScript 5 y NestJS 10.4, con PostgreSQL 16, Prisma ORM 6 y Prisma Migrate. La API obligatoria es REST JSON bajo `/api/v1` y se documenta con Swagger/OpenAPI. HU-01 ya ratificó `@nestjs/schedule`, scheduling dinámico, ausencia de job cuando no hay periodicidad y una política de solapamiento que omite activaciones concurrentes sin encolarlas.
 
 HU-18 es dueña del estado global de periodicidad. Debe persistirlo, exponerlo y avisar sus cambios; HU-01 es dueña de traducir ese estado a un job futuro.

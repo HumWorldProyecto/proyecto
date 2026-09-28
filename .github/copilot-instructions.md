@@ -14,6 +14,14 @@ Antes de proponer, diseñar, implementar o revisar un cambio:
 
 Ante una diferencia, distinguir entre restricciones obligatorias, baseline tecnológico ratificado y decisiones del cambio. Ningún agente puede convertir una decisión tecnológica en requisito funcional ni alterar una restricción del proyecto.
 
+## Gobernanza de ADR
+
+- Consultar docs/adr/README.md y los ADR aplicables antes de proponer, diseñar, implementar o revisar cambios arquitectónicos.
+- Respetar los ADR con estado Aceptado y citar los aplicables desde design.md.
+- Si una petición contradice un ADR aceptado, detenerse e informar para revisión humana.
+- No cambiar el estado de un ADR ni escoger una alternativa pendiente sin aprobación humana.
+- Proponer un ADR nuevo cuando un cambio modifique una decisión arquitectónica aceptada y sincronizar los artefactos relacionados.
+
 ## Arquitectura
 
 - Mantener una aplicación web modular con separación clara entre presentación, API, servicios/lógica de negocio y repositorios/datos.
