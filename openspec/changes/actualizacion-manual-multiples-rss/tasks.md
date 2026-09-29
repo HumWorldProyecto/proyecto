@@ -86,7 +86,7 @@
 
 - [x] 10.1 Ejecutar `openspec validate actualizacion-manual-multiples-rss --strict` sobre los artefactos finales.
 - [x] 10.2 Confirmar en el diff que no cambiaron `schema.prisma`, migraciones, dependencias, workflows, scheduler ni periodicidad.
-- [x] 10.3 Confirmar conformidad con `docs/architecture.md`, ADR-002, ADR-003 y el flujo controller-servicio-puerto-adaptador.
+- [x] 10.3 Confirmar conformidad con `docs/architecture.md`, ADR-002, ADR-003, ADR-004, ADR-005 y el flujo controller-servicio-puerto-adaptador.
 - [x] 10.4 Confirmar que no existe acceso directo desde el nuevo controller/coordinador a Prisma, `SourcesService` o adaptadores de persistencia.
 - [x] 10.5 Confirmar que HU-03 captura exclusivamente RSS y que todas las tareas permanecen dentro del alcance aprobado.
 - [x] 10.6 Registrar evidencia de comandos, pruebas y cobertura para la revisión humana previa al merge.

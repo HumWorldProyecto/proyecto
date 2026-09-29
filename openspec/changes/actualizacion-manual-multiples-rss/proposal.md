@@ -22,6 +22,15 @@ HumWorld necesita que un administrador pueda actualizar manualmente varias fuent
 
 Ninguna. HU-03 compone las capacidades existentes sin modificar sus requisitos aprobados.
 
+## Decisiones arquitectónicas aplicables
+
+- ADR-002 es aplicable por el stack existente Node.js, TypeScript, NestJS, PostgreSQL, Prisma y Jest.
+- ADR-003 es aplicable por la reutilización del flujo RSS y de `SourceCaptureGuard`.
+- ADR-004 es aplicable por el monolito modular y la separación entre controller, servicio, puertos y adaptadores.
+- ADR-005 es aplicable por la estrategia combinada de pruebas unitarias, integración con PostgreSQL y E2E.
+
+HU-03 respeta estas decisiones aceptadas sin modificarlas. ADR-006 permanece Propuesto y no impone una migración a NestJS 11 ni otro cambio del baseline.
+
 ## Impact
 
 - `capture`: nuevo coordinador de captura múltiple, contrato de entrada/salida, controller y DTO, componiendo el flujo unitario existente.

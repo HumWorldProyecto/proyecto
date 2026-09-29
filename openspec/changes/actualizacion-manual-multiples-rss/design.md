@@ -8,7 +8,16 @@ Véase `proposal.md` para la motivación y `spec.md` para el contrato observable
 - HU-04 implementa `CaptureOutputPort` para persistir y deduplicar noticias por fuente.
 - `SourceCaptureError` ya representa las categorías estables aprobadas para captura.
 
-Las restricciones aplicables son API REST bajo `/api/v1`, JSON, Swagger/OpenAPI, RSS sin scraping, separación controller-servicio-puerto-adaptador, cobertura global mínima de 80 % y ausencia de nuevas dependencias o cambios de persistencia. ADR-002 y ADR-003 continúan vigentes.
+Las restricciones aplicables son API REST bajo `/api/v1`, JSON, Swagger/OpenAPI, RSS sin scraping, separación controller-servicio-puerto-adaptador, cobertura global mínima de 80 % y ausencia de nuevas dependencias o cambios de persistencia.
+
+Los ADR aplicables y su cumplimiento son:
+
+- ADR-002: se conserva el stack existente Node.js, TypeScript, NestJS, PostgreSQL, Prisma y Jest, sin introducir tecnologías ni dependencias.
+- ADR-003: se reutilizan el flujo RSS, sus integraciones existentes y `SourceCaptureGuard`, sin modificar el scheduler ni el timeout.
+- ADR-004: el endpoint permanece dentro del monolito modular y separa controller, servicio coordinador, puertos y adaptadores.
+- ADR-005: la verificación combina pruebas unitarias, integración con PostgreSQL real y E2E.
+
+HU-03 no modifica ninguna de estas decisiones aceptadas. ADR-006 permanece Propuesto y no se aplica como obligación ni autoriza una migración a NestJS 11.
 
 ## Goals / Non-Goals
 
