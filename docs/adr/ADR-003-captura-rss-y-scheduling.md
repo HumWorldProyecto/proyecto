@@ -1,64 +1,56 @@
-# ADR-003 — Captura RSS y scheduling
+# ADR-003: Adoptar integraciones NestJS para captura RSS y scheduling
 
-**Estado:** Aceptado
+- **Estado:** Aceptado
+- **Fecha:** 2026-09-02; formalización P9: 2026-09-23
+- **Responsables:** Equipo 5
+- **Relacionado con:** [ADR-002](ADR-002-stack-node-nest-prisma-jest.md), [ADR-004](ADR-004-monolito-modular-y-separacion-de-responsabilidades.md), HU-01, HU-02, HU-15 y HU-18
 
-**Fecha:** 2026-09-02
+## Problema, elemento de arquitectura sobre el que decidir
 
-## Contexto
+Necesitamos descargar e interpretar RSS, programar capturas y aplicar un timeout común. La solución debe integrarse con NestJS, ser fácil de probar y mantener la restricción RSS-only.
 
-HumWorld debe capturar noticias exclusivamente desde fuentes RSS. El web scraping está prohibido.
+## Opciones consideradas
 
-La captura necesita mecanismos integrados con NestJS para realizar solicitudes HTTP, interpretar documentos RSS y programar ejecuciones. También necesita un timeout coherente que pueda modificarse desde un único punto de configuración.
+- **A. Herramientas nativas y scheduler propio:** usar fetch, otro parser estructurado y temporizadores administrados por nuestro código.
+- **B. Integraciones NestJS:** usar @nestjs/axios, rss-parser, @nestjs/schedule y una configuración central.
+- **C. Cola o scheduler externo:** ejecutar la captura mediante infraestructura y workers separados.
 
-Las implementaciones provisionales basadas en `fetch` directo, expresiones regulares para interpretar XML y llamadas recursivas a `setTimeout` no constituyen la solución arquitectónica final aprobada.
+## Matriz de decisión
+
+| Criterio | A. Gestión propia | B. NestJS | C. Infraestructura externa |
+| --- | --- | --- | --- |
+| Integración con el backend actual | Media | Alta | Media |
+| Facilidad de prueba | Media | Alta | Media |
+| Simplicidad operacional | Media | Alta | Baja |
+| Soporte para varias instancias | Baja | Baja | Alta |
 
 ## Decisión
 
-El Equipo 5 adopta las siguientes tecnologías para la captura RSS:
+Mantener @nestjs/axios para HTTP, rss-parser para interpretar feeds y @nestjs/schedule para la planificación. El timeout se obtiene desde una configuración central, con 10 segundos por defecto.
 
-- HTTP: `@nestjs/axios`, mediante los mecanismos de integración de NestJS.
-- Parser: `rss-parser`.
-- Scheduling: `@nestjs/schedule`.
-- Timeout HTTP: 10 segundos como valor técnico por defecto, configurable desde una única configuración central.
+La integración incluye un guard que rechaza Atom, HTML y contenido no RSS antes del parseo. Los jobs solo disparan casos de uso; no contienen reglas de captura o persistencia.
 
-El valor predeterminado de 10 segundos es una decisión técnica de diseño y configuración, no un requisito funcional de `spec.md`. La clave, su validación y el mecanismo de override deben concretarse en el `design.md` correspondiente, y el valor no debe repetirse como número mágico en distintos componentes.
+SchedulerRegistry puede usar timers internamente. Lo que no aceptamos es implementar nuestro propio scheduler principal mediante un ciclo recursivo artesanal fuera de @nestjs/schedule.
 
-El uso de `rss-parser` no modifica la restricción de aceptar únicamente RSS. Si la biblioteca puede interpretar otros formatos, el diseño de la integración debe conservar explícitamente el límite RSS-only sin recurrir a un parser RSS basado en expresiones regulares.
+## Por qué se elige frente a las demás
 
-Los jobs programados deben disparar casos de uso; no deben contener ni duplicar las reglas de negocio de captura o persistencia.
-
-## Alternativas consideradas
-
-### `fetch` directo como implementación final
-
-Se descartó para la captura RSS porque no es la integración HTTP ratificada para NestJS. El acceso HTTP debe quedar encapsulado mediante `@nestjs/axios`, de forma compatible con configuración, inyección de dependencias y pruebas.
-
-### Parser RSS mediante expresiones regulares
-
-Se descartó porque XML requiere tratamiento estructural y puede incluir namespaces, entidades, contenido multilínea y variantes que no deben resolverse con coincidencias de texto frágiles.
-
-### Scheduler principal mediante `setTimeout` recursivo
-
-Se descartó porque no ofrece la integración de lifecycle, registro y administración de jobs adoptada para NestJS. `setTimeout` no debe actuar como scheduler principal de la captura.
-
-### Timeout fijo o disperso
-
-Se descartó porque dificulta modificar y verificar la política HTTP. El timeout debe obtenerse siempre de la configuración central, que aplica 10 segundos cuando no existe un valor configurado.
+Ya usamos estas herramientas y están integradas con el backend. Mantenerlas evita duplicar mecanismos, facilita las pruebas y no agrega infraestructura que el proyecto todavía no necesita.
 
 ## Consecuencias
 
 ### Positivas
 
-- HTTP, parseo y scheduling quedan alineados con el framework ratificado.
-- El timeout puede cambiarse sin modificar múltiples componentes.
-- Los adaptadores pueden probarse mediante contratos e inyección de dependencias.
-- El scheduler puede integrarse con el lifecycle y el registro de jobs de NestJS.
-- Se descarta como solución final el parser RSS basado en expresiones regulares.
+- HTTP, parsing, timeout y scheduling siguen un mecanismo común.
+- Los adaptadores y jobs pueden probarse mediante inyección de dependencias.
 
-### Costes y limitaciones
+### Negativas y deuda aceptada
 
-- Deben declararse y mantenerse dependencias compatibles con la versión de NestJS utilizada por el proyecto.
-- El parseo y el acceso HTTP requieren manejo asíncrono y traducción controlada de errores.
-- La integración debe preservar explícitamente la restricción RSS-only, aunque la biblioteca acepte formatos adicionales.
-- El nombre y la validación de la configuración, los reintentos, el backoff, la observabilidad avanzada y la política detallada de solapamientos o concurrencia continúan siendo decisiones de `design.md`.
-- Este ADR no define la elegibilidad de fuentes de HU-15 ni la identidad de noticias de HU-04.
+- El guard RSS-only sigue siendo necesario porque rss-parser acepta otros formatos.
+- El scheduling actual funciona dentro de una instancia y no coordina réplicas.
+
+## Trazabilidad y sincronización
+
+- [Arquitectura](../architecture.md) e [índice ADR](README.md)
+- OpenSpec de [captura automática](../../openspec/changes/captura-automatica-rss/design.md) y [actualización manual](../../openspec/changes/actualizacion-manual-rss/design.md)
+- [Módulo de captura](../../backend/src/capture/capture.module.ts) y [scheduler](../../backend/src/capture/jobs/capture-scheduler.ts)
+- [Pruebas de captura](../../backend/test/capture)

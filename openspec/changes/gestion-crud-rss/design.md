@@ -1,5 +1,7 @@
 ## Context
 
+**ADR aplicables:** [ADR-002](../../../docs/adr/ADR-002-stack-node-nest-prisma-jest.md), [ADR-003](../../../docs/adr/ADR-003-captura-rss-y-scheduling.md), [ADR-004](../../../docs/adr/ADR-004-monolito-modular-y-separacion-de-responsabilidades.md) y [ADR-005](../../../docs/adr/ADR-005-estrategia-combinada-de-pruebas.md).
+
 La arquitectura vigente de HumWorld define un monolito modular sobre Node.js 24 LTS, TypeScript 5 y NestJS 10.4, con PostgreSQL 16, Prisma ORM 6, Prisma Migrate y una API REST JSON bajo `/api/v1` documentada con Swagger/OpenAPI. HU-01 ya aprobó la captura sobre una instantánea de fuentes elegibles; HU-04 ya usa `News.sourceId` como referencia estable de procedencia.
 
 HU-15 administra fuentes RSS directamente. La especificación global de HumWorld y la planificación original de HU-15 también exigen gestionar canales/medios que agrupan fuentes. Issue #16 y este OpenSpec representan un slice refinado dedicado a fuentes RSS. Este diseño no introduce silenciosamente una entidad `Channel`: la capacidad de canales/medios continúa siendo alcance obligatorio pendiente y debe quedar trazada en el backlog y en Sprint Review.
@@ -180,7 +182,7 @@ Un `SourcesModule` contiene controller, casos de uso, puerto de repositorio, ada
 
 Se aprueba **A: una FK real y obligatoria `News.sourceId -> RssSource.id`**, con `Restrict`/`NoAction` ante borrado. `RssSource.id` será un `String` UUID estable y `News.sourceId` continuará siendo obligatorio; no se mantendrá como un escalar sin integridad referencial.
 
-No existe producción, la desactivación nunca borra la fuente y el E2E de Sprint 1 necesita una procedencia demostrable. La FK garantiza que cada `News.sourceId` refiera a una fuente estable, evita cascadas y protege contra un borrado físico accidental. El schema Prisma, `RssSource`, la FK, la migración coordinada con `dedupeKey NOT NULL` de HU-04 y los fixtures que crean primero su fuente fueron implementados y verificados en el Paso 3B. Permanecen pendientes el repositorio de fuentes, los casos de uso, la API y el provider.
+No existe producción, la desactivación nunca borra la fuente y el E2E de Sprint 1 necesita una procedencia demostrable. La FK garantiza que cada `News.sourceId` refiera a una fuente estable, evita cascadas y protege contra un borrado físico accidental. El schema Prisma, `RssSource`, la FK, la migración coordinada con `dedupeKey NOT NULL`, el repositorio, los casos de uso, la API y el provider están implementados y verificados.
 
 ## Risks / Trade-offs
 
@@ -189,13 +191,12 @@ No existe producción, la desactivación nunca borra la fuente y el E2E de Sprin
 - **Latencia de validación:** la creación o actualización espera la verificación remota; el timeout común garantiza finalización finita.
 - **Relación con News:** la FK fortalece integridad y trazabilidad; el Paso 3B ya ordenó la migración y los fixtures para que la fuente exista antes de guardar noticias.
 - **Canales/medios:** la especificación global y la planificación original de HU-15 exigen esta gestión, mientras Issue #16/OpenSpec cubre ahora un slice de fuentes. No se crea `Channel` aquí, pero la capacidad no es opcional: debe registrarse explícitamente en backlog antes del cierre del proyecto y mostrarse como separación de alcance en Sprint Review.
-- **HU-02:** su cambio pendiente aún habla de cualquier fuente registrada y no aclara el comportamiento manual sobre una fuente desactivada. Debe reconciliarse posteriormente sin modificarlo en este paso.
 
 ## Migration Plan
 
-El Paso 3B completó `RssSource`, su restricción única, la FK obligatoria `News.sourceId -> RssSource.id` con `Restrict`/`NoAction`, la migración coordinada con `dedupeKey NOT NULL` y la adaptación de fixtures. También verificó la migración desde una base PostgreSQL vacía.
+La implementación completó `RssSource`, su restricción única, la FK obligatoria `News.sourceId -> RssSource.id` con `Restrict`/`NoAction`, la migración coordinada con `dedupeKey NOT NULL`, el repositorio, los casos de uso, la API y el provider. La migración desde una base PostgreSQL vacía y las pruebas unitarias, de integración y E2E fueron verificadas.
 
-Permanecen pendientes implementar el repositorio de fuentes, los casos de uso, la API y el provider; después deberán ejecutarse sus pruebas unitarias, de integración y E2E.
+Solo permanecen abiertas las tareas documentales 9.1 y 9.2 sobre la capacidad obligatoria pendiente de Channel/Media.
 
 No existe producción que migrar y no se realizará borrado físico de fuentes.
 

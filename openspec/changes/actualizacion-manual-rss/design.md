@@ -1,5 +1,7 @@
 ## Context
 
+**ADR aplicables:** [ADR-002](../../../docs/adr/ADR-002-stack-node-nest-prisma-jest.md), [ADR-003](../../../docs/adr/ADR-003-captura-rss-y-scheduling.md), [ADR-004](../../../docs/adr/ADR-004-monolito-modular-y-separacion-de-responsabilidades.md) y [ADR-005](../../../docs/adr/ADR-005-estrategia-combinada-de-pruebas.md). [ADR-006](../../../docs/adr/ADR-006-reevaluacion-nestjs-10-vs-11.md) permanece Propuesto y no autoriza cambios de dependencias.
+
 La motivación y el alcance funcional se describen en `proposal.md`; los comportamientos verificables están en `specs/actualizacion-manual-rss/spec.md`. El backend es un monolito modular NestJS sobre Node.js y TypeScript, con PostgreSQL/Prisma y Jest.
 
 Después de Sprint 1 están integrados:

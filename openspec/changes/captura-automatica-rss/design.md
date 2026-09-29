@@ -1,10 +1,12 @@
 ## Context
 
+**ADR aplicables:** [ADR-002](../../../docs/adr/ADR-002-stack-node-nest-prisma-jest.md), [ADR-003](../../../docs/adr/ADR-003-captura-rss-y-scheduling.md), [ADR-004](../../../docs/adr/ADR-004-monolito-modular-y-separacion-de-responsabilidades.md) y [ADR-005](../../../docs/adr/ADR-005-estrategia-combinada-de-pruebas.md).
+
 La motivación y el alcance funcional se describen en `proposal.md`; los comportamientos verificables están en `specs/captura-automatica-rss/spec.md`. La arquitectura permanente y los ADR ya están sincronizados: HumWorld utiliza Node.js 24 LTS, TypeScript 5 y NestJS 10.4 como baseline temporal de Sprint 1. `ADR-003-captura-rss-y-scheduling.md` ratifica `@nestjs/axios`, `rss-parser` y `@nestjs/schedule` para esta capacidad.
 
-El backend ya contiene `CaptureModule`, sus límites, el orquestador y adaptadores provisionales. El acceso HTTP actual usa `fetch`, la interpretación usa expresiones regulares y el disparador usa `setTimeout`; esas implementaciones prueban parte de la orquestación, pero no cumplen todavía el stack ratificado ni todos los contratos actuales.
+El backend integra `CaptureModule` desde `AppModule`. El acceso HTTP usa `HttpService`, la interpretación usa `rss-parser` detrás del guard RSS-only y la planificación se administra con `@nestjs/schedule` y `SchedulerRegistry`. Los adaptadores provisionales descritos durante el diseño inicial ya no forman parte de la implementación vigente.
 
-HU-15 ya define un límite de lectura que entrega una instantánea del conjunto elegible para captura. HU-01 consume ese conjunto sin redefinir su estado ni sus reglas administrativas. HU-18 ya cerró su contrato definitivo: `PeriodicityProviderPort` entrega `configured(minutes)` o `unconfigured`, y `PeriodicityChangeNotifierPort` permite suscribirse a cambios `PeriodicityChange { state, effectiveAt }` posteriores a la persistencia. Las implementaciones reales de esos límites aún no existen y los puertos provisionales de `capture` no expresan completamente los contratos; por ello `CaptureModule` todavía no está integrado en `AppModule`.
+HU-15 define el límite de lectura que entrega una instantánea del conjunto elegible para captura. HU-01 consume ese conjunto sin redefinir su estado ni sus reglas administrativas. HU-18 entrega el estado mediante `PeriodicityProviderPort` y notifica cambios posteriores a la persistencia mediante `PeriodicityChangeNotifierPort`. Las implementaciones reales de esos límites están conectadas de forma unidireccional y `CaptureModule` está integrado en `AppModule`.
 
 HU-01 produce cero o más ítems RSS interpretados mediante `CaptureOutputPort`. HU-04 ya implementa ese lado de salida dentro de `NewsModule`; la identidad y persistencia de noticias continúan perteneciendo al cambio de HU-04.
 
@@ -131,13 +133,13 @@ El guard se liberará siempre al finalizar la captura en curso, también cuando 
 
 #### Mantener un límite abstracto hacia HU-04
 
-Una fuente RSS válida produce cero o más ítems mediante `CaptureOutputPort`. `CaptureOrchestratorService` no conoce Prisma ni las reglas de identidad. `NewsModule` implementa el puerto del lado de HU-04 y `CaptureModule` conserva esa composición interna; la importación de `CaptureModule` en `AppModule` se realizará cuando existan proveedores reales compatibles para HU-15 y HU-18.
+Una fuente RSS válida produce cero o más ítems mediante `CaptureOutputPort`. `CaptureOrchestratorService` no conoce Prisma ni las reglas de identidad. `NewsModule` implementa el puerto del lado de HU-04 y `CaptureModule` conserva esa composición interna; `AppModule` importa `CaptureModule` con los providers reales de HU-15 y HU-18.
 
-### Decisiones PENDIENTES
+### Decisión resuelta durante la implementación
 
-#### Técnica del guard si requiere una dependencia XML adicional
+#### Guard RSS-only sin dependencia XML adicional
 
-El resultado exigido del guard está aprobado, pero no se aprueba ninguna dependencia XML nueva en este cambio. Si las capacidades ya disponibles no permiten un guard robusto y verificable, la selección de esa dependencia queda pendiente de revisión humana.
+El guard RSS-only se implementó con las capacidades ya disponibles y se cubrió con pruebas para RSS, Atom, HTML y contenido inválido. No se añadió una dependencia XML.
 
 ## Risks / Trade-offs
 
@@ -146,13 +148,11 @@ El resultado exigido del guard está aprobado, pero no se aprueba ninguna depend
 - **[El procesamiento secuencial puede prolongar una ejecución]** → Aplicar el timeout por fuente y medir antes de proponer concurrencia.
 - **[Una captura puede continuar cuando llega otra activación automática]** → Aplicar el guard aprobado, omitir esa activación sin encolarla y liberar siempre el guard al finalizar para admitir la siguiente activación normal.
 - **[Una misma notificación podría entregarse más de una vez por un defecto de integración]** → Hacer idempotente el listener respecto de `state + effectiveAt` para no duplicar ni desplazar jobs.
-- **[El provider de HU-15 y el provider/notifier de HU-18 aún no están implementados]** → Mantener `CaptureModule` fuera de `AppModule` hasta que la composición pueda resolverse sin dobles provisionales.
-- **[Las dependencias ratificadas aún no están declaradas]** → Mantener pendientes las tareas de dependencias, adaptadores, integración y verificación final.
 
 ## Migration Plan
 
-No se requiere migración de datos. La implementación sustituirá de forma conjunta los adaptadores provisionales de HTTP, parser y scheduling, incorporará la configuración central y el guard de solapamiento, adaptará el provider de HU-15 e integrará el provider/notifier definitivos de HU-18. La integración raíz se habilitará solo cuando todos sus providers sean resolubles y la suscripción quede activa antes del tráfico externo. El cambio deberá verificarse con pruebas unitarias, de integración, E2E y build antes de retirar los provisionales.
+No se requirió migración de datos. La implementación sustituyó los adaptadores provisionales, incorporó la configuración central y el guard de solapamiento, y conectó los contratos definitivos de HU-15 y HU-18. La integración raíz quedó habilitada con providers resolubles y se verificó mediante pruebas unitarias, de integración, E2E y build.
 
 ## Open Questions
 
-- ¿Puede implementarse un guard RSS-only robusto con las capacidades ya aprobadas o debe proponerse una dependencia XML adicional para revisión humana?
+Ninguna. El guard RSS-only se implementó sin añadir una dependencia XML.
