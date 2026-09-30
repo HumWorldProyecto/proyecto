@@ -36,7 +36,11 @@ export class MultipleSourceCaptureController {
 
   @Post('capture')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Actualizar manualmente múltiples fuentes RSS' })
+  @ApiOperation({
+    summary: 'Actualizar manualmente múltiples fuentes RSS',
+    description:
+      'Captura manualmente múltiples fuentes RSS seleccionadas. Requiere al menos dos sourceIds efectivos, deduplica conservando el orden de su primera aparición y procesa cada fuente de forma aislada. Los fallos individuales aparecen en results sin convertir un batch válido en error HTTP.',
+  })
   @ApiBody({ required: true, type: MultipleSourceCaptureRequestDto })
   @ApiOkResponse({
     description:
