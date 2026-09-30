@@ -12,7 +12,9 @@ import { CAPTURE_OUTPUT_PORT } from '../../src/capture/ports/capture-output.port
 import { RSS_FETCHER_PORT } from '../../src/capture/ports/rss-fetcher.port';
 import { RSS_PARSER_PORT } from '../../src/capture/ports/rss-parser.port';
 import { ManualSourceCaptureController } from '../../src/capture/controllers/manual-source-capture.controller';
+import { MultipleSourceCaptureController } from '../../src/capture/controllers/multiple-source-capture.controller';
 import { ManualSourceCaptureService } from '../../src/capture/services/manual-source-capture.service';
+import { MultipleSourceCaptureService } from '../../src/capture/services/multiple-source-capture.service';
 import { SourceCaptureGuard } from '../../src/capture/services/source-capture-guard';
 import { SourceCaptureService } from '../../src/capture/services/source-capture.service';
 import { NewsCaptureOutputAdapter } from '../../src/news/integrations/news-capture-output.adapter';
@@ -55,6 +57,12 @@ describe('AppModule productivo (integración PostgreSQL real)', () => {
     );
     expect(moduleRef.get(ManualSourceCaptureController)).toBeInstanceOf(
       ManualSourceCaptureController,
+    );
+    expect(moduleRef.get(MultipleSourceCaptureService)).toBeInstanceOf(
+      MultipleSourceCaptureService,
+    );
+    expect(moduleRef.get(MultipleSourceCaptureController)).toBeInstanceOf(
+      MultipleSourceCaptureController,
     );
     expect(moduleRef.get(CaptureScheduler)).toBeInstanceOf(CaptureScheduler);
   });

@@ -16,6 +16,8 @@ import { SourceCaptureGuard } from './services/source-capture-guard';
 import { SourceCaptureService } from './services/source-capture.service';
 import { ManualSourceCaptureService } from './services/manual-source-capture.service';
 import { ManualSourceCaptureController } from './controllers/manual-source-capture.controller';
+import { MultipleSourceCaptureService } from './services/multiple-source-capture.service';
+import { MultipleSourceCaptureController } from './controllers/multiple-source-capture.controller';
 
 /**
  * Composición unidireccional del flujo automático HU-15 -> HU-01 -> HU-04,
@@ -30,11 +32,12 @@ import { ManualSourceCaptureController } from './controllers/manual-source-captu
     NewsModule,
     RssHttpConfigModule,
   ],
-  controllers: [ManualSourceCaptureController],
+  controllers: [ManualSourceCaptureController, MultipleSourceCaptureController],
   providers: [
     SourceCaptureGuard,
     SourceCaptureService,
     ManualSourceCaptureService,
+    MultipleSourceCaptureService,
     CaptureOrchestratorService,
     AutomaticCaptureJob,
     CaptureScheduler,
