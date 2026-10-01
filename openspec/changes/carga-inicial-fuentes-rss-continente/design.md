@@ -4,7 +4,7 @@ La motivación y el alcance funcional se describen en [proposal.md](./proposal.m
 
 Actualmente `RssSource` identifica cada fuente por una URL única y conserva `id`, `active` y sus relaciones con `News`. No existe un atributo geográfico. El CRUD administrativo normaliza y valida URLs, mientras que `SourceRegistryPort` expone a los casos de captura únicamente `{ id, url }`. HU-14 debe añadir una clasificación continental opcional y una carga inicial reproducible sin ampliar esos contratos.
 
-La lista definitiva de feeds todavía no está aprobada. La implementación del manifiesto queda bloqueada hasta recibir esa aprobación; este diseño no selecciona, busca ni inventa URLs.
+La lista definitiva de feeds fue aprobada el 2026-10-01 después de completar la curación descrita en este diseño. La implementación del manifiesto queda habilitada únicamente para ese dataset; cualquier sustitución o incorporación futura requerirá una nueva revisión explícita y no se inferirá durante la implementación.
 
 ADR aplicables:
 
@@ -35,6 +35,23 @@ No hay contradicción con decisiones aceptadas ni se propone cambiar el estado d
 - Añadir dependencias, scripts de `package.json` o ejecución automática durante el arranque.
 
 ## Decisions
+
+### 0. Dataset editorial aprobado y evidencia de curación
+
+El 2026-10-01 quedó aprobado el siguiente conjunto inicial, con una fuente por cada continente admitido:
+
+| Continente | URL aprobada |
+| --- | --- |
+| `AFRICA` | `https://africanews.com/feed/rss` |
+| `ASIA` | `https://www.straitstimes.com/news/asia/rss.xml` |
+| `EUROPE` | `https://www.euronews.com/rss?format=mrss&level=theme&name=news` |
+| `NORTH_AMERICA` | `https://moxie.foxnews.com/google-publisher/latest.xml` |
+| `SOUTH_AMERICA` | `https://en.mercopress.com/rss/` |
+| `OCEANIA` | `https://www.theguardian.com/australia-news/rss` |
+
+Las seis URLs fueron verificadas en un proceso controlado con el comportamiento real de producción de `HttpRssFetcher` y `RssOnlyParser`, incluyendo la normalización, resolución de destino, política SSRF, fijación del Agent, redirecciones seguras y validación de raíz RSS. La selección no usa scraping.
+
+Esta validación de red pertenece a la curación previa del dataset y no se traslada al seed. El manifiesto versionará las URL aprobadas y el seed será completamente offline: normalizará y validará su estructura local, pero no volverá a consultarlas por Internet. Cuando una de estas fuentes sea utilizada por la captura normal, `HttpRssFetcher` volverá a aplicar DNS, política SSRF, fijación de destino, redirecciones y descarga, y `RssOnlyParser` validará e interpretará el documento recibido en esa ejecución.
 
 ### 1. El continente será un enum Prisma nullable en `RssSource`
 
@@ -83,7 +100,7 @@ Alternativa descartada: incluir la carga como SQL dentro de la migración. Mezcl
 
 ### 3. El dataset será un manifiesto TypeScript estático y versionado
 
-El manifiesto previsto estará en `backend/src/sources/seed/initial-rss-sources.manifest.ts` y declarará entradas inmutables con forma `{ url, continent }`. Importará el tipo `Continent` generado por Prisma para evitar duplicar el conjunto de valores. Solo se poblará cuando exista una lista de URLs aprobada explícitamente.
+El manifiesto previsto estará en `backend/src/sources/seed/initial-rss-sources.manifest.ts` y declarará entradas inmutables con forma `{ url, continent }`. Importará el tipo `Continent` generado por Prisma para evitar duplicar el conjunto de valores. Se poblará exclusivamente con el dataset aprobado en la decisión 0.
 
 Antes de persistir, un validador puro en `backend/src/sources/seed/initial-rss-sources.validator.ts`:
 

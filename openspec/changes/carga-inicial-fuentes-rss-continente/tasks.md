@@ -1,10 +1,10 @@
 ## 1. Aprobar el dataset de fuentes
 
-- [ ] 1.1 Recibir del Equipo 5 la lista explícitamente aprobada de URLs y continentes, sin inventar ni incorporar candidatos no revisados.
-- [ ] 1.2 Verificar en un proceso de curación separado que cada URL aprobada sea RSS público real —no Atom—, HTTP/S sin autenticación, estable/canónica y preferentemente HTTPS.
-- [ ] 1.3 Verificar en la curación que cada feed aprobado cumpla la política SSRF vigente, sea interpretable por `RssOnlyParser` y no requiera scraping, sin trasladar llamadas de red al seed.
-- [ ] 1.4 Confirmar que la lista aprobada cubra `AFRICA`, `ASIA`, `EUROPE`, `NORTH_AMERICA`, `SOUTH_AMERICA` y `OCEANIA`, excluya Antártida y asocie cada continente por origen editorial, no por hosting.
-- [ ] 1.5 Obtener la revisión humana final del dataset y bloquear toda implementación del manifiesto hasta completar esta puerta.
+- [x] 1.1 Recibir del Equipo 5 la lista explícitamente aprobada de URLs y continentes, sin inventar ni incorporar candidatos no revisados.
+- [x] 1.2 Verificar en un proceso de curación separado que cada URL aprobada sea RSS público real —no Atom—, HTTP/S sin autenticación, estable/canónica y preferentemente HTTPS.
+- [x] 1.3 Verificar en la curación que cada feed aprobado cumpla la política SSRF vigente, sea interpretable por `RssOnlyParser` y no requiera scraping, sin trasladar llamadas de red al seed.
+- [x] 1.4 Confirmar que la lista aprobada cubra `AFRICA`, `ASIA`, `EUROPE`, `NORTH_AMERICA`, `SOUTH_AMERICA` y `OCEANIA`, excluya Antártida y asocie cada continente por origen editorial, no por hosting.
+- [x] 1.5 Obtener la revisión humana final del dataset y bloquear toda implementación del manifiesto hasta completar esta puerta.
 
 ## 2. Evolucionar el esquema y la migración Prisma
 
