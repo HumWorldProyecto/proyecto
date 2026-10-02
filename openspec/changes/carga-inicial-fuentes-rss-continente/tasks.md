@@ -8,21 +8,21 @@
 
 ## 2. Evolucionar el esquema y la migración Prisma
 
-- [ ] 2.1 Añadir al esquema Prisma el enum `Continent` con exactamente los seis valores aprobados.
-- [ ] 2.2 Añadir `continent Continent?` a `RssSource` sin modificar `News`, relaciones ni restricciones existentes.
-- [ ] 2.3 Generar una migración Prisma nueva para crear el enum y la columna nullable, sin editar migraciones históricas.
-- [ ] 2.4 Revisar que la migración sea aditiva y no contenga backfill, DML, URLs ni operaciones de red.
-- [ ] 2.5 Ejecutar `prisma validate` y `prisma generate` y revisar que el cliente exponga el enum previsto.
+- [x] 2.1 Añadir al esquema Prisma el enum `Continent` con exactamente los seis valores aprobados.
+- [x] 2.2 Añadir `continent Continent?` a `RssSource` sin modificar `News`, relaciones ni restricciones existentes.
+- [x] 2.3 Generar una migración Prisma nueva para crear el enum y la columna nullable, sin editar migraciones históricas.
+- [x] 2.4 Revisar que la migración sea aditiva y no contenga backfill, DML, URLs ni operaciones de red.
+- [x] 2.5 Ejecutar `prisma validate` y `prisma generate` y revisar que el cliente exponga el enum previsto.
 
 ## 3. Crear y validar el manifiesto versionado
 
-- [ ] 3.1 Crear el tipo inmutable de entrada `{ url, continent }` reutilizando `Continent` del cliente Prisma.
-- [ ] 3.2 Crear `initial-rss-sources.manifest.ts` exclusivamente con las URLs y asociaciones aprobadas en la sección 1.
-- [ ] 3.3 Implementar la validación de presencia de URL y de pertenencia al conjunto exacto de continentes aprobados.
-- [ ] 3.4 Reutilizar `SourceUrlNormalizer` para obtener la representación normalizada de cada URL antes de persistir.
-- [ ] 3.5 Detectar y rechazar URLs duplicadas después de normalizar, antes de abrir una transacción.
-- [ ] 3.6 Validar que el manifiesto incluya al menos una fuente por cada uno de los seis continentes.
-- [ ] 3.7 Devolver desde el validador una colección normalizada e inmutable y errores controlados que no escriban datos.
+- [x] 3.1 Crear el tipo inmutable de entrada `{ url, continent }` reutilizando `Continent` del cliente Prisma.
+- [x] 3.2 Crear `initial-rss-sources.manifest.ts` exclusivamente con las URLs y asociaciones aprobadas en la sección 1.
+- [x] 3.3 Implementar la validación de presencia de URL y de pertenencia al conjunto exacto de continentes aprobados.
+- [x] 3.4 Reutilizar `SourceUrlNormalizer` para obtener la representación normalizada de cada URL antes de persistir.
+- [x] 3.5 Detectar y rechazar URLs duplicadas después de normalizar, antes de abrir una transacción.
+- [x] 3.6 Validar que el manifiesto incluya al menos una fuente por cada uno de los seis continentes.
+- [x] 3.7 Devolver desde el validador una colección normalizada e inmutable y errores controlados que no escriban datos.
 
 ## 4. Implementar la carga transaccional e idempotente
 
@@ -45,9 +45,9 @@
 
 ## 6. Cubrir manifiesto y seeder con pruebas unitarias
 
-- [ ] 6.1 Probar que el manifiesto aprobado contiene exactamente la taxonomía permitida, cubre los seis continentes, excluye Antártida y conserva la correspondencia URL-continente aprobada.
-- [ ] 6.2 Probar el rechazo de cobertura incompleta, URL o continente ausente y valor continental no permitido.
-- [ ] 6.3 Probar el rechazo de URL inválida, protocolo no HTTP/S, credenciales y duplicados equivalentes después de normalizar.
+- [x] 6.1 Probar que el manifiesto aprobado contiene exactamente la taxonomía permitida, cubre los seis continentes, excluye Antártida y conserva la correspondencia URL-continente aprobada.
+- [x] 6.2 Probar el rechazo de cobertura incompleta, URL o continente ausente y valor continental no permitido.
+- [x] 6.3 Probar el rechazo de URL inválida, protocolo no HTTP/S, credenciales y duplicados equivalentes después de normalizar.
 - [ ] 6.4 Probar la creación de una fuente inexistente con `active: true` y su continente.
 - [ ] 6.5 Probar el enriquecimiento de fuentes activas e inactivas con continente ausente, preservando identificador y estado.
 - [ ] 6.6 Probar el no-op y la repetición idempotente cuando la fuente ya tenga el mismo continente.
