@@ -26,34 +26,34 @@
 
 ## 4. Implementar la carga transaccional e idempotente
 
-- [ ] 4.1 Definir el resultado resumido del seeder y un error controlado que identifique conflictos de continente sin exponer secretos.
-- [ ] 4.2 Ejecutar la validación completa del manifiesto antes de iniciar cualquier operación de persistencia.
-- [ ] 4.3 Procesar la colección validada en orden determinista dentro de una única transacción interactiva de Prisma.
-- [ ] 4.4 Crear como activa una fuente cuya URL normalizada no exista, asignando su continente aprobado.
-- [ ] 4.5 Asignar el continente a una fuente existente con `continent: null` sin cambiar su identificador ni su estado.
-- [ ] 4.6 Tratar como no-op una fuente existente con el mismo continente, sin duplicarla ni actualizarla innecesariamente.
-- [ ] 4.7 Detectar una fuente existente con otro continente, lanzar el conflicto controlado y abortar la transacción completa.
-- [ ] 4.8 Garantizar que ninguna ruta del seeder reactive fuentes inactivas ni modifique `id` o datos de `News`.
-- [ ] 4.9 Propagar fallos de persistencia tras el rollback y producir contadores coherentes de creadas, enriquecidas y sin cambios.
+- [x] 4.1 Definir el resultado resumido del seeder y un error controlado que identifique conflictos de continente sin exponer secretos.
+- [x] 4.2 Ejecutar la validación completa del manifiesto antes de iniciar cualquier operación de persistencia.
+- [x] 4.3 Procesar la colección validada en orden determinista dentro de una única transacción interactiva de Prisma.
+- [x] 4.4 Crear como activa una fuente cuya URL normalizada no exista, asignando su continente aprobado.
+- [x] 4.5 Asignar el continente a una fuente existente con `continent: null` sin cambiar su identificador ni su estado.
+- [x] 4.6 Tratar como no-op una fuente existente con el mismo continente, sin duplicarla ni actualizarla innecesariamente.
+- [x] 4.7 Detectar una fuente existente con otro continente, lanzar el conflicto controlado y abortar la transacción completa.
+- [x] 4.8 Garantizar que ninguna ruta del seeder reactive fuentes inactivas ni modifique `id` o datos de `News`.
+- [x] 4.9 Propagar fallos de persistencia tras el rollback y producir contadores coherentes de creadas, enriquecidas y sin cambios.
 
 ## 5. Proporcionar la ejecución explícita y offline
 
-- [ ] 5.1 Crear `load-initial-rss-sources.ts` para construir `PrismaClient`, invocar el seeder y cerrar siempre la conexión.
-- [ ] 5.2 Hacer que el entry point termine con código distinto de cero y un diagnóstico controlado ante validación, conflicto o fallo de persistencia.
+- [x] 5.1 Crear `load-initial-rss-sources.ts` para construir `PrismaClient`, invocar el seeder y cerrar siempre la conexión.
+- [x] 5.2 Hacer que el entry point termine con código distinto de cero y un diagnóstico controlado ante validación, conflicto o fallo de persistencia.
 - [ ] 5.3 Verificar que el loader compilado se ejecute con `node dist/sources/seed/load-initial-rss-sources.js` después de las migraciones.
-- [ ] 5.4 Confirmar que el loader no se importe desde `main.ts` ni `SourcesModule`, no haga llamadas de red y no requiera cambios en dependencias o `package.json`.
+- [x] 5.4 Confirmar que el loader no se importe desde `main.ts` ni `SourcesModule`, no haga llamadas de red y no requiera cambios en dependencias o `package.json`.
 
 ## 6. Cubrir manifiesto y seeder con pruebas unitarias
 
 - [x] 6.1 Probar que el manifiesto aprobado contiene exactamente la taxonomía permitida, cubre los seis continentes, excluye Antártida y conserva la correspondencia URL-continente aprobada.
 - [x] 6.2 Probar el rechazo de cobertura incompleta, URL o continente ausente y valor continental no permitido.
 - [x] 6.3 Probar el rechazo de URL inválida, protocolo no HTTP/S, credenciales y duplicados equivalentes después de normalizar.
-- [ ] 6.4 Probar la creación de una fuente inexistente con `active: true` y su continente.
-- [ ] 6.5 Probar el enriquecimiento de fuentes activas e inactivas con continente ausente, preservando identificador y estado.
-- [ ] 6.6 Probar el no-op y la repetición idempotente cuando la fuente ya tenga el mismo continente.
-- [ ] 6.7 Probar el conflicto controlado cuando la fuente tenga un continente diferente y comprobar que no se intenta reasignar.
-- [ ] 6.8 Probar la propagación de un fallo tardío y que el seeder no informe una ejecución parcial como exitosa.
-- [ ] 6.9 Probar que la validación precede a la transacción y que ningún test del seed necesita HTTP, DNS, fetcher o parser remotos.
+- [x] 6.4 Probar la creación de una fuente inexistente con `active: true` y su continente.
+- [x] 6.5 Probar el enriquecimiento de fuentes activas e inactivas con continente ausente, preservando identificador y estado.
+- [x] 6.6 Probar el no-op y la repetición idempotente cuando la fuente ya tenga el mismo continente.
+- [x] 6.7 Probar el conflicto controlado cuando la fuente tenga un continente diferente y comprobar que no se intenta reasignar.
+- [x] 6.8 Probar la propagación de un fallo tardío y que el seeder no informe una ejecución parcial como exitosa.
+- [x] 6.9 Probar que la validación precede a la transacción y que ningún test del seed necesita HTTP, DNS, fetcher o parser remotos.
 
 ## 7. Verificar migración y seed con PostgreSQL real
 
