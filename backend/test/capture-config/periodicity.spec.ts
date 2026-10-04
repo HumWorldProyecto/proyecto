@@ -14,7 +14,7 @@ describe('catálogo de periodicidad', () => {
     expect(configuredPeriodicity(value)).toEqual({ kind: 'configured', minutes: value });
   });
 
-  it.each([undefined, null, '30', true, false, 0, 14, 30.5, 31, 1450, NaN, Infinity])(
+  it.each([undefined, null, '30', true, false, -1, 0, 14, 30.5, 31, 1450, NaN, Infinity])(
     'rechaza estrictamente %p',
     (value) => {
       expect(isAllowedPeriodicityMinutes(value)).toBe(false);
