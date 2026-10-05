@@ -9,11 +9,10 @@ export type PeriodicityState =
   | Readonly<{ kind: 'unconfigured' }>;
 
 export function isAllowedPeriodicityMinutes(value: unknown): value is AllowedPeriodicityMinutes {
-return (
-  typeof value === 'number' &&
-  (value === -1 ||
-    ALLOWED_PERIODICITY_MINUTES.some((allowed) => allowed === value))
-);
+  return (
+    typeof value === 'number' &&
+    ALLOWED_PERIODICITY_MINUTES.some((allowed) => allowed === value)
+  );
 }
 
 export function requireAllowedPeriodicityMinutes(value: unknown): AllowedPeriodicityMinutes {
