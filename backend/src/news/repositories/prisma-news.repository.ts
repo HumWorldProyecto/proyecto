@@ -6,6 +6,11 @@ import {
   IdentifiedCapturedNewsItem,
   NewsDedupeKey,
 } from '../types/identified-captured-news-item';
+import {
+  isOfficialMediaTopicQCode,
+  resolveOfficialMediaTopics,
+} from '../../classification/catalog/iptc-media-topics';
+import { MEDIA_TOPIC_QCODES } from '../../classification/types/media-topic';
 
 function isValidDedupeKey(value: unknown): value is NewsDedupeKey {
   if (typeof value !== 'string') {
@@ -33,6 +38,7 @@ export class PrismaNewsRepository implements NewsRepositoryPort {
       guid: row.guid,
       description: row.description,
       pubDate: row.pubDate,
+      mediaTopics: resolveOfficialMediaTopics(row.mediaTopicQcodes),
       capturedAt: row.capturedAt,
     }));
   }
@@ -43,6 +49,10 @@ export class PrismaNewsRepository implements NewsRepositoryPort {
     }
 
     const pubDate = item.pubDate ? new Date(item.pubDate) : null;
+    const requestedQCodes = new Set(
+      (item.mediaTopicQcodes ?? []).filter(isOfficialMediaTopicQCode),
+    );
+    const mediaTopicQcodes = MEDIA_TOPIC_QCODES.filter((qcode) => requestedQCodes.has(qcode));
     const data = {
       sourceId: item.sourceId,
       title: item.title ?? null,
@@ -51,6 +61,7 @@ export class PrismaNewsRepository implements NewsRepositoryPort {
       description: item.description ?? null,
       pubDate,
       dedupeKey: item.dedupeKey,
+      mediaTopicQcodes,
     };
 
     await this.prisma.news.upsert({

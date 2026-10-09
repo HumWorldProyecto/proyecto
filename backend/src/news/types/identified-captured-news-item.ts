@@ -1,3 +1,5 @@
+import { MediaTopicQCode } from '../../classification/types/media-topic';
+
 export type NewsDedupeKey = `guid:${string}` | `link:${string}`;
 
 export interface IdentifiedCapturedNewsItem {
@@ -8,4 +10,5 @@ export interface IdentifiedCapturedNewsItem {
   readonly guid?: string;
   readonly pubDate?: string;
   readonly description?: string;
+  readonly mediaTopicQcodes?: readonly MediaTopicQCode[];
 }
