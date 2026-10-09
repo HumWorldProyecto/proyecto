@@ -42,3 +42,18 @@ model News {
   @@unique([sourceId, dedupeKey])
   @@map("news")
 }
+
+enum DictionaryLanguage {
+  es
+  en
+}
+
+model DictionaryEntry {
+  id       String             @id @default(uuid())
+  term     String
+  language DictionaryLanguage
+  weight   Int
+
+  @@unique([language, term])
+  @@map("dictionary_entries")
+}
