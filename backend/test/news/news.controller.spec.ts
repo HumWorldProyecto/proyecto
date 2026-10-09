@@ -21,6 +21,13 @@ describe('NewsController', () => {
         guid: 'guid-1',
         description: 'desc',
         pubDate: new Date('2024-01-01T00:00:00.000Z'),
+        mediaTopics: [
+          {
+            qcode: 'medtop:13000000',
+            uri: 'http://cv.iptc.org/newscodes/mediatopic/13000000',
+            label: 'Ciencia y tecnología',
+          },
+        ],
         capturedAt: new Date('2024-01-02T00:00:00.000Z'),
       },
     ];
@@ -38,6 +45,7 @@ describe('NewsController', () => {
         guid: 'guid-1',
         description: 'desc',
         pubDate: news[0].pubDate,
+        mediaTopics: news[0].mediaTopics,
         capturedAt: news[0].capturedAt,
       },
     ]);

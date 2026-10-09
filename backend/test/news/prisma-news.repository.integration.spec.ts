@@ -201,4 +201,103 @@ describe('PrismaNewsRepository (integración, PostgreSQL real)', () => {
   it('devuelve una lista vacía cuando no hay noticias almacenadas', async () => {
     await expect(repository.findAll()).resolves.toEqual([]);
   });
+
+  it('persiste QCodes y devuelve sus metadatos oficiales junto con la noticia', async () => {
+    await repository.upsertCapturedItem({
+      sourceId: SOURCE_A_ID,
+      dedupeKey: 'guid:clasificada',
+      guid: 'clasificada',
+      mediaTopicQcodes: ['medtop:07000000', 'medtop:13000000'],
+    });
+
+    await expect(repository.findAll()).resolves.toEqual([
+      expect.objectContaining({
+        mediaTopics: [
+          {
+            qcode: 'medtop:07000000',
+            uri: 'http://cv.iptc.org/newscodes/mediatopic/07000000',
+            label: 'Salud',
+          },
+          {
+            qcode: 'medtop:13000000',
+            uri: 'http://cv.iptc.org/newscodes/mediatopic/13000000',
+            label: 'Ciencia y tecnología',
+          },
+        ],
+      }),
+    ]);
+  });
+
+  it('filtra valores ajenos, elimina duplicados y persiste el orden oficial', async () => {
+    const item = {
+      sourceId: SOURCE_A_ID,
+      dedupeKey: 'guid:normalizada',
+      guid: 'normalizada',
+      mediaTopicQcodes: [
+        'medtop:17000000',
+        'medtop:01000000',
+        'medtop:99999999',
+        'medtop:17000000',
+      ],
+    } as unknown as IdentifiedCapturedNewsItem;
+
+    await repository.upsertCapturedItem(item);
+
+    await expect(
+      prisma.news.findUnique({ where: { id: (await prisma.news.findFirstOrThrow()).id } }),
+    ).resolves.toMatchObject({
+      mediaTopicQcodes: ['medtop:01000000', 'medtop:17000000'],
+    });
+  });
+
+  it('no reclasifica un duplicado y conserva la clasificación de la primera captura', async () => {
+    const identity = {
+      sourceId: SOURCE_A_ID,
+      dedupeKey: 'guid:sin-reclasificar' as const,
+      guid: 'sin-reclasificar',
+    };
+
+    await repository.upsertCapturedItem({
+      ...identity,
+      mediaTopicQcodes: ['medtop:07000000'],
+    });
+    await repository.upsertCapturedItem({
+      ...identity,
+      mediaTopicQcodes: ['medtop:13000000'],
+    });
+
+    await expect(prisma.news.findFirstOrThrow()).resolves.toMatchObject({
+      mediaTopicQcodes: ['medtop:07000000'],
+    });
+  });
+
+  it('usa lista vacía por defecto para una noticia sin clasificación', async () => {
+    await repository.upsertCapturedItem({
+      sourceId: SOURCE_A_ID,
+      dedupeKey: 'guid:sin-tema',
+      guid: 'sin-tema',
+    });
+
+    await expect(prisma.news.findFirstOrThrow()).resolves.toMatchObject({ mediaTopicQcodes: [] });
+    await expect(repository.findAll()).resolves.toEqual([
+      expect.objectContaining({ mediaTopics: [] }),
+    ]);
+  });
+
+  it('rechaza en PostgreSQL un QCode que no pertenece al catálogo oficial', async () => {
+    await expect(
+      prisma.$executeRaw`
+        INSERT INTO "news" ("id", "sourceId", "dedupeKey", "mediaTopicQcodes", "capturedAt")
+        VALUES (
+          'news-invalid-topic',
+          ${SOURCE_A_ID},
+          'guid:invalid-topic',
+          ARRAY['medtop:99999999']::TEXT[],
+          CURRENT_TIMESTAMP
+        )
+      `,
+    ).rejects.toThrow();
+
+    await expect(prisma.news.count()).resolves.toBe(0);
+  });
 });

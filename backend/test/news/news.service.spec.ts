@@ -25,6 +25,7 @@ describe('NewsService', () => {
         guid: 'guid-1',
         description: 'desc',
         pubDate: new Date('2024-01-01T00:00:00.000Z'),
+        mediaTopics: [],
         capturedAt: new Date('2024-01-02T00:00:00.000Z'),
       },
     ];
@@ -185,6 +186,102 @@ describe('NewsService', () => {
     expect(upsertCapturedItem).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({ dedupeKey: 'guid:guid-2', title: 'Correcto' }),
+    );
+  });
+
+  it('clasifica título y descripción antes de persistir todos los QCodes coincidentes', async () => {
+    const upsertCapturedItem = jest.fn().mockResolvedValue(undefined);
+    const repository: NewsRepositoryPort = { findAll: jest.fn(), upsertCapturedItem };
+    const classifier = {
+      classify: jest.fn().mockReturnValue(['medtop:07000000', 'medtop:13000000']),
+    };
+    const service = new NewsService(repository, classifier);
+
+    await service.saveCapturedItems([
+      {
+        sourceId: 'a',
+        guid: 'guid-clasificado',
+        title: 'Nueva vacuna',
+        description: 'Tecnología médica',
+      },
+    ]);
+
+    expect(classifier.classify).toHaveBeenCalledWith({
+      title: 'Nueva vacuna',
+      description: 'Tecnología médica',
+    });
+    expect(upsertCapturedItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dedupeKey: 'guid:guid-clasificado',
+        mediaTopicQcodes: ['medtop:07000000', 'medtop:13000000'],
+      }),
+    );
+  });
+
+  it('continúa con lista vacía cuando el clasificador falla', async () => {
+    const upsertCapturedItem = jest.fn().mockResolvedValue(undefined);
+    const repository: NewsRepositoryPort = { findAll: jest.fn(), upsertCapturedItem };
+    const classifier = {
+      classify: jest.fn().mockImplementation(() => {
+        throw new Error('fallo de clasificación');
+      }),
+    };
+    const service = new NewsService(repository, classifier);
+
+    await expect(
+      service.saveCapturedItems([{ sourceId: 'a', guid: 'guid-fallback', title: 'Vacuna' }]),
+    ).resolves.toBeUndefined();
+
+    expect(upsertCapturedItem).toHaveBeenCalledWith(
+      expect.objectContaining({ mediaTopicQcodes: [] }),
+    );
+  });
+
+  it('un fallo del clasificador no bloquea los ítems siguientes del lote', async () => {
+    const upsertCapturedItem = jest.fn().mockResolvedValue(undefined);
+    const repository: NewsRepositoryPort = { findAll: jest.fn(), upsertCapturedItem };
+    const classifier = {
+      classify: jest
+        .fn()
+        .mockImplementationOnce(() => {
+          throw new Error('fallo aislado');
+        })
+        .mockReturnValueOnce(['medtop:13000000']),
+    };
+    const service = new NewsService(repository, classifier);
+
+    await service.saveCapturedItems([
+      { sourceId: 'a', guid: 'guid-primero', title: 'Primero' },
+      { sourceId: 'a', guid: 'guid-segundo', title: 'Tecnología' },
+    ]);
+
+    expect(upsertCapturedItem).toHaveBeenCalledTimes(2);
+    expect(upsertCapturedItem).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ dedupeKey: 'guid:guid-primero', mediaTopicQcodes: [] }),
+    );
+    expect(upsertCapturedItem).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        dedupeKey: 'guid:guid-segundo',
+        mediaTopicQcodes: ['medtop:13000000'],
+      }),
+    );
+  });
+
+  it('no transforma un fallo de persistencia en un fallback de clasificación', async () => {
+    const upsertCapturedItem = jest.fn().mockRejectedValue(new Error('postgres no disponible'));
+    const repository: NewsRepositoryPort = { findAll: jest.fn(), upsertCapturedItem };
+    const classifier = { classify: jest.fn().mockReturnValue(['medtop:07000000']) };
+    const service = new NewsService(repository, classifier);
+
+    await expect(
+      service.saveCapturedItems([{ sourceId: 'a', guid: 'guid-pg', title: 'Vacuna' }]),
+    ).resolves.toBeUndefined();
+
+    expect(classifier.classify).toHaveBeenCalledTimes(1);
+    expect(upsertCapturedItem).toHaveBeenCalledWith(
+      expect.objectContaining({ mediaTopicQcodes: ['medtop:07000000'] }),
     );
   });
 });

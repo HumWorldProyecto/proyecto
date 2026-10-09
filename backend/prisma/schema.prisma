@@ -28,16 +28,17 @@ model CaptureConfig {
 }
 
 model News {
-  id          String    @id @default(uuid())
-  sourceId    String
-  title       String?
-  link        String?
-  guid        String?
-  description String?
-  pubDate     DateTime?
-  dedupeKey   String
-  capturedAt  DateTime  @default(now())
-  source      RssSource @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  id                String    @id @default(uuid())
+  sourceId          String
+  title             String?
+  link              String?
+  guid              String?
+  description       String?
+  pubDate           DateTime?
+  dedupeKey         String
+  mediaTopicQcodes  String[]  @default([])
+  capturedAt        DateTime  @default(now())
+  source            RssSource @relation(fields: [sourceId], references: [id], onDelete: Restrict)
 
   @@unique([sourceId, dedupeKey])
   @@map("news")
