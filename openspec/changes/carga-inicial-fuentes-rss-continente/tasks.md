@@ -40,7 +40,7 @@
 
 - [x] 5.1 Crear `load-initial-rss-sources.ts` para construir `PrismaClient`, invocar el seeder y cerrar siempre la conexión.
 - [x] 5.2 Hacer que el entry point termine con código distinto de cero y un diagnóstico controlado ante validación, conflicto o fallo de persistencia.
-- [ ] 5.3 Verificar que el loader compilado se ejecute con `node dist/sources/seed/load-initial-rss-sources.js` después de las migraciones.
+- [x] 5.3 Verificar que el loader compilado se ejecute con `node dist/sources/seed/load-initial-rss-sources.js` después de las migraciones.
 - [x] 5.4 Confirmar que el loader no se importe desde `main.ts` ni `SourcesModule`, no haga llamadas de red y no requiera cambios en dependencias o `package.json`.
 
 ## 6. Cubrir manifiesto y seeder con pruebas unitarias
@@ -57,30 +57,30 @@
 
 ## 7. Verificar migración y seed con PostgreSQL real
 
-- [ ] 7.1 Preparar fixtures locales y aislados para ejecutar las pruebas de integración sin acceso a Internet.
-- [ ] 7.2 Probar la migración completa sobre una base PostgreSQL vacía.
-- [ ] 7.3 Preparar una base en el estado anterior con fuentes activas, inactivas y noticias relacionadas.
-- [ ] 7.4 Aplicar la nueva migración sobre la base anterior y comprobar que fuentes, noticias, relaciones y estados se conservan con `continent: null`.
-- [ ] 7.5 Ejecutar el seed sobre una base sin sus URLs y comprobar creación, cobertura continental y restricción única.
-- [ ] 7.6 Repetir el mismo seed y comprobar que no cambian cantidad de filas, identificadores, estados ni continentes.
-- [ ] 7.7 Ejecutar el seed con fuentes preexistentes sin continente y comprobar enriquecimiento sin reactivación.
-- [ ] 7.8 Introducir un conflicto continental tardío y comprobar el rollback de todas las creaciones y actualizaciones de esa ejecución.
-- [ ] 7.9 Forzar un fallo de persistencia tardío y comprobar atomicidad, ausencia de datos parciales y posibilidad de repetición posterior.
+- [x] 7.1 Preparar fixtures locales y aislados para ejecutar las pruebas de integración sin acceso a Internet.
+- [x] 7.2 Probar la migración completa sobre una base PostgreSQL vacía.
+- [x] 7.3 Preparar una base en el estado anterior con fuentes activas, inactivas y noticias relacionadas.
+- [x] 7.4 Aplicar la nueva migración sobre la base anterior y comprobar que fuentes, noticias, relaciones y estados se conservan con `continent: null`.
+- [x] 7.5 Ejecutar el seed sobre una base sin sus URLs y comprobar creación, cobertura continental y restricción única.
+- [x] 7.6 Repetir el mismo seed y comprobar que no cambian cantidad de filas, identificadores, estados ni continentes.
+- [x] 7.7 Ejecutar el seed con fuentes preexistentes sin continente y comprobar enriquecimiento sin reactivación.
+- [x] 7.8 Introducir un conflicto continental tardío y comprobar el rollback de todas las creaciones y actualizaciones de esa ejecución.
+- [x] 7.9 Forzar un fallo de persistencia tardío y comprobar atomicidad, ausencia de datos parciales y posibilidad de repetición posterior.
 
 ## 8. Ejecutar regresiones de fuentes y captura
 
-- [ ] 8.1 Probar que el CRUD de fuentes continúa aceptando altas basadas únicamente en URL y no exige continente.
-- [ ] 8.2 Probar que respuestas REST, DTO y OpenAPI no incorporan continente ni filtros geográficos.
-- [ ] 8.3 Probar que `SourceRegistryPort` y `EligibleSource` continúan exponiendo exclusivamente `{ id, url }` para fuentes con y sin continente.
-- [ ] 8.4 Ejecutar las regresiones de HU-01, HU-02 y HU-03 y comprobar que scheduling, captura individual y captura múltiple no dependen de geografía.
-- [ ] 8.5 Comprobar que la persistencia y deduplicación de `News` conservan solo la referencia `sourceId` y no copian continente.
+- [x] 8.1 Probar que el CRUD de fuentes continúa aceptando altas basadas únicamente en URL y no exige continente.
+- [x] 8.2 Probar que respuestas REST, DTO y OpenAPI no incorporan continente ni filtros geográficos.
+- [x] 8.3 Probar que `SourceRegistryPort` y `EligibleSource` continúan exponiendo exclusivamente `{ id, url }` para fuentes con y sin continente.
+- [x] 8.4 Ejecutar las regresiones de HU-01, HU-02 y HU-03 y comprobar que scheduling, captura individual y captura múltiple no dependen de geografía.
+- [x] 8.5 Comprobar que la persistencia y deduplicación de `News` conservan solo la referencia `sourceId` y no copian continente.
 
 ## 9. Validar calidad, alcance y arquitectura
 
-- [ ] 9.1 Validar `carga-inicial-fuentes-rss-continente` con OpenSpec en modo strict.
-- [ ] 9.2 Ejecutar nuevamente `prisma validate` y `prisma generate` sobre el resultado final.
-- [ ] 9.3 Ejecutar el build del backend y comprobar que el loader se emita en la ruta diseñada.
-- [ ] 9.4 Ejecutar las pruebas unitarias y de integración específicas de HU-14.
-- [ ] 9.5 Ejecutar la suite Jest completa con cobertura y confirmar el umbral global mínimo de 80 %.
-- [ ] 9.6 Ejecutar `git diff --check` y revisar que no haya cambios en dependencias, workflows, frontend, captura, scheduler, OpenAPI ni funcionalidad fuera de alcance.
-- [ ] 9.7 Revisar conformidad final con `docs/architecture.md` y ADR-002, ADR-003, ADR-004 y ADR-005, confirmando que no procede crear o modificar ADR.
+- [x] 9.1 Validar `carga-inicial-fuentes-rss-continente` con OpenSpec en modo strict.
+- [x] 9.2 Ejecutar nuevamente `prisma validate` y `prisma generate` sobre el resultado final.
+- [x] 9.3 Ejecutar el build del backend y comprobar que el loader se emita en la ruta diseñada.
+- [x] 9.4 Ejecutar las pruebas unitarias y de integración específicas de HU-14.
+- [x] 9.5 Ejecutar la suite Jest completa con cobertura y confirmar el umbral global mínimo de 80 %.
+- [x] 9.6 Ejecutar `git diff --check` y revisar que no haya cambios en dependencias, workflows, frontend, captura, scheduler, OpenAPI ni funcionalidad fuera de alcance.
+- [x] 9.7 Revisar conformidad final con `docs/architecture.md` y ADR-002, ADR-003, ADR-004 y ADR-005, confirmando que no procede crear o modificar ADR.

@@ -1,3 +1,4 @@
+import { Continent } from '@prisma/client';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { PrismaNewsRepository } from '../../src/news/repositories/prisma-news.repository';
 import { IdentifiedCapturedNewsItem } from '../../src/news/types/identified-captured-news-item';
@@ -24,7 +25,11 @@ describe('PrismaNewsRepository (integración, PostgreSQL real)', () => {
     await prisma.rssSource.deleteMany();
     await prisma.rssSource.createMany({
       data: [
-        { id: SOURCE_A_ID, url: 'https://source-a.example/rss' },
+        {
+          id: SOURCE_A_ID,
+          url: 'https://source-a.example/rss',
+          continent: Continent.EUROPE,
+        },
         { id: SOURCE_B_ID, url: 'https://source-b.example/rss' },
       ],
     });
@@ -59,6 +64,37 @@ describe('PrismaNewsRepository (integración, PostgreSQL real)', () => {
         },
       }),
     ).resolves.toMatchObject({ dedupeKey: 'guid:guid-1' });
+  });
+
+  it('conserva News sin continent aunque su fuente esté clasificada', async () => {
+    await repository.upsertCapturedItem({
+      sourceId: SOURCE_A_ID,
+      dedupeKey: 'guid:sin-continent-en-news',
+      guid: 'sin-continent-en-news',
+    });
+
+    const stored = await prisma.news.findUniqueOrThrow({
+      where: {
+        sourceId_dedupeKey: {
+          sourceId: SOURCE_A_ID,
+          dedupeKey: 'guid:sin-continent-en-news',
+        },
+      },
+    });
+    const columns = await prisma.$queryRaw<Array<{ column_name: string }>>`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'news'
+    `;
+
+    expect(stored).not.toHaveProperty('continent');
+    expect(columns.map(({ column_name }) => column_name)).not.toContain('continent');
+    await expect(repository.findAll()).resolves.toEqual([
+      expect.objectContaining({
+        sourceId: SOURCE_A_ID,
+        guid: 'sin-continent-en-news',
+      }),
+    ]);
   });
 
   it('conserva los metadatos disponibles aunque falten enlace y título', async () => {
