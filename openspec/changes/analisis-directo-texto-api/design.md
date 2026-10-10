@@ -101,6 +101,7 @@ Los DTO usarán decoradores Swagger para documentar campos, idiomas, límites, e
 - `backend/src/sentiment/dto/sentiment-analysis-response.dto.ts`
 - `backend/src/sentiment/errors/sentiment-analysis.error.ts`
 - `backend/src/sentiment/services/direct-sentiment-analysis.service.ts`
+- `backend/src/sentiment/types/direct-sentiment-analysis.ts`
 - `backend/src/sentiment/sentiment.module.ts`
 - `backend/test/sentiment/direct-sentiment-analysis.service.spec.ts`
 - `backend/test/sentiment/sentiment.controller.spec.ts`
