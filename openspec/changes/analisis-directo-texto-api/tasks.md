@@ -63,9 +63,9 @@
 
 - [x] 8.1 Crear un commit de especificación antes del código.
 - [x] 8.2 Crear un commit separado de implementación validada.
-- [ ] 8.3 Publicar solo `hu10/analisis-directo-texto-api`, sin force push.
-- [ ] 8.4 Ejecutar `workflow_dispatch` sobre la rama y comprobar `backend-tests` y `check`.
-- [ ] 8.5 No abrir PR a `main` mientras HU-17/HU-05 no estén integradas.
+- [x] 8.3 Publicar solo `hu10/analisis-directo-texto-api`, sin force push.
+- [x] 8.4 Ejecutar `workflow_dispatch` sobre la rama y comprobar `backend-tests` y `check`.
+- [x] 8.5 No abrir PR a `main` mientras HU-17/HU-05 no estén integradas.
 
 ## Evidencia local
 
@@ -77,3 +77,5 @@
 - Fallo real de lectura PostgreSQL provocado y restaurado dentro del test; respuesta `503` sanitizada comprobada.
 - OpenAPI generado desde NestJS: `POST /api/v1/sentiment/analyze`, DTO de request/response, límite 10.000 y respuestas `200/400/413/500/503`.
 - Sin cambios en dependencias, Prisma, News, Capture, scheduling, frontend, arquitectura o ADR.
+- GitHub Actions `workflow_dispatch` sobre `dd16946f07da4ee4ea069d836b943c3a0e70cc77`: ejecución [#38012130739](https://github.com/HumWorldProyecto/proyecto/actions/runs/38012130739), jobs `backend-tests` y `check` aprobados.
+- PR #42 (HU-17) continúa abierta y HU-05 aún no tiene PR; no se abrió PR de HU-10 a `main`.
