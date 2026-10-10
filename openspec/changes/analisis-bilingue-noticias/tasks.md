@@ -46,9 +46,9 @@
 
 - [x] 6.1 Crear `spec: define HU-07 bilingual news sentiment` antes de las pruebas nuevas.
 - [x] 6.2 Crear `test: verify HU-07 bilingual news sentiment` separado.
-- [ ] 6.3 Publicar solo `hu07/analisis-bilingue-noticias`, sin force push.
-- [ ] 6.4 Ejecutar GitHub Actions y comprobar `backend-tests` y `check`.
-- [ ] 6.5 No abrir PR a `main` mientras HU-05 siga pendiente de integración.
+- [x] 6.3 Publicar solo `hu07/analisis-bilingue-noticias`, sin force push.
+- [x] 6.4 Ejecutar GitHub Actions y comprobar `backend-tests` y `check`.
+- [x] 6.5 No abrir PR a `main` mientras HU-05 siga pendiente de integración.
 
 ## Evidencia local
 
@@ -62,3 +62,5 @@
 - PostgreSQL real descartable `16.15`, sin volumen, con las tres migraciones existentes aplicadas.
 - Fallos reales de las tablas `news` y `dictionary_entries` provocados y restaurados dentro de `finally`; ambos produjeron errores controlados.
 - Diff productivo vacío: sin cambios en `backend/src/**`, Prisma, dependencias, OpenAPI, News, Capture, scheduling, frontend, arquitectura o ADR.
+- GitHub Actions `workflow_dispatch` sobre `bd0e815156d08013c748d28e5a9e77020eac049b`: ejecución [#38024911739](https://github.com/HumWorldProyecto/proyecto/actions/runs/38024911739), jobs `backend-tests` y `check` aprobados.
+- PR #40, #41 y #42 continúan abiertas; HU-05 no tiene PR y no se abrió PR de HU-07 a `main`.
