@@ -66,7 +66,7 @@
 - [x] 8.4 Ejecutar `openspec validate persistencia-valor-humor --strict`.
 - [x] 8.5 Ejecutar `git diff --check` y revisar ausencia de secretos, dependencias y cambios fuera de alcance.
 - [x] 8.6 Verificar conformidad con arquitectura, ADR-002, ADR-004 y ADR-005 antes de marcar tareas.
-- [ ] 8.7 Publicar únicamente la rama HU-06, ejecutar GitHub Actions y documentar SHA, jobs y evidencia PostgreSQL.
+- [x] 8.7 Publicar únicamente la rama HU-06, ejecutar GitHub Actions y documentar SHA, jobs y evidencia PostgreSQL.
 - [x] 8.8 Verificar el gate de PR: abrir con `Closes #7` solo cuando las dependencias estén integradas; en caso contrario, no abrirla.
 
 ## Evidencia local
@@ -78,4 +78,4 @@
 - PostgreSQL real: esquema vacío, actualización de noticia histórica, constraints, fallos reales de diccionario/escritura y secuencia combinada HU-14/HU-16/HU-17/HU-06 aprobados.
 - OpenSpec strict y comprobación de whitespace aprobados; diff funcional vacío en captura, scheduling, dependencias y frontend.
 - La regresión productiva de HU-14, HU-16, HU-07 y HU-10 queda pendiente hasta que sus ramas se integren en la base; se validó su compatibilidad contractual y de migraciones aplicable.
-- La publicación y GitHub Actions se documentarán después del commit de implementación. No se abre PR mientras HU-17 y HU-05 sigan fuera de `main`.
+- GitHub Actions run 38166818143 sobre 77af6d050fc9b17eeed56afc347aa8fcdf72147a: backend-tests y check aprobados. No se abre PR mientras HU-17 y HU-05 sigan fuera de main.
