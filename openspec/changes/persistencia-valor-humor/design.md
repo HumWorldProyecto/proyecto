@@ -150,8 +150,8 @@ Códigos propuestos:
 | Análisis y persistencia correctos, incluidos cero coincidencias o diccionario vacío | `200` |
 | UUID, JSON o idioma inválido | `400` |
 | Noticia inexistente, también si desaparece antes de persistir | `404` |
-| Lectura del diccionario o acceso PostgreSQL temporalmente indisponible | `503` |
-| Fallo inesperado sanitizado | `500` |
+| Lectura del diccionario temporalmente indisponible | `503` |
+| Fallo de lectura de News, persistencia PostgreSQL u otro fallo inesperado | `500` |
 
 Ninguna respuesta de error expone SQL, credenciales, URL de conexión o mensajes internos.
 

@@ -3,7 +3,10 @@ import { PrismaNewsForSentimentReader } from '../../src/sentiment/adapters/prism
 import { SentimentController } from '../../src/sentiment/controllers/sentiment.controller';
 import { SentimentModule } from '../../src/sentiment/sentiment.module';
 import { NEWS_FOR_SENTIMENT_READER_PORT } from '../../src/sentiment/ports/news-for-sentiment-reader.port';
+import { NEWS_SENTIMENT_REPOSITORY_PORT } from '../../src/sentiment/ports/news-sentiment-repository.port';
 import { SENTIMENT_ANALYZER_PORT } from '../../src/sentiment/ports/sentiment-analyzer.port';
+import { PrismaNewsSentimentRepository } from '../../src/sentiment/repositories/prisma-news-sentiment.repository';
+import { AnalyzeAndPersistNewsSentimentService } from '../../src/sentiment/services/analyze-and-persist-news-sentiment.service';
 import { DictionarySentimentAnalyzer } from '../../src/sentiment/services/dictionary-sentiment-analyzer';
 import { DirectSentimentAnalysisService } from '../../src/sentiment/services/direct-sentiment-analysis.service';
 import { NewsSentimentAnalysisService } from '../../src/sentiment/services/news-sentiment-analysis.service';
@@ -22,6 +25,12 @@ describe('SentimentModule', () => {
     expect(moduleRef.get(SentimentController)).toBeInstanceOf(SentimentController);
     expect(moduleRef.get(NewsSentimentAnalysisService)).toBeInstanceOf(
       NewsSentimentAnalysisService,
+    );
+    expect(moduleRef.get(NEWS_SENTIMENT_REPOSITORY_PORT)).toBeInstanceOf(
+      PrismaNewsSentimentRepository,
+    );
+    expect(moduleRef.get(AnalyzeAndPersistNewsSentimentService)).toBeInstanceOf(
+      AnalyzeAndPersistNewsSentimentService,
     );
 
     await moduleRef.close();
