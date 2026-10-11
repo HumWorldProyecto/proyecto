@@ -28,6 +28,7 @@ describe('NewsController', () => {
             label: 'Ciencia y tecnología',
           },
         ],
+        sentiment: null,
         capturedAt: new Date('2024-01-02T00:00:00.000Z'),
       },
     ];
@@ -46,6 +47,7 @@ describe('NewsController', () => {
         description: 'desc',
         pubDate: news[0].pubDate,
         mediaTopics: news[0].mediaTopics,
+        sentiment: null,
         capturedAt: news[0].capturedAt,
       },
     ]);

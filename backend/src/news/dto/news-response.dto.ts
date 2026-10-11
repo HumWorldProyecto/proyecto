@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { News } from '../types/news';
+import { PersistedSentimentResponseDto } from '../../sentiment/dto/news-sentiment-response.dto';
 
 export class MediaTopicResponseDto {
   @ApiProperty({ example: 'medtop:13000000', description: 'QCode oficial de IPTC Media Topics' })
@@ -43,6 +44,13 @@ export class NewsResponseDto {
   })
   mediaTopics!: MediaTopicResponseDto[];
 
+  @ApiProperty({
+    description: 'Último análisis persistido; null indica que la noticia nunca fue analizada',
+    type: () => PersistedSentimentResponseDto,
+    nullable: true,
+  })
+  sentiment!: PersistedSentimentResponseDto | null;
+
   @ApiProperty({ description: 'Momento en el que HumWorld almacenó la noticia' })
   capturedAt!: Date;
 
@@ -56,6 +64,9 @@ export class NewsResponseDto {
     dto.description = news.description;
     dto.pubDate = news.pubDate;
     dto.mediaTopics = news.mediaTopics.map((topic) => ({ ...topic }));
+    dto.sentiment = news.sentiment
+      ? PersistedSentimentResponseDto.fromDomain(news.sentiment)
+      : null;
     dto.capturedAt = news.capturedAt;
     return dto;
   }

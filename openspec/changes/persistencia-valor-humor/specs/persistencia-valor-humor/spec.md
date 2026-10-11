@@ -107,7 +107,7 @@ La persistencia SHALL actualizar únicamente los cuatro campos de sentimiento me
 #### Scenario: Fallo durante la actualización
 - **GIVEN** una noticia con o sin análisis anterior y un análisis nuevo ya calculado
 - **WHEN** PostgreSQL falla al persistirlo
-- **THEN** la API responde `503` con datos internos sanitizados
+- **THEN** la API responde `500` con datos internos sanitizados
 - **AND** no queda un resultado parcial
 - **AND** un resultado anterior permanece sin cambios
 

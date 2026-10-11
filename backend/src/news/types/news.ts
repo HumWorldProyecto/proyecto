@@ -1,4 +1,5 @@
 import { MediaTopic } from '../../classification/types/media-topic';
+import type { PersistedNewsSentiment } from '../../sentiment/types/persisted-news-sentiment';
 
 export interface News {
   readonly id: string;
@@ -9,5 +10,6 @@ export interface News {
   readonly description: string | null;
   readonly pubDate: Date | null;
   readonly mediaTopics: readonly MediaTopic[];
+  readonly sentiment: PersistedNewsSentiment | null;
   readonly capturedAt: Date;
 }
