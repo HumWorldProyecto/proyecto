@@ -66,6 +66,7 @@ describe('GET /api/v1/news (e2e, PostgreSQL real)', () => {
       title: 'Noticia end-to-end',
       link: 'https://example.com/e2e',
       guid: 'guid-e2e',
+      sentiment: null,
       description: 'Descripción e2e',
     });
   });

@@ -33,6 +33,18 @@ export class PrismaNewsRepository implements NewsRepositoryPort {
       guid: row.guid,
       description: row.description,
       pubDate: row.pubDate,
+      sentiment:
+        row.sentimentScore === null &&
+        row.sentimentMatchedTerms === null &&
+        row.sentimentLanguage === null &&
+        row.sentimentAnalyzedAt === null
+          ? null
+          : {
+              score: Number(row.sentimentScore),
+              matchedTerms: row.sentimentMatchedTerms as number,
+              language: row.sentimentLanguage as 'es' | 'en',
+              analyzedAt: row.sentimentAnalyzedAt as Date,
+            },
       capturedAt: row.capturedAt,
     }));
   }

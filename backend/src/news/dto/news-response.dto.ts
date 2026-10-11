@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { News } from '../types/news';
+import { PersistedSentimentResponseDto } from '../../sentiment/dto/news-sentiment-response.dto';
 
 export class NewsResponseDto {
   @ApiProperty({ description: 'Identificador interno de la noticia almacenada' })
@@ -23,6 +24,13 @@ export class NewsResponseDto {
   @ApiPropertyOptional({ description: 'Fecha de publicación reportada por el feed', nullable: true })
   pubDate!: Date | null;
 
+  @ApiProperty({
+    description: 'Último análisis persistido; null indica que la noticia nunca fue analizada',
+    type: () => PersistedSentimentResponseDto,
+    nullable: true,
+  })
+  sentiment!: PersistedSentimentResponseDto | null;
+
   @ApiProperty({ description: 'Momento en el que HumWorld almacenó la noticia' })
   capturedAt!: Date;
 
@@ -35,6 +43,9 @@ export class NewsResponseDto {
     dto.guid = news.guid;
     dto.description = news.description;
     dto.pubDate = news.pubDate;
+    dto.sentiment = news.sentiment
+      ? PersistedSentimentResponseDto.fromDomain(news.sentiment)
+      : null;
     dto.capturedAt = news.capturedAt;
     return dto;
   }

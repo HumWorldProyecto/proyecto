@@ -51,6 +51,7 @@ describe('PrismaNewsRepository (integración, PostgreSQL real)', () => {
       link: 'https://example.com/noticia',
       guid: 'guid-1',
       description: 'Descripción de prueba',
+      sentiment: null,
     });
     await expect(
       prisma.news.findUnique({
@@ -79,7 +80,87 @@ describe('PrismaNewsRepository (integración, PostgreSQL real)', () => {
       link: null,
       description: null,
       pubDate: null,
+      sentiment: null,
     });
+  });
+
+  it('mapea Decimal como número y conserva el análisis persistido', async () => {
+    await repository.upsertCapturedItem({
+      sourceId: SOURCE_A_ID,
+      dedupeKey: 'guid:sentiment-map',
+      guid: 'sentiment-map',
+    });
+    const stored = await prisma.news.findUniqueOrThrow({
+      where: {
+        sourceId_dedupeKey: { sourceId: SOURCE_A_ID, dedupeKey: 'guid:sentiment-map' },
+      },
+    });
+    const analyzedAt = new Date('2026-10-11T15:30:00.000Z');
+    await prisma.news.update({
+      where: { id: stored.id },
+      data: {
+        sentimentScore: 0.125,
+        sentimentMatchedTerms: 4,
+        sentimentLanguage: 'es',
+        sentimentAnalyzedAt: analyzedAt,
+      },
+    });
+
+    const [news] = await repository.findAll();
+
+    expect(news.sentiment).toEqual({
+      score: 0.125,
+      matchedTerms: 4,
+      language: 'es',
+      analyzedAt,
+    });
+    expect(typeof news.sentiment?.score).toBe('number');
+  });
+
+  it('un upsert duplicado con update vacío preserva el sentimiento completo', async () => {
+    const item: IdentifiedCapturedNewsItem = {
+      sourceId: SOURCE_A_ID,
+      dedupeKey: 'guid:sentiment-preserved',
+      guid: 'sentiment-preserved',
+      title: 'Original',
+      description: 'Descripción original',
+    };
+    await repository.upsertCapturedItem(item);
+    const stored = await prisma.news.findUniqueOrThrow({
+      where: {
+        sourceId_dedupeKey: {
+          sourceId: SOURCE_A_ID,
+          dedupeKey: 'guid:sentiment-preserved',
+        },
+      },
+    });
+    const analyzedAt = new Date('2026-10-11T16:00:00.000Z');
+    await prisma.news.update({
+      where: { id: stored.id },
+      data: {
+        sentimentScore: -0.5,
+        sentimentMatchedTerms: 2,
+        sentimentLanguage: 'en',
+        sentimentAnalyzedAt: analyzedAt,
+      },
+    });
+
+    await repository.upsertCapturedItem({
+      ...item,
+      title: 'Intento de reemplazo',
+      description: 'Intento de reemplazo',
+    });
+
+    const unchanged = await prisma.news.findUniqueOrThrow({ where: { id: stored.id } });
+    expect(unchanged).toMatchObject({
+      id: stored.id,
+      title: 'Original',
+      description: 'Descripción original',
+      sentimentMatchedTerms: 2,
+      sentimentLanguage: 'en',
+      sentimentAnalyzedAt: analyzedAt,
+    });
+    expect(Number(unchanged.sentimentScore)).toBe(-0.5);
   });
 
   it('hace cumplir dedupeKey NOT NULL en PostgreSQL', async () => {

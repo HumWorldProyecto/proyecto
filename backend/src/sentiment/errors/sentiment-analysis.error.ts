@@ -18,3 +18,10 @@ export class NewsForSentimentReadError extends Error {
     this.name = 'NewsForSentimentReadError';
   }
 }
+
+export class NewsSentimentPersistenceError extends Error {
+  constructor() {
+    super('No fue posible persistir el sentimiento de la noticia');
+    this.name = 'NewsSentimentPersistenceError';
+  }
+}

@@ -25,6 +25,7 @@ describe('NewsService', () => {
         guid: 'guid-1',
         description: 'desc',
         pubDate: new Date('2024-01-01T00:00:00.000Z'),
+        sentiment: null,
         capturedAt: new Date('2024-01-02T00:00:00.000Z'),
       },
     ];
