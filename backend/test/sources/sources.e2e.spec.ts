@@ -1,4 +1,5 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Continent } from '@prisma/client';
 import { Test } from '@nestjs/testing';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import request from 'supertest';
@@ -6,6 +7,8 @@ import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { SourceAccessibilityError } from '../../src/sources/errors/source-accessibility.error';
 import { SourceAccessibilityChecker } from '../../src/sources/integrations/source-accessibility-checker';
+
+jest.setTimeout(30_000);
 
 describe('/api/v1/sources (e2e, PostgreSQL real)', () => {
   let app: INestApplication;
@@ -73,6 +76,55 @@ describe('/api/v1/sources (e2e, PostgreSQL real)', () => {
     expect(collection.body).toEqual([creation.body]);
     expect(detail.status).toBe(200);
     expect(detail.body).toEqual(creation.body);
+    await expect(
+      prisma.rssSource.findUnique({ where: { id: creation.body.id } }),
+    ).resolves.toMatchObject({ continent: null });
+  });
+
+  it('mantiene continent interno y ausente de REST, DTO, filtros y OpenAPI', async () => {
+    const source = await prisma.rssSource.create({
+      data: {
+        url: 'https://continent-internal.example/feed',
+        continent: Continent.EUROPE,
+      },
+    });
+
+    const collection = await request(app.getHttpServer()).get('/api/v1/sources');
+    const detail = await request(app.getHttpServer()).get(`/api/v1/sources/${source.id}`);
+
+    expect(collection.status).toBe(200);
+    expect(collection.body).toHaveLength(1);
+    expect(Object.keys(collection.body[0]).sort()).toEqual([
+      'active',
+      'createdAt',
+      'id',
+      'updatedAt',
+      'url',
+    ]);
+    expect(detail.status).toBe(200);
+    expect(Object.keys(detail.body).sort()).toEqual([
+      'active',
+      'createdAt',
+      'id',
+      'updatedAt',
+      'url',
+    ]);
+
+    const createSchema = openApi.components?.schemas?.CreateSourceDto as
+      | { properties?: Record<string, unknown> }
+      | undefined;
+    const responseSchema = openApi.components?.schemas?.SourceResponseDto as
+      | { properties?: Record<string, unknown> }
+      | undefined;
+    expect(Object.keys(createSchema?.properties ?? {})).toEqual(['url']);
+    expect(Object.keys(responseSchema?.properties ?? {}).sort()).toEqual([
+      'active',
+      'createdAt',
+      'id',
+      'updatedAt',
+      'url',
+    ]);
+    expect(JSON.stringify(openApi)).not.toMatch(/continent/i);
   });
 
   it('POST responde 400/409 y no persiste entradas rechazadas', async () => {

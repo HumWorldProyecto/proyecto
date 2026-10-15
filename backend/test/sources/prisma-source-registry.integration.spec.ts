@@ -1,3 +1,4 @@
+import { Continent } from '@prisma/client';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { PrismaSourceRegistry } from '../../src/sources/integrations/prisma-source-registry';
 import { PrismaSourceRepository } from '../../src/sources/repositories/prisma-source.repository';
@@ -37,6 +38,33 @@ describe('PrismaSourceRegistry (integración, PostgreSQL real)', () => {
     await expect(registry.findForCapture(active.id)).resolves.toEqual({
       kind: 'eligible',
       source: { id: active.id, url: active.url },
+    });
+  });
+
+  it('proyecta solo id y url para fuentes con y sin continente', async () => {
+    const withoutContinent = await prisma.rssSource.create({
+      data: {
+        id: 'registry-without-continent',
+        url: 'https://without-continent.example/feed',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    });
+    const withContinent = await prisma.rssSource.create({
+      data: {
+        id: 'registry-with-continent',
+        url: 'https://with-continent.example/feed',
+        continent: Continent.OCEANIA,
+        createdAt: new Date('2026-01-02T00:00:00.000Z'),
+      },
+    });
+
+    await expect(registry.getEligibleSources()).resolves.toEqual([
+      { id: withoutContinent.id, url: withoutContinent.url },
+      { id: withContinent.id, url: withContinent.url },
+    ]);
+    await expect(registry.findForCapture(withContinent.id)).resolves.toEqual({
+      kind: 'eligible',
+      source: { id: withContinent.id, url: withContinent.url },
     });
   });
 });
