@@ -9,8 +9,8 @@ import { PrismaService } from '../../src/prisma/prisma.service';
 const CONTROLLED_RSS = `<?xml version="1.0"?>
 <rss version="2.0"><channel><title>HumWorld controlado</title>
   <item><title>Sin identidad</title><description>Debe descartarse</description></item>
-  <item><title>Noticia persistida</title><guid>controlled-guid</guid>
-    <link>https://example.com/article</link><description>Desde RSS</description></item>
+  <item><title>Vacuna para pacientes</title><guid>controlled-guid</guid>
+    <link>https://example.com/article</link><description>Tecnología científica</description></item>
 </channel></rss>`;
 
 describe('captura RSS -> PostgreSQL -> GET /news (e2e)', () => {
@@ -66,10 +66,17 @@ describe('captura RSS -> PostgreSQL -> GET /news (e2e)', () => {
     expect(firstList.body).toEqual([
       expect.objectContaining({
         source: source.id,
-        title: 'Noticia persistida',
+        title: 'Vacuna para pacientes',
         guid: 'controlled-guid',
         link: 'https://example.com/article',
-        description: 'Desde RSS',
+        description: 'Tecnología científica',
+        mediaTopics: [
+          expect.objectContaining({ qcode: 'medtop:07000000', label: 'Salud' }),
+          expect.objectContaining({
+            qcode: 'medtop:13000000',
+            label: 'Ciencia y tecnología',
+          }),
+        ],
       }),
     ]);
 

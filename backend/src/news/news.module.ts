@@ -6,6 +6,7 @@ import { PrismaNewsRepository } from './repositories/prisma-news.repository';
 import { NewsService } from './services/news.service';
 import { NewsCaptureOutputAdapter } from './integrations/news-capture-output.adapter';
 import { NewsController } from './controllers/news.controller';
+import { ClassificationModule } from '../classification/classification.module';
 
 /**
  * Módulo de noticias y sus metadatos (HU-04). Implementa el lado de salida
@@ -13,7 +14,7 @@ import { NewsController } from './controllers/news.controller';
  * CaptureModule pueda resolverlo, sin alterar su contrato.
  */
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, ClassificationModule],
   controllers: [NewsController],
   providers: [
     { provide: NEWS_REPOSITORY_PORT, useClass: PrismaNewsRepository },

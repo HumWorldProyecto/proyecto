@@ -1,6 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { News } from '../types/news';
 
+export class MediaTopicResponseDto {
+  @ApiProperty({ example: 'medtop:13000000', description: 'QCode oficial de IPTC Media Topics' })
+  qcode!: string;
+
+  @ApiProperty({
+    example: 'http://cv.iptc.org/newscodes/mediatopic/13000000',
+    description: 'URI oficial del concepto IPTC',
+  })
+  uri!: string;
+
+  @ApiProperty({ example: 'Ciencia y tecnología', description: 'Nombre oficial en español' })
+  label!: string;
+}
+
 export class NewsResponseDto {
   @ApiProperty({ description: 'Identificador interno de la noticia almacenada' })
   id!: string;
@@ -23,6 +37,12 @@ export class NewsResponseDto {
   @ApiPropertyOptional({ description: 'Fecha de publicación reportada por el feed', nullable: true })
   pubDate!: Date | null;
 
+  @ApiProperty({
+    type: () => [MediaTopicResponseDto],
+    description: 'Conceptos raíz oficiales IPTC Media Topics asignados a la noticia',
+  })
+  mediaTopics!: MediaTopicResponseDto[];
+
   @ApiProperty({ description: 'Momento en el que HumWorld almacenó la noticia' })
   capturedAt!: Date;
 
@@ -35,6 +55,7 @@ export class NewsResponseDto {
     dto.guid = news.guid;
     dto.description = news.description;
     dto.pubDate = news.pubDate;
+    dto.mediaTopics = news.mediaTopics.map((topic) => ({ ...topic }));
     dto.capturedAt = news.capturedAt;
     return dto;
   }

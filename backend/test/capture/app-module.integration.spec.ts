@@ -21,6 +21,8 @@ import { NewsCaptureOutputAdapter } from '../../src/news/integrations/news-captu
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { PrismaSourceRegistry } from '../../src/sources/integrations/prisma-source-registry';
 import { SOURCE_REGISTRY_PORT } from '../../src/sources/ports/source-registry.port';
+import { MEDIA_TOPIC_CLASSIFIER_PORT } from '../../src/classification/ports/media-topic-classifier.port';
+import { RuleBasedMediaTopicClassifier } from '../../src/classification/services/rule-based-media-topic-classifier';
 
 describe('AppModule productivo (integración PostgreSQL real)', () => {
   let app: INestApplication;
@@ -50,6 +52,9 @@ describe('AppModule productivo (integración PostgreSQL real)', () => {
     expect(moduleRef.get(CAPTURE_OUTPUT_PORT)).toBeInstanceOf(NewsCaptureOutputAdapter);
     expect(moduleRef.get(RSS_FETCHER_PORT)).toBeInstanceOf(HttpRssFetcher);
     expect(moduleRef.get(RSS_PARSER_PORT)).toBeInstanceOf(RssOnlyParser);
+    expect(moduleRef.get(MEDIA_TOPIC_CLASSIFIER_PORT)).toBeInstanceOf(
+      RuleBasedMediaTopicClassifier,
+    );
     expect(moduleRef.get(SourceCaptureGuard)).toBeInstanceOf(SourceCaptureGuard);
     expect(moduleRef.get(SourceCaptureService)).toBeInstanceOf(SourceCaptureService);
     expect(moduleRef.get(ManualSourceCaptureService)).toBeInstanceOf(
