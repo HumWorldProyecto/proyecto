@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { spawnSync } from 'child_process';
-import { existsSync } from 'fs';
+import { existsSync, readdirSync } from 'fs';
 import { resolve } from 'path';
 import { Continent, PrismaClient } from '@prisma/client';
 import { INITIAL_RSS_SOURCES_MANIFEST } from '../../src/sources/seed/initial-rss-sources.manifest';
@@ -11,11 +11,15 @@ const LOADER = resolve(
   BACKEND_ROOT,
   'dist/sources/seed/load-initial-rss-sources.js',
 );
-const EXPECTED_MIGRATIONS = [
-  '20260831150455_init_news',
-  '20260904014216_add_sources_config_and_news_identity',
-  '20261001000000_add_rss_source_continent',
-] as const;
+const MIGRATIONS_ROOT = resolve(BACKEND_ROOT, 'prisma/migrations');
+const EXPECTED_MIGRATIONS = readdirSync(MIGRATIONS_ROOT, { withFileTypes: true })
+  .filter(
+    (entry) =>
+      entry.isDirectory() &&
+      existsSync(resolve(MIGRATIONS_ROOT, entry.name, 'migration.sql')),
+  )
+  .map(({ name }) => name)
+  .sort();
 const EXPECTED_CONTINENTS = [
   'AFRICA',
   'ASIA',
