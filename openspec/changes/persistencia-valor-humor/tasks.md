@@ -60,7 +60,7 @@
 
 ## 8. Regresión y cierre
 
-- [ ] 8.1 Ejecutar regresiones HU-01, HU-02, HU-03, News, HU-14, HU-16, HU-17, HU-05, HU-07 y HU-10 disponibles en la base reconciliada.
+- [x] 8.1 Ejecutar regresiones HU-01, HU-02, HU-03, News, HU-14, HU-16, HU-17, HU-05, HU-07 y HU-10 disponibles en la base reconciliada.
 - [x] 8.2 Ejecutar Prisma validate/generate y build con Node 24 y Prisma 6.
 - [x] 8.3 Ejecutar Jest completo y confirmar cobertura global mínima del 80 %.
 - [x] 8.4 Ejecutar `openspec validate persistencia-valor-humor --strict`.
@@ -79,3 +79,14 @@
 - OpenSpec strict y comprobación de whitespace aprobados; diff funcional vacío en captura, scheduling, dependencias y frontend.
 - La regresión productiva de HU-14, HU-16, HU-07 y HU-10 queda pendiente hasta que sus ramas se integren en la base; se validó su compatibilidad contractual y de migraciones aplicable.
 - GitHub Actions run 38166818143 sobre 77af6d050fc9b17eeed56afc347aa8fcdf72147a: backend-tests y check aprobados. No se abre PR mientras HU-17 y HU-05 sigan fuera de main.
+
+## Reconciliación verificada — 2026-10-19
+
+- Base remota comprobada: `main` en `4ea9c06717bf7c490bf34a6e20c8427b4dbdc31e`, con HU-17 (#42), HU-14 (#40) y HU-16 (#41) integradas mediante squash.
+- HU-05 se reutiliza desde la PR #43 (`6ed150e7e818c943d5cb7a844a9def89feb8c644`), sin reaplicar los commits anteriores al squash de HU-17. Se reaplicaron únicamente los parches propios de HU-07, HU-10 y HU-06, con trazabilidad mediante cherry-pick.
+- Se resolvieron los conflictos conservando `RssSource.continent`, `News.mediaTopicQcodes`, `mediaTopics`, normalización/diccionario y todos los providers, exports y endpoints HU-05/HU-10. OpenAPI se regeneró desde NestJS; las rutas previas y sus propiedades existentes permanecen iguales.
+- Prisma 6.19.3 validate/generate, build TypeScript/NestJS y Jest completo aprobados con Node 24.19.0 y PostgreSQL 16.15 descartable. 70 suites y 690 pruebas aprobadas; cobertura: 98,46 % statements, 93,31 % branches, 99,05 % functions y 98,41 % lines.
+- OpenSpec 1.14.3: 13 elementos aprobados con `validate --all --strict`. En Windows se pasó a Jest `--testMatch=**/test/**/*.spec.ts` para evitar la expansión incorrecta de la ruta absoluta; no se modificó la configuración versionada.
+- Seis migraciones aplicadas desde base vacía; actualización desde las cinco migraciones de main con fuente, noticia IPTC, diccionario y configuración existentes preservados. Los cuatro campos nuevos quedan NULL; cinco escrituras inválidas fueron rechazadas y el resultado cero sin evidencia fue aceptado.
+- Las cinco migraciones históricas permanecen idénticas en Git. La única migración añadida es `20261011000000_add_news_sentiment`.
+- Esta preparación sigue pendiente de integración. La PR #43 requiere revisión y fusión humanas; las PR posteriores solo se abrirán contra main cuando el diff contenga únicamente su historia. La evidencia CI histórica anterior no se atribuye a los nuevos SHA.
