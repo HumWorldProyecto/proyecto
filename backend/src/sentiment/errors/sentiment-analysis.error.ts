@@ -5,6 +5,13 @@ export class SentimentDictionaryReadError extends Error {
   }
 }
 
+export class DirectSentimentTextTooLongError extends Error {
+  constructor() {
+    super('El texto supera el límite permitido');
+    this.name = 'DirectSentimentTextTooLongError';
+  }
+}
+
 export class NewsForSentimentNotFoundError extends Error {
   constructor() {
     super('La noticia no existe');
@@ -16,5 +23,12 @@ export class NewsForSentimentReadError extends Error {
   constructor() {
     super('No fue posible leer la noticia');
     this.name = 'NewsForSentimentReadError';
+  }
+}
+
+export class NewsSentimentPersistenceError extends Error {
+  constructor() {
+    super('No fue posible persistir el sentimiento de la noticia');
+    this.name = 'NewsSentimentPersistenceError';
   }
 }
