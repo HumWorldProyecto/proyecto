@@ -4,11 +4,11 @@ import {
 } from '../../src/sentiment/errors/sentiment-analysis.error';
 import { NewsSentimentRepositoryPort } from '../../src/sentiment/ports/news-sentiment-repository.port';
 import { AnalyzeAndPersistNewsSentimentService } from '../../src/sentiment/services/analyze-and-persist-news-sentiment.service';
-import { NewsSentimentAnalysisService } from '../../src/sentiment/services/news-sentiment-analysis.service';
+import { NewsSentimentEvidenceService } from '../../src/sentiment/services/news-sentiment-evidence.service';
 
 describe('AnalyzeAndPersistNewsSentimentService', () => {
   const newsId = '11111111-1111-4111-8111-111111111111';
-  let analysis: jest.Mocked<Pick<NewsSentimentAnalysisService, 'analyzeNews'>>;
+  let analysis: jest.Mocked<Pick<NewsSentimentEvidenceService, 'analyzeNews'>>;
   let repository: jest.Mocked<NewsSentimentRepositoryPort>;
   let service: AnalyzeAndPersistNewsSentimentService;
 
@@ -16,7 +16,7 @@ describe('AnalyzeAndPersistNewsSentimentService', () => {
     analysis = { analyzeNews: jest.fn() };
     repository = { replaceLatest: jest.fn() };
     service = new AnalyzeAndPersistNewsSentimentService(
-      analysis as unknown as NewsSentimentAnalysisService,
+      analysis as unknown as NewsSentimentEvidenceService,
       repository,
     );
   });
@@ -31,6 +31,7 @@ describe('AnalyzeAndPersistNewsSentimentService', () => {
       newsId,
       score: example.score,
       matchedTerms: example.matchedTerms,
+      terms: [],
     });
     const persisted = {
       newsId,
@@ -50,6 +51,7 @@ describe('AnalyzeAndPersistNewsSentimentService', () => {
       newsId,
       score: example.score,
       matchedTerms: example.matchedTerms,
+      terms: [],
       language: example.language,
     });
     expect(analysis.analyzeNews.mock.invocationCallOrder[0]).toBeLessThan(
@@ -66,7 +68,7 @@ describe('AnalyzeAndPersistNewsSentimentService', () => {
   });
 
   it('propaga un fallo de persistencia y no informa un resultado', async () => {
-    analysis.analyzeNews.mockResolvedValue({ newsId, score: 1, matchedTerms: 1 });
+    analysis.analyzeNews.mockResolvedValue({ newsId, score: 1, matchedTerms: 1, terms: [] });
     repository.replaceLatest.mockRejectedValue(new NewsSentimentPersistenceError());
 
     await expect(service.execute({ newsId, language: 'es' })).rejects.toBeInstanceOf(
@@ -75,7 +77,7 @@ describe('AnalyzeAndPersistNewsSentimentService', () => {
   });
 
   it('propaga inexistencia si la noticia desaparece antes de la escritura', async () => {
-    analysis.analyzeNews.mockResolvedValue({ newsId, score: 1, matchedTerms: 1 });
+    analysis.analyzeNews.mockResolvedValue({ newsId, score: 1, matchedTerms: 1, terms: [] });
     repository.replaceLatest.mockRejectedValue(new NewsForSentimentNotFoundError());
 
     await expect(service.execute({ newsId, language: 'es' })).rejects.toBeInstanceOf(

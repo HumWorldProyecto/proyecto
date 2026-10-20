@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-HumWorld captura noticias exclusivamente mediante fuentes RSS y las almacena para su consulta. El producto evolucionará progresivamente para calcular el sentimiento o humor de esas noticias y permitir consultas y dashboards geográficos.
+HumWorld captura noticias exclusivamente mediante fuentes RSS, guarda su análisis de sentimiento y permite explorar resultados geográficos, temporales y su evidencia.
 
 ## Equipo
 
@@ -15,7 +15,7 @@ HumWorld captura noticias exclusivamente mediante fuentes RSS y las almacena par
 
 ## Estado actual
 
-El incremento de Sprint 1 está integrado en `main` mediante el [PR #29](https://github.com/HumWorldProyecto/proyecto/pull/29), con CI post-merge verde. La actualización manual individual de HU-02 se integró posteriormente mediante el [PR #31](https://github.com/HumWorldProyecto/proyecto/pull/31).
+Al 20 de octubre de 2026 están integradas 13/21 historias: Sprints 1, 2 y 3 completos. Sprint 3 se cerró mediante las PR [#42](https://github.com/HumWorldProyecto/proyecto/pull/42), [#43](https://github.com/HumWorldProyecto/proyecto/pull/43) y [#44](https://github.com/HumWorldProyecto/proyecto/pull/44), con CI posterior verde. El incremento Sprint 4 de esta rama reúne HU-08/09/11/12/13 y requiere revisión y fusión humanas.
 
 Capacidades implementadas actualmente:
 
@@ -23,13 +23,16 @@ Capacidades implementadas actualmente:
 - Configuración global de periodicidad.
 - Captura automática RSS.
 - Actualización manual individual mediante `POST /api/v1/sources/:id/capture`.
+- Actualización manual múltiple, carga inicial de fuentes por continente y clasificación IPTC Media Topics.
 - Almacenamiento y deduplicación de noticias.
 - Consulta de noticias mediante `GET /api/v1/news`.
 - Documentación Swagger/OpenAPI.
 - Persistencia PostgreSQL con Prisma.
 - Pruebas automáticas e integración continua.
+- Diccionario administrable, análisis español/inglés, análisis directo y persistencia del último sentimiento.
+- En este incremento Sprint 4: consultas por mundo/continente/país, evolución, mapa, nube y ranking con evidencia guardada; interfaz React y asignación explícita de país de fuente.
 
-La actualización manual múltiple de HU-03, el análisis de sentimiento, los dashboards, el frontend, Channel/Media, el diccionario, el purgado y las demás capacidades futuras todavía no están implementados.
+HU-19/20/21 de caducidad y purgado siguen pendientes. Ver el [avance, calendario y plan](docs/planificacion/avance-2026-10-20.md). No se presenta Sprint 4 como Done antes de su integración.
 
 ## Stack actual
 
@@ -43,6 +46,7 @@ La actualización manual múltiple de HU-03, el análisis de sentimiento, los da
 - GitHub Actions
 - OpenSpec
 - Swagger/OpenAPI
+- React, Vite, Leaflet y Chart.js; Vitest y React Testing Library.
 
 ## Puesta en marcha local
 
@@ -72,12 +76,15 @@ node dist/main.js
 - Swagger: <http://localhost:3000/api/docs>
 - API: <http://localhost:3000/api/v1>
 
+Para explorar el dashboard, iniciar `npm ci` y `npm run dev` desde `frontend/` y abrir http://localhost:5173. Alternativa Docker completa y separada de la base habitual: [guía Sprint 4](docs/sprint4-dashboard.md).
+
 ## Calidad
 
 - Cobertura global mínima contractual: **80 %**.
-- El PR #29 reportó **343/343 tests**.
-- Cobertura del incremento: Statements **97.92 %**, Branches **92.57 %**, Functions **98.33 %** y Lines **97.86 %**.
-- El workflow post-merge de `main` finalizó correctamente.
+- Sprint 4: backend **728 pruebas / 73 suites**; cobertura 98,67 % statements, 94,15 % branches, 99,17 % functions y 98,60 % lines.
+- Frontend: **16 pruebas**; cobertura 100 % statements/functions/lines y 92,85 % branches.
+- Prisma y migraciones verificadas desde vacío y desde main con PostgreSQL 16. Contratos anteriores preservados.
+- GitHub Actions comprueba backend, frontend y OpenSpec. La revisión y fusión deben ser humanas.
 
 ## Documentación
 

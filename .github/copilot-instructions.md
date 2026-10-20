@@ -35,19 +35,19 @@ Ante una diferencia, distinguir entre restricciones obligatorias, baseline tecno
 
 Los módulos conceptuales iniciales son `sources`, `capture`, `news`, `sentiment`, `dictionary`, `classification`, `analytics`, `purge` y `config`. No crear módulos, carpetas ni código que no sean necesarios para un cambio aprobado.
 
-## Tecnologías ratificadas y frontend previsto
+## Tecnologías ratificadas
 
 El Equipo 5 ha ratificado el siguiente baseline tecnológico:
 
 - Backend actual: Node.js, TypeScript y NestJS.
 - Persistencia: PostgreSQL, Prisma ORM y Prisma Migrate.
 - Pruebas del backend: Jest.
-- Frontend previsto, todavía no implementado: React, TypeScript y Vite.
+- Frontend del incremento Sprint 4: React, TypeScript y Vite.
 - Captura RSS: `@nestjs/axios` para HTTP y `rss-parser` para interpretación.
 - Scheduling: `@nestjs/schedule`.
 - Timeout HTTP RSS: obtenido de una única configuración, con 10 segundos como valor técnico por defecto.
-- Visualización prevista para el frontend: Leaflet y Chart.js.
-- Pruebas previstas para el frontend: Vitest y React Testing Library.
+- Visualización frontend: Leaflet y Chart.js.
+- Pruebas frontend: Vitest y React Testing Library.
 - DevOps/calidad: Docker, Docker Compose, GitHub Actions y SonarQube. Docker y GitHub Actions son además restricciones obligatorias del proyecto; sus detalles siguen sujetos al diseño.
 
 Estas tecnologías son decisiones del equipo, no requisitos del negocio ni imposiciones del enunciado. El nombre de la clave, la validación y el mecanismo de override del timeout pertenecen al `design.md` correspondiente; el valor de 10 segundos no debe trasladarse a `spec.md` como requisito funcional. No cambiar el stack, las librerías principales, la persistencia, el método de sentimiento, el scheduling, la infraestructura o el despliegue sin análisis de impacto y aprobación humana.

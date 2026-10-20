@@ -54,4 +54,6 @@ Unitarias del motor (evidencia exacta, idioma, frases, repeticiones y compatibil
 
 ## Migration Plan
 
+La construcción detectó avisos críticos heredados en proxy-addr 2.0.7 y handlebars 4.7.x. Se aplicarán únicamente sus parches compatibles permitidos por los rangos existentes (2.0.8 y 4.7.10), sin cambio de dependencias principales ni ADR. Verificar lockfile, auditoría y regresión completa. La deuda conocida de NestJS 10/ADR-006 sigue pendiente y no se declara resuelta.
+
 Aplicar migración aditiva mediante Prisma Migrate; desplegar backend antes que frontend. Arranque de demostración en compose separado y datos/puertos propios. Rollback de aplicación puede volver a main conservando columnas adicionales sin borrar datos. No ejecutar down, reset ni recrear bases compartidas. Revisar y fusionar la PR humanamente; no cerrar Issues manualmente.

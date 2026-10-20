@@ -1,0 +1,100 @@
+import type { Coverage, Dashboard, Geography, News } from '../src/types/dashboard';
+export const coverage: Coverage = {
+  total: 4,
+  analyzed: 3,
+  withEvidence: 2,
+  withoutEvidence: 1,
+  unanalyzed: 1,
+  unknownCountry: 1,
+  missingTermEvidence: 1,
+  average: 0.25,
+};
+export const news: News = {
+  id: 'n1',
+  title: 'Buenas noticias para Chile',
+  description: '<p>Una noticia <b>buena</b></p>',
+  link: 'https://example.org/news',
+  date: '2026-10-19T12:00:00.000Z',
+  dateSource: 'publication',
+  sourceId: 's1',
+  sourceUrl: 'https://example.org/rss',
+  countryCode: 'CL',
+  continent: 'SOUTH_AMERICA',
+  score: 1,
+  matchedTerms: 2,
+  language: 'es',
+  analyzedAt: '2026-10-20T10:00:00.000Z',
+  terms: [{ term: 'bueno', language: 'es', weight: 5, occurrences: 2 }],
+  contribution: 0.5,
+};
+export const geography: Geography = {
+  countries: [
+    { code: 'CL', name: 'Chile', continent: 'SOUTH_AMERICA' },
+    { code: 'ES', name: 'España', continent: 'EUROPE' },
+  ],
+  sources: [
+    { id: 's1', url: 'https://example.org/rss', active: true, countryCode: null, continent: null },
+  ],
+};
+export const dashboard: Dashboard = {
+  filters: { country: null, continent: null, from: null, to: null },
+  summary: coverage,
+  countries: geography.countries.map((country) => ({ ...country, ...coverage })),
+  timeline: [
+    { ...coverage, date: '2026-10-19' },
+    { ...coverage, average: null, total: 1, withEvidence: 0, date: '2026-10-20' },
+  ],
+  words: [
+    {
+      term: 'bueno',
+      language: 'es',
+      occurrences: 2,
+      newsCount: 1,
+      contribution: 0.5,
+      influence: 0.5,
+    },
+    {
+      term: 'malo',
+      language: 'es',
+      occurrences: 1,
+      newsCount: 1,
+      contribution: -0.25,
+      influence: 0.25,
+    },
+  ],
+  news: [
+    news,
+    {
+      ...news,
+      id: 'n2',
+      title: 'Una noticia histórica',
+      terms: null,
+      score: -0.5,
+      matchedTerms: 1,
+      contribution: -0.25,
+    },
+    {
+      ...news,
+      id: 'n3',
+      title: null,
+      countryCode: null,
+      score: 0,
+      matchedTerms: 0,
+      terms: [],
+      contribution: null,
+      date: '2026-10-20T12:00:00.000Z',
+      dateSource: 'capture',
+    },
+    {
+      ...news,
+      id: 'n4',
+      title: 'Pendiente de análisis',
+      score: null,
+      matchedTerms: null,
+      language: null,
+      analyzedAt: null,
+      terms: null,
+      contribution: null,
+    },
+  ],
+};

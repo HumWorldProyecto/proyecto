@@ -20,6 +20,7 @@ model RssSource {
   id        String     @id @default(uuid())
   url       String     @unique
   continent Continent?
+  countryCode String?  @db.VarChar(2)
   active    Boolean    @default(true)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
@@ -51,6 +52,7 @@ model News {
   sentimentMatchedTerms   Int?
   sentimentLanguage       DictionaryLanguage?
   sentimentAnalyzedAt     DateTime?
+  sentimentTerms          Json?
   capturedAt              DateTime            @default(now())
   source                  RssSource           @relation(fields: [sourceId], references: [id], onDelete: Restrict)
 
