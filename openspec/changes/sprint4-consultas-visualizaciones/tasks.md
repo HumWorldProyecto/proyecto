@@ -23,7 +23,7 @@
 
 - [x] 4.1 Sincronizar estado frontend en arquitectura/contexto sin cambiar decisiones; verificar conformidad por capas y alcance de cinco HU.
 - [x] 4.2 Incorporar CI frontend/OpenSpec; ejecutar strict, Prisma, builds, Jest y Vitest con cobertura >=80; guardar evidencia y comprobar diff/contratos históricos.
-- [ ] 4.3 Confirmar main y SHA de la rama, publicar una PR limpia y comprobar CI; entregar enlaces, estado real, revisión humana pendiente y siguiente paso.
+- [x] 4.3 Confirmar main y SHA de la rama, publicar una PR limpia y comprobar CI; entregar enlaces, estado real, revisión humana pendiente y siguiente paso.
 
 ## Workflow follow-up
 

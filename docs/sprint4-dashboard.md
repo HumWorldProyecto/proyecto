@@ -17,10 +17,10 @@ Abrir http://localhost:5173. La interfaz consulta exclusivamente `/api/v1` a tra
 Alternativa Docker separada de la base habitual: definir `HUMWORLD_DEMO_PASSWORD` en el entorno con un valor local que sea válido en una URL (letras y números). No escribirlo en Git.
 
 ```sh
-docker compose -f compose.sprint4.yml up --build -d
+docker compose -p humworld-equipo5-local -f compose.sprint4.yml up --build -d
 ```
 
-Abrir http://localhost:54173 y Swagger http://localhost:53000/api/docs. Este compose usa su propio nombre, red y volumen, sin publicar PostgreSQL ni utilizar `postgres-data` del compose original. Para detener conservando datos: `docker compose -f compose.sprint4.yml stop`. El frontend usa Vite preview para la demostración académica local; no se presenta como servidor de producción pública.
+Abrir http://localhost:54173 y Swagger http://localhost:53000/api/docs. Este compose usa su propio nombre, red y volumen, sin publicar PostgreSQL ni utilizar `postgres-data` del compose original. El nombre explícito separa el entorno del equipo de los contenedores temporales de verificación. Para detener conservando datos: `docker compose -p humworld-equipo5-local -f compose.sprint4.yml stop`. El frontend usa Vite preview para la demostración académica local; no se presenta como servidor de producción pública.
 
 ## Recorrido de demostración
 
