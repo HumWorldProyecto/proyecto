@@ -26,6 +26,7 @@ export class PrismaNewsSentimentRepository implements NewsSentimentRepositoryPor
           sentimentMatchedTerms: input.matchedTerms,
           sentimentLanguage: input.language,
           sentimentAnalyzedAt: analyzedAt,
+          sentimentTerms: input.terms ? input.terms.map((term) => ({ ...term })) : Prisma.DbNull,
         },
         select: {
           id: true,

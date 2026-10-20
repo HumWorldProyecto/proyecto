@@ -7,6 +7,7 @@ import {
 import { DictionaryEntry } from '../../dictionary/types/dictionary-entry';
 import { SentimentDictionaryReadError } from '../errors/sentiment-analysis.error';
 import { SentimentAnalyzerPort } from '../ports/sentiment-analyzer.port';
+import { SentimentEvidenceAnalyzerPort, SentimentEvidenceResult, SentimentTermEvidence } from '../ports/sentiment-evidence-analyzer.port';
 import {
   SentimentAnalysisInput,
   SentimentAnalysisResult,
@@ -15,6 +16,7 @@ import {
 
 type PreparedEntry = Readonly<{
   id: string;
+  term: string;
   tokens: readonly string[];
   weight: number;
 }>;
@@ -37,7 +39,7 @@ export function calculateSentimentScore(totalWeight: number, matchedTerms: numbe
 }
 
 @Injectable()
-export class DictionarySentimentAnalyzer implements SentimentAnalyzerPort {
+export class DictionarySentimentAnalyzer implements SentimentAnalyzerPort, SentimentEvidenceAnalyzerPort {
   constructor(
     @Inject(DICTIONARY_READER_PORT)
     private readonly dictionaryReader: DictionaryReaderPort,
@@ -45,11 +47,16 @@ export class DictionarySentimentAnalyzer implements SentimentAnalyzerPort {
   ) {}
 
   async analyze(input: SentimentAnalysisInput): Promise<SentimentAnalysisResult> {
+    const { score, matchedTerms } = await this.analyzeWithEvidence(input);
+    return Object.freeze({ score, matchedTerms });
+  }
+
+  async analyzeWithEvidence(input: SentimentAnalysisInput): Promise<SentimentEvidenceResult> {
     this.normalizer.assertLanguage(input.language);
     const segments = input.segments.map((segment) => this.tokenize(segment, input.language));
 
     if (segments.every((tokens) => tokens.length === 0)) {
-      return Object.freeze({ score: 0, matchedTerms: 0 });
+      return Object.freeze({ score: 0, matchedTerms: 0, terms: Object.freeze([]) });
     }
 
     let entries: readonly DictionaryEntry[];
@@ -62,6 +69,7 @@ export class DictionarySentimentAnalyzer implements SentimentAnalyzerPort {
     const prepared = this.prepareEntries(entries, input.language);
     let totalWeight = 0;
     let matchedTerms = 0;
+    const evidence = new Map<string, SentimentTermEvidence>();
 
     for (const tokens of segments) {
       let position = 0;
@@ -73,6 +81,11 @@ export class DictionarySentimentAnalyzer implements SentimentAnalyzerPort {
         }
         totalWeight += match.weight;
         matchedTerms += 1;
+        const previous = evidence.get(match.id);
+        evidence.set(match.id, Object.freeze({
+          term: match.term, language: input.language, weight: match.weight,
+          occurrences: (previous?.occurrences ?? 0) + 1,
+        }));
         position += match.tokens.length;
       }
     }
@@ -80,6 +93,7 @@ export class DictionarySentimentAnalyzer implements SentimentAnalyzerPort {
     return Object.freeze({
       score: calculateSentimentScore(totalWeight, matchedTerms),
       matchedTerms,
+      terms: Object.freeze([...evidence.values()]),
     });
   }
 
@@ -103,6 +117,7 @@ export class DictionarySentimentAnalyzer implements SentimentAnalyzerPort {
       .filter((entry) => entry.language === language)
       .map((entry) => ({
         id: entry.id,
+        term: this.normalizer.normalize(entry.term, language),
         tokens: Object.freeze(this.normalizer.normalize(entry.term, language).split(' ')),
         weight: entry.weight,
       }))

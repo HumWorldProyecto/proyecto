@@ -41,6 +41,7 @@ describe('PrismaNewsSentimentRepository', () => {
         sentimentMatchedTerms: 2,
         sentimentLanguage: 'es',
         sentimentAnalyzedAt: expect.any(Date),
+        sentimentTerms: Prisma.DbNull,
       },
       select: {
         id: true,

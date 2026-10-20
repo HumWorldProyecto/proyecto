@@ -7,6 +7,8 @@ import { NewsSentimentController } from './controllers/news-sentiment.controller
 import { NEWS_FOR_SENTIMENT_READER_PORT } from './ports/news-for-sentiment-reader.port';
 import { NEWS_SENTIMENT_REPOSITORY_PORT } from './ports/news-sentiment-repository.port';
 import { SENTIMENT_ANALYZER_PORT } from './ports/sentiment-analyzer.port';
+import { SENTIMENT_EVIDENCE_ANALYZER_PORT } from './ports/sentiment-evidence-analyzer.port';
+import { NewsSentimentEvidenceService } from './services/news-sentiment-evidence.service';
 import { PrismaNewsSentimentRepository } from './repositories/prisma-news-sentiment.repository';
 import { AnalyzeAndPersistNewsSentimentService } from './services/analyze-and-persist-news-sentiment.service';
 import { DictionarySentimentAnalyzer } from './services/dictionary-sentiment-analyzer';
@@ -21,6 +23,8 @@ import { NewsSentimentAnalysisService } from './services/news-sentiment-analysis
     { provide: NEWS_FOR_SENTIMENT_READER_PORT, useExisting: PrismaNewsForSentimentReader },
     DictionarySentimentAnalyzer,
     { provide: SENTIMENT_ANALYZER_PORT, useExisting: DictionarySentimentAnalyzer },
+    { provide: SENTIMENT_EVIDENCE_ANALYZER_PORT, useExisting: DictionarySentimentAnalyzer },
+    NewsSentimentEvidenceService,
     DirectSentimentAnalysisService,
     NewsSentimentAnalysisService,
     PrismaNewsSentimentRepository,

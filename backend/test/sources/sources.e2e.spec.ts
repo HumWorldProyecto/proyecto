@@ -81,7 +81,7 @@ describe('/api/v1/sources (e2e, PostgreSQL real)', () => {
     ).resolves.toMatchObject({ continent: null });
   });
 
-  it('mantiene continent interno y ausente de REST, DTO, filtros y OpenAPI', async () => {
+  it('mantiene continent ausente del contrato CRUD y captura de fuentes HU-14', async () => {
     const source = await prisma.rssSource.create({
       data: {
         url: 'https://continent-internal.example/feed',
@@ -124,7 +124,9 @@ describe('/api/v1/sources (e2e, PostgreSQL real)', () => {
       'updatedAt',
       'url',
     ]);
-    expect(JSON.stringify(openApi)).not.toMatch(/continent/i);
+    // Sprint 4 adds geography under dashboards; the existing sources family stays URL-only.
+    const sourcePaths = Object.fromEntries(Object.entries(openApi.paths).filter(([path]) => path.startsWith('/api/v1/sources')));
+    expect(JSON.stringify(sourcePaths)).not.toMatch(/continent/i);
   });
 
   it('POST responde 400/409 y no persiste entradas rechazadas', async () => {

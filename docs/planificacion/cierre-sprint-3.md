@@ -1,6 +1,6 @@
 # Cierre integrado del Sprint 3
 
-Actualizado el 19 de octubre de 2026. Estado: pendiente de revisión e integración de esta PR.
+Registro preparado el 19 de octubre de 2026. **Actualización del 20 de octubre:** PR #44 aprobada y fusionada humanamente el 19 de octubre. Main `5e4d27c3fe89eeb3fd2fca26b3fa0799b11bbb04`, CI 39341853543 exitoso y Sprint 3 5/5 Done. Las secciones siguientes conservan el contexto previo a la fusión; el [estado vigente](avance-2026-10-20.md) incluye Sprint 4 y calendario.
 
 ## Base y alcance
 
