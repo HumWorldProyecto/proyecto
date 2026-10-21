@@ -77,7 +77,7 @@ describe('P11: API de fuentes y regresión con PostgreSQL 16', () => {
     const active = await request(app.getHttpServer()).get(`${endpoint}?active=true`);
     const inactive = await request(app.getHttpServer()).get(`${endpoint}?active=false`);
     // Assert: esta única aserción se altera temporalmente en la demostración rojo/verde.
-    expect(all.status).toBe(404); // P11-RED-GREEN
+    expect(all.status).toBe(200); // P11-RED-GREEN
     expect(all.body.map((item: { id: string }) => item.id)).toEqual([first.id, middle.id, last.id]);
     expect(active.status).toBe(200);
     expect(active.body.map((item: { id: string }) => item.id)).toEqual([first.id, last.id]);

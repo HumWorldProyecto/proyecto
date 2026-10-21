@@ -14,8 +14,8 @@
 
 ## 3. Demostración y entrega
 
-- [ ] 3.1 Publicar PR draft limpia contra main y comprobar CI/artefactos verdes.
-- [ ] 3.2 Publicar una aserción deliberadamente incorrecta; comprobar fallo local y check remoto rojo con logs/artefacto y SHA guardados.
+- [x] 3.1 Publicar PR draft limpia contra main y comprobar CI/artefactos verdes.
+- [x] 3.2 Publicar una aserción deliberadamente incorrecta; comprobar fallo local y check remoto rojo con logs/artefacto y SHA guardados.
 - [ ] 3.3 Corregir aserción, repetir suite y comprobar CI final verde; documentar evidencias, crítica y pasos de presentación.
 - [ ] 3.4 Solicitar revisión humana y entregar Issue/PR/reportes, sin fusionar ni cerrar manualmente la Issue.
 
