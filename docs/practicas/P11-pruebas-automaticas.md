@@ -75,13 +75,24 @@ Los tests nuevos pueden repetirse con `npx jest --runInBand --testPathPattern=te
 | Propuesta y revisión antes de código | `81fa440fd49e9314c9740d368830d5164f92bcb7` | Matriz y decisiones registradas |
 | Implementación correcta inicial | `970ebe22cc7351a1449854f88993171899e0d31f` | [CI verde, run 39617864337](https://github.com/HumWorldProyecto/proyecto/actions/runs/39617864337): 698 aprobadas, artefacto 12354186432 |
 | Única aserción incorrecta, 200 → 404 | `81a26f30f119c55f3bceb35fa6c5d6e2eb98eac2` | [CI rojo, run 39618380936](https://github.com/HumWorldProyecto/proyecto/actions/runs/39618380936): 697 aprobadas / 1 fallida, artefacto 12353682667 |
+| Restauración de 200 y evidencia del fallo | `e893fea2dbce395c16083802a0b305c7c63d667a` | [CI verde corregido, run 39618983221](https://github.com/HumWorldProyecto/proyecto/actions/runs/39618983221): 698 aprobadas, artefacto 12354486120 |
 
 Caso fallido: `P11-A02: ordena por fecha de creación y filtra ambos estados exactamente`, sources-regression.api.spec.ts:80. Tanto local (7/8, exit 1) como remoto (697/698, exit 1): **Expected: 404 / Received: 200**. En el run rojo, backend-tests falla en el paso de pruebas; el paso Publicar informes se ejecuta y termina success por `if: always()`. Se descargaron logs y ZIP de ambos runs y se validaron sus XML independientemente: JUnit rojo tiene exactamente un failure A02 y cero errors/skipped; JUnit inicial, 698 casos sin fallos. Cobertura XML presente y válido también en el fallo.
 
-La corrección restaura 200; no cambia la API ni oculta pruebas. No se usa continue-on-error, test.skip ni reducción de cobertura. La restauración y su ejecución verde se registrarán tras verificarlas. No fusionar la demostración ni cerrar manualmente la Issue. La protección actual de main exige revisión, pero no enumera checks obligatorios: CI rojo demuestra detección, no una regla de bloqueo por checks.
+La corrección restaura 200; no cambia la API ni oculta pruebas. Se repitió la suite local completa: 698/698, 30,336 s; reporter 3/3. CI corregido también 698/698, cobertura igual a la tabla y JUnit/Cobertura descargados y validados: cero failures/errors/skipped. No se usa continue-on-error, test.skip ni reducción de cobertura. PR lista para revisión, solicitada a `fsanhuezanez`; aprobación y fusión humanas pendientes. Issue #46 sigue abierta.
+
+Este cierre documental es posterior al commit corregido verificado de la tabla. El SHA de la cabeza actual, su check final y artefacto se registran en la descripción de la PR para evitar referenciar un commit aún inexistente desde sí mismo. No fusionar la demostración ni cerrar manualmente la Issue. La protección actual de main exige revisión, pero no enumera checks obligatorios: CI rojo demuestra detección, no una regla de bloqueo por checks.
 
 En Actions: abrir la ejecución enlazada → backend-tests → Ejecutar pruebas → comprobar nombre del caso y Expected/Received; descargar «informes-pruebas-backend» en Artifacts y abrir JUnit/XML. Los artefactos caducan a los siete días; los enlaces a runs/logs y SHA quedan en la documentación.
 
 ## Revisión crítica de la asistencia
 
 Codex propuso los casos; contrastó códigos HTTP, tipos y dependencias con el código y OpenSpec antes de implementarlos. Se descartaron falsas unitarias con HTTP y cambios del producto para que una expectativa inventada pasara. La aserción incorrecta fue intencional y se conserva su evidencia. Si el docente exige una sesión específicamente con Copilot, el equipo debe realizarla y registrar su revisión: no se inventa esa participación.
+
+## Guion breve para mostrar al profesor
+
+1. Abrir la Issue #46 y la matriz: ocho casos nuevos, cuatro unitarias sin HTTP/DB/red y cuatro de API, con los colaboradores sustituidos identificados. Explicar AAA y fixtures nuevas/limpieza serial en PostgreSQL descartable.
+2. Mostrar los dos tests de captura y los dos límites XML; después A03 conserva la noticia completa, clasificación y sentimiento al editar una fuente.
+3. Comparar 690 → 698 pruebas y las cuatro métricas de cobertura. Señalar las dos zonas todavía descubiertas y los casos adicionales propuestos; 80 % no garantiza corrección.
+4. Abrir el run rojo: A02 Expected 404 / Received 200 y exit 1; descargar el artefacto pese al fallo. Abrir el verde corregido y comprobar 698/698, JUnit y Cobertura.
+5. Mostrar PR #47 lista, sin cambios de negocio/migraciones y con revisión humana pendiente. Esta práctica técnica no añade historias Done ni integra Sprint 4; #45 conserva su propio proceso de revisión.
