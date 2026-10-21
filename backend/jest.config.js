@@ -3,13 +3,15 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   rootDir: '.',
-  testMatch: ['<rootDir>/test/**/*.spec.ts'],
+  testMatch: ['**/test/**/*.spec.ts'],
   // Las suites de integración/E2E comparten una única base PostgreSQL.
   // Se serializan para evitar que sus limpiezas globales interfieran entre sí.
   maxWorkers: 1,
   setupFiles: ['<rootDir>/test/setup-env.ts'],
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.module.ts', '!src/main.ts'],
-  coverageDirectory: '<rootDir>/coverage',
+  reporters: ['default', '<rootDir>/test/reporting/junit-reporter.cjs'],
+  coverageDirectory: '<rootDir>/reports/coverage',
+  coverageReporters: ['text', 'json', 'json-summary', 'lcov', 'cobertura'],
   coverageThreshold: {
     global: {
       statements: 80,

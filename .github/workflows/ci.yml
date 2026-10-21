@@ -55,8 +55,20 @@ jobs:
       - name: Aplicar migraciones de Prisma
         run: npx prisma migrate deploy
 
+      - name: Verificar generación de informes JUnit
+        run: npm run test:reporter
+
       - name: Ejecutar pruebas con cobertura (unitarias + integración)
-        run: npx jest --coverage
+        run: npm run test:ci
+
+      - name: Publicar informes de pruebas y cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: informes-pruebas-backend
+          path: backend/reports/
+          if-no-files-found: warn
+          retention-days: 7
 
   check:
     runs-on: ubuntu-latest
