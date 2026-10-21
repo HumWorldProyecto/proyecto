@@ -2,15 +2,15 @@
 
 ## 1. Propuesta y entorno
 
-- [ ] 1.1 Registrar matriz y revisión crítica antes de implementar; verificar ocho casos no duplicados y clasificación real.
-- [ ] 1.2 Ejecutar baseline en PostgreSQL 16 aislado y registrar cobertura de dos zonas no ejercitadas.
-- [ ] 1.3 Crear Issue técnica P11 con criterios y trazabilidad sin modificar historias de producto.
+- [x] 1.1 Registrar matriz y revisión crítica antes de implementar; verificar ocho casos no duplicados y clasificación real.
+- [x] 1.2 Ejecutar baseline en PostgreSQL 16 aislado y registrar cobertura de dos zonas no ejercitadas.
+- [x] 1.3 Crear Issue técnica P11 con criterios y trazabilidad sin modificar historias de producto.
 
 ## 2. Pruebas e informes
 
-- [ ] 2.1 Implementar cuatro unitarias AAA con dobles aislados y cuatro API con fixtures; verificar su ejecución y repetición dirigida.
-- [ ] 2.2 Incorporar reporter JUnit y cobertura XML nativa sin dependencias; verificar node:test, validez XML y fallo de escritura observable.
-- [ ] 2.3 Ampliar CI y documentación; verificar build, Prisma, strict, suite completa y >=80 %.
+- [x] 2.1 Implementar cuatro unitarias AAA con dobles aislados y cuatro API con fixtures; verificar su ejecución y repetición dirigida.
+- [x] 2.2 Incorporar reporter JUnit y cobertura XML nativa sin dependencias; verificar node:test, validez XML y fallo de escritura observable.
+- [x] 2.3 Ampliar CI y documentación; verificar build, Prisma, strict, suite completa y >=80 %.
 
 ## 3. Demostración y entrega
 

@@ -23,12 +23,25 @@ Los ocho casos usan Arrange/Act/Assert. Son positivos (registro/listado/conserva
 
 PA-01/02 → alta RSS válida 201 / URL inválida 400; PA-03 → colección vacía 200; PA-04 → múltiples fuentes ordenadas; PA-05/06 → fuente existente 200/inexistente 404. PA-07 no se copia: los IDs de fuentes son strings y su contrato no exige números positivos. Estos casos básicos ya existen en test/sources/sources.e2e.spec.ts; los ocho nuevos no se presentan como todos los tests existentes.
 
-## Dos zonas a analizar con cobertura
+## Cobertura medida antes y después
 
-1. SourceCaptureService: salidas no tipadas de fetch y parse. La suite previa cubría errores tipados y fallo de output, pero no esas dos rutas. U01/U02 deben mejorar esas líneas y garantizar liberación del guard.
-2. rss-only-parser: comentarios/declaración XML inicial sin cierre. U03/U04 deben cubrir esas defensas; no se inventan entradas imposibles para alcanzar 100 %.
+Baseline: main `5e4d27c`, Node 24.19.0, PostgreSQL 16 en contenedor aislado, seis migraciones aplicadas sin modificarlas. Después de compilar el loader utilizado por HU-14: **70 suites / 690 pruebas aprobadas**, 42,052 s. Al principio se intentó ejecutar sin build y cuatro tests del loader fallaron por faltar dist; se corrigió la preparación y se repitió la suite completa. No se contabiliza ese intento como baseline válido.
 
-El informe antes/después y la evidencia remota se añadirán después de ejecutar. Cobertura de líneas no equivale a requisitos satisfechos ni a aserciones correctas.
+Primera ejecución completa P11: **72 suites / 698 pruebas aprobadas**, 42,573 s; los ocho nuevos también pasaron dos ejecuciones dirigidas. Además, tres pruebas del reporter con node:test (se cuentan por separado). JUnit leído con un parser XML independiente: 698 casos, cero failures/errors/skipped; Cobertura XML válido.
+
+| Métrica global | Antes | Con P11 | Mínimo |
+| --- | ---: | ---: | ---: |
+| Statements | 98,46 % | 98,71 % | 80 % |
+| Branches | 93,31 % | 93,87 % | 80 % |
+| Functions | 99,05 % | 99,05 % | 80 % |
+| Lines | 98,41 % | 98,67 % | 80 % |
+
+1. SourceCaptureService: el baseline muestra sin cubrir las líneas 68 (parse inesperado) y 74 (conservar un SourceCaptureError existente). U02 cubre 68; líneas 94,87 % → 97,43 %. La hipótesis preliminar de que fetch también estaba descubierto se corrigió al leer la medición: U01 agrega comprobaciones de corte y liberación, pero no aumenta esa línea ya cubierta. Propuesta futura: el colaborador entrega un SourceCaptureError y comprobar identidad exacta, sin doble envoltura.
+2. rss-only-parser: baseline sin cubrir 22/34/38. U03/U04 cubren comentario y declaración truncados (22/38); líneas 93,33 % → 97,77 %. Queda 34: límite inválido de `<?xml...`; caso adicional propuesto `<?xmlfoo?><rss/>` debe rechazar la declaración.
+
+A04 también cubre la propagación de errores desconocidos del repositorio: líneas 96,42 % → 100 %. Los dos casos adicionales anteriores se proponen para trabajo posterior; no se presentan como ejecutados. Cobertura de líneas no equivale a requisitos satisfechos ni a aserciones correctas.
+
+Seguimiento técnico: [Issue #46](https://github.com/HumWorldProyecto/proyecto/issues/46). OpenSpec strict válido, Prisma validate/migrate status y build correctos. Sin cambios en src, contratos, esquema, migraciones o dependencias.
 
 ## Reproducción
 
