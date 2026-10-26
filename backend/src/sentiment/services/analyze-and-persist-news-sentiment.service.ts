@@ -5,7 +5,7 @@ import {
   NewsSentimentRepositoryPort,
 } from '../ports/news-sentiment-repository.port';
 import { PersistedNewsSentimentResult } from '../types/persisted-news-sentiment';
-import { NewsSentimentAnalysisService } from './news-sentiment-analysis.service';
+import { NewsSentimentEvidenceService } from './news-sentiment-evidence.service';
 
 export type AnalyzeAndPersistNewsSentimentInput = Readonly<{
   newsId: string;
@@ -15,7 +15,7 @@ export type AnalyzeAndPersistNewsSentimentInput = Readonly<{
 @Injectable()
 export class AnalyzeAndPersistNewsSentimentService {
   constructor(
-    private readonly newsAnalysis: NewsSentimentAnalysisService,
+    private readonly newsAnalysis: NewsSentimentEvidenceService,
     @Inject(NEWS_SENTIMENT_REPOSITORY_PORT)
     private readonly repository: NewsSentimentRepositoryPort,
   ) {}
@@ -30,6 +30,7 @@ export class AnalyzeAndPersistNewsSentimentService {
       score: analysis.score,
       matchedTerms: analysis.matchedTerms,
       language: input.language,
+      terms: analysis.terms,
     });
   }
 }
