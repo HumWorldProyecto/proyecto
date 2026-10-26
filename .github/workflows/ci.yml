@@ -93,3 +93,28 @@ jobs:
         run: |
           echo "KO ERROR - Fallo en uno de los pasos anteriores"
           exit 1
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:cov
+
+  openspec-sprint4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+      - run: npx --yes @fission-ai/openspec@1.14.3 validate sprint4-consultas-visualizaciones --strict

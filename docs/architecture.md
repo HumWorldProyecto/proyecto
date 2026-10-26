@@ -48,12 +48,12 @@ Todo el contenido de esta sección ha sido **revisado y ratificado por el Equipo
 | Área | Elección ratificada | Estado arquitectónico |
 | --- | --- | --- |
 | Backend | Node.js 24 LTS, TypeScript 5 y NestJS 10.4 | NestJS 10.4 ratificado como baseline temporal para cerrar Sprint 1 |
-| Frontend | React, TypeScript y Vite | Ratificado como frontend previsto; todavía no implementado |
+| Frontend | React, TypeScript y Vite | Ratificado; implementado en el incremento Sprint 4 |
 | Persistencia | PostgreSQL 16, Prisma ORM 6 y Prisma Migrate para migraciones | Ratificado |
 | Captura RSS | `@nestjs/axios` como integración HTTP y `rss-parser` como parser RSS | Ratificado |
 | Scheduling | `@nestjs/schedule` | Ratificado |
-| Visualización | Leaflet para mapas y Chart.js para gráficos | Previsto para el frontend; todavía no implementado |
-| Pruebas | Jest 29 para backend; Vitest y React Testing Library previstos para frontend | Jest ratificado para el backend actual; herramientas frontend todavía no implementadas |
+| Visualización | Leaflet para mapas y Chart.js para gráficos | Implementado en el frontend de Sprint 4 |
+| Pruebas | Jest 29 para backend; Vitest y React Testing Library para frontend | Jest para backend; Vitest y React Testing Library implementados en Sprint 4 |
 | DevOps y calidad | Docker, Docker Compose para el entorno local, GitHub Actions y SonarQube | Ratificado; Docker y GitHub Actions son además restricciones obligatorias |
 
 Node.js 24 LTS es el runtime oficial del proyecto. La versión patch utilizada por cada entorno pertenece a su configuración técnica y no se replica como inventario de dependencias menores en este documento.
@@ -200,15 +200,15 @@ La captura automática y el purgado automático deben programarse como disparado
 
 ## 13. Frontend y visualización
 
-El frontend previsto implementará la interfaz web, la administración y los dashboards consumiendo exclusivamente `/api/v1`. React, TypeScript y Vite están ratificados para ese frontend, pero todavía no existe una implementación frontend en el repositorio.
+El frontend implementa las consultas y dashboards de Sprint 4 consumiendo exclusivamente `/api/v1`. React, TypeScript y Vite están ratificados para ese frontend, con implementación en frontend/ para el incremento Sprint 4.
 
-Leaflet y Chart.js están previstos para los mapas y gráficos del frontend todavía no implementado. La composición exacta de cada visualización, sus interacciones y la transformación específica de datos deben definirse a partir de la historia de usuario y del `design.md` aplicable. Las reglas centrales de negocio no deben trasladarse a componentes del frontend.
+Leaflet y Chart.js implementan los mapas y gráficos del frontend de Sprint 4. La composición exacta de cada visualización, sus interacciones y la transformación específica de datos deben definirse a partir de la historia de usuario y del `design.md` aplicable. Las reglas centrales de negocio no deben trasladarse a componentes del frontend.
 
 ## 14. Estrategia de pruebas
 
 Cada historia de usuario debe incluir pruebas automatizadas trazables a sus escenarios. Deben utilizarse pruebas unitarias, de integración y de aceptación según corresponda, con una cobertura global mínima obligatoria del 80 %.
 
-Como baseline ratificado, el backend utiliza Jest. Vitest y React Testing Library están previstos para el frontend todavía no implementado. La obligación de probar y el umbral de cobertura del 80 % son restricciones del proyecto, no elecciones del equipo. Cada `design.md` debe explicar los niveles de prueba, los casos relevantes y la forma de verificar la implementación.
+Como baseline ratificado, el backend utiliza Jest. Vitest y React Testing Library verifican el frontend de Sprint 4. La obligación de probar y el umbral de cobertura del 80 % son restricciones del proyecto, no elecciones del equipo. Cada `design.md` debe explicar los niveles de prueba, los casos relevantes y la forma de verificar la implementación.
 
 ## 15. DevOps y calidad
 
