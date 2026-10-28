@@ -24,6 +24,7 @@ import {
 } from '../dto/multiple-source-capture-response.dto';
 import { MultipleSourceCaptureInputError } from '../errors/multiple-source-capture-input.error';
 import { MultipleSourceCaptureService } from '../services/multiple-source-capture.service';
+import { RequireApiKey } from '../../auth/require-api-key.decorator';
 
 @ApiTags('sources')
 @ApiExtraModels(
@@ -35,6 +36,7 @@ export class MultipleSourceCaptureController {
   constructor(private readonly multipleCapture: MultipleSourceCaptureService) {}
 
   @Post('capture')
+  @RequireApiKey('write')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Actualizar manualmente múltiples fuentes RSS',

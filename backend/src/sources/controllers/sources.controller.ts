@@ -35,6 +35,7 @@ import { UpdateSourceDto } from '../dto/update-source.dto';
 import { SourceInputError, SourceNotFoundError, SourceUrlConflictError } from '../errors/source-domain.error';
 import { SourceAccessibilityError } from '../errors/source-accessibility.error';
 import { SourcesService } from '../services/sources.service';
+import { RequireApiKey } from '../../auth/require-api-key.decorator';
 
 @ApiTags('sources')
 @Controller('sources')
@@ -42,6 +43,7 @@ export class SourcesController {
   constructor(private readonly sourcesService: SourcesService) {}
 
   @Post()
+  @RequireApiKey('write')
   @ApiOperation({ summary: 'Registrar una fuente RSS' })
   @ApiCreatedResponse({ description: 'Fuente creada y activa', type: SourceResponseDto })
   @ApiBadRequestResponse({ description: 'URL inválida, no permitida o inaccesible' })
@@ -51,6 +53,7 @@ export class SourcesController {
   }
 
   @Get()
+  @RequireApiKey('read')
   @ApiOperation({ summary: 'Listar fuentes RSS' })
   @ApiQuery({ name: 'active', required: false, enum: ['true', 'false'] })
   @ApiOkResponse({ description: 'Listado de fuentes', type: SourceResponseDto, isArray: true })
@@ -63,6 +66,7 @@ export class SourcesController {
   }
 
   @Get(':id')
+  @RequireApiKey('read')
   @ApiOperation({ summary: 'Consultar una fuente RSS' })
   @ApiParam({ name: 'id', description: 'Identificador estable de la fuente' })
   @ApiOkResponse({ description: 'Fuente encontrada', type: SourceResponseDto })
@@ -72,6 +76,7 @@ export class SourcesController {
   }
 
   @Put(':id')
+  @RequireApiKey('write')
   @ApiOperation({ summary: 'Reemplazar la URL editable de una fuente RSS' })
   @ApiParam({ name: 'id', description: 'Identificador estable de la fuente' })
   @ApiOkResponse({ description: 'Fuente reemplazada', type: SourceResponseDto })
@@ -86,6 +91,7 @@ export class SourcesController {
   }
 
   @Patch(':id')
+  @RequireApiKey('write')
   @ApiOperation({ summary: 'Actualizar parcialmente una fuente RSS' })
   @ApiParam({ name: 'id', description: 'Identificador estable de la fuente' })
   @ApiOkResponse({ description: 'Fuente actualizada o reactivada', type: SourceResponseDto })
@@ -100,6 +106,7 @@ export class SourcesController {
   }
 
   @Delete(':id')
+  @RequireApiKey('write')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Desactivar una fuente RSS sin borrarla' })
   @ApiParam({ name: 'id', description: 'Identificador estable de la fuente' })

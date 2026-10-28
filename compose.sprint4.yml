@@ -17,6 +17,8 @@ services:
     build: ./backend
     environment:
       DATABASE_URL: postgresql://humworld:${HUMWORLD_DEMO_PASSWORD}@postgres:5432/humworld_sprint4?schema=public
+      HUMWORLD_API_KEY_READ: ${HUMWORLD_API_KEY_READ:?Define la clave de consulta del entorno local}
+      HUMWORLD_API_KEY_WRITE: ${HUMWORLD_API_KEY_WRITE:?Define la clave de gestión del entorno local}
     ports:
       - "127.0.0.1:53000:3000"
     depends_on:

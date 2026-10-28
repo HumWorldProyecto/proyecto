@@ -18,6 +18,7 @@ context: |
   No utilizar como solución final un parser RSS basado en expresiones regulares, un scheduler principal artesanal basado en un ciclo recursivo con setTimeout ni valores de timeout dispersos como números mágicos.
 
   Mantener el flujo frontend -> API -> servicios -> repositorios -> sistema gestor de datos. El frontend consume exclusivamente la API; la API invoca servicios y no accede directamente a datos; los servicios coordinan repositorios e integraciones; los jobs disparan casos de uso y no duplican lógica de negocio.
+  P12 añade guards de acceso por aplicación en la familia de fuentes RSS según proteger-fuentes-rss; las claves no llegan a servicios/repositorios ni al frontend distribuido. No equivale a usuarios/login ni a protección global de las otras familias.
   No implementar fuera de historias de usuario aprobadas. Cada historia debe incluir pruebas. No inventar requisitos, relaciones funcionales, endpoints ni valores de configuración ausentes de las historias y especificaciones aprobadas.
 
 # Reglas por artefacto OpenSpec.
