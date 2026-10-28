@@ -14,8 +14,8 @@
 - [x] 3.1 Unitarias config/guard y matriz HTTP; PostgreSQL comprueba no efectos y contratos válidos.
 - [x] 3.2 Suites heredadas autorizadas, builds, Prisma, cobertura >=80%, strict y diff.
 - [x] 3.3 Crear secretos CI exclusivos cifrados sin mostrar valores; conservar evidencia de nombres.
-- [ ] 3.4 Smoke HTTP/rotación, job con secrets explícitos y artefactos sin valores; verificar CI real y Swagger/UI.
+- [x] 3.4 Smoke HTTP/rotación, job con secrets explícitos y artefactos sin valores; verificar CI real y Swagger/UI.
 
 ## 4. Entrega (CA9)
 - [x] 4.1 Documentar trazabilidad de criterios, resultados, límites, rotación y guía del profesor.
-- [ ] 4.2 PR limpia contra main, solo BGallegos000 como revisor; verificar SHA/checks finales, sin fusionar/cerrar Issues manualmente.
+- [x] 4.2 PR limpia contra main, solo BGallegos000 como revisor; verificar SHA/checks finales, sin fusionar/cerrar Issues manualmente.

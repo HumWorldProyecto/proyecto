@@ -88,6 +88,16 @@ La demostración de rotación reinicia la aplicación de comprobación con una c
 
 ## Trazabilidad de criterios de la Issue
 
+## Evidencia remota verificada
+
+[PR #49](https://github.com/HumWorldProyecto/proyecto/pull/49), base main `f5ef214eac6610dcc9ceda195f7dc83f31fdb0de`. Implementación verificada `8ab5d535e15ec2c5ed54704c0430974b1833b82c`: [Actions run 40708394739](https://github.com/HumWorldProyecto/proyecto/actions/runs/40708394739), **success** en backend-tests, frontend-tests, p12-security, openspec-sprint4 y check.
+
+Artefactos descargados y comprobados independientemente: `informes-pruebas-backend` **12824882351** (JUnit: 802 casos, cero failures/errors/skipped; Cobertura XML válido) y `comprobaciones-acceso-p12` **12825605107** (112/112 comprobaciones, incluida rotación y no ejecución de servicios al denegar). El JSON de acceso no contiene valores de claves; el log de Actions enmascara las variables recibidas. Retención de siete días, hasta el 04-11-2026.
+
+Los dos secretos se consumieron realmente en el job, sin fallback. La PR pasó de borrador a lista y se solicitó revisión exclusivamente a **BGallegos000**, sin equipos u otros revisores solicitados. Aprobación y fusión humanas pendientes; Issue #48 permanece abierta. El cierre documental es posterior a este commit de implementación; el SHA y check de la cabeza final se mantienen en la descripción de la PR para no autorreferenciar un commit aún inexistente.
+
+## Correspondencia final
+
 | Criterio | Especificación / comprobación |
 | --- | --- |
 | 1–2: 401/403 y matriz sin efectos, éxito vigente | Autenticar antes / perfiles; 66 casos P12 y regresión autorizada |
