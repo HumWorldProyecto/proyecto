@@ -1,7 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
-import request from 'supertest';
+import request from '../helpers/authorized-request';
 import { AppModule } from '../../src/app.module';
 import { RssFetchError } from '../../src/capture/errors/rss-fetch.error';
 import { RSS_FETCHER_PORT } from '../../src/capture/ports/rss-fetcher.port';

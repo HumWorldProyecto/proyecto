@@ -156,9 +156,10 @@ it('comunica catálogo no disponible y permite reintentar', async () => {
   const user = userEvent.setup();
   render(<App />);
   expect(await screen.findByRole('alert')).toHaveTextContent(
-    'No se pudo cargar la lista de países',
+    'No pudimos conectar con los datos',
   );
-  expect(screen.getByLabelText('País')).toBeDisabled();
+  // El catálogo público del resultado mantiene los filtros si falla el acceso a fuentes.
+  await waitFor(() => expect(screen.getByLabelText('País')).not.toBeDisabled());
   await user.click(screen.getByRole('button', { name: 'Reintentar' }));
   expect(fetchMock.mock.calls.filter(([url]) => url.includes('/geography')).length).toBeGreaterThan(
     1,

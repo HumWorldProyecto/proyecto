@@ -93,3 +93,6 @@ Para explorar el dashboard, iniciar `npm ci` y `npm run dev` desde `frontend/` y
 - [Planificación](docs/planificacion/)
 - [Trazabilidad de requisitos](docs/requisitos/)
 - [OpenSpec](openspec/)
+# Práctica P12: acceso a fuentes RSS
+
+Las operaciones de fuentes RSS requieren `X-API-Key`; consulta admite ambos perfiles y las escrituras requieren gestión. Incluye captura manual y geografía de fuentes. Antes de arrancar, define `HUMWORLD_API_KEY_READ` y `HUMWORLD_API_KEY_WRITE` con valores distintos; no hay claves predeterminadas. La web las recibe durante el uso y solo en memoria. Consulta [la guía P12](docs/practicas/P12-secretos-acceso-api.md) para configuración, permisos, Swagger, rotación y evidencia de CI. Las demás familias conservan sus contratos.

@@ -80,6 +80,8 @@ Estas tecnologías son decisiones del equipo, no requisitos del negocio ni impos
 
 ## Seguridad básica
 
+- P12 protege la familia de fuentes RSS según `openspec/changes/proteger-fuentes-rss`. Mantener los guards y no trasladar credenciales a servicios/repositorios o bundles del frontend. Las credenciales efímeras de fixtures Jest no son defaults del producto. El resto de familias conserva su contrato; no afirmar seguridad global ni extender permisos sin un cambio revisado.
+
 - No almacenar secretos, tokens, contraseñas ni credenciales en el repositorio.
 - Utilizar configuración externa y mecanismos seguros de secretos cuando se diseñen entornos y workflows.
 - No registrar datos sensibles ni incluirlos en ejemplos, pruebas o documentación.

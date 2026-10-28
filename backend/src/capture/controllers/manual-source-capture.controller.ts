@@ -24,6 +24,7 @@ import {
 import { ManualSourceCaptureResponseDto } from '../dto/manual-source-capture-response.dto';
 import { SourceCaptureError } from '../errors/source-capture.error';
 import { ManualSourceCaptureService } from '../services/manual-source-capture.service';
+import { RequireApiKey } from '../../auth/require-api-key.decorator';
 
 @ApiTags('sources')
 @Controller('sources')
@@ -31,6 +32,7 @@ export class ManualSourceCaptureController {
   constructor(private readonly manualCapture: ManualSourceCaptureService) {}
 
   @Post(':id/capture')
+  @RequireApiKey('write')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Actualizar manualmente una fuente RSS' })
   @ApiParam({ name: 'id', description: 'Identificador estable de la fuente RSS' })
