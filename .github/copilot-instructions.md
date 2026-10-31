@@ -80,6 +80,8 @@ Estas tecnologías son decisiones del equipo, no requisitos del negocio ni impos
 
 ## Seguridad básica
 
+- El cambio `cierre-sprint5` protege sus nuevas rutas de caducidad/purga y medios con permisos explícitos. No ampliar el borrado a fuentes o datos fuera de News. La demo usa exclusivamente humworld_demo_final; no resetear bases compartidas. No alterar rangos de defensa SSRF o URI canónicas para silenciar Sonar ni fingir revisión de hallazgos.
+
 - P12 protege la familia de fuentes RSS según `openspec/changes/proteger-fuentes-rss`. Mantener los guards y no trasladar credenciales a servicios/repositorios o bundles del frontend. Las credenciales efímeras de fixtures Jest no son defaults del producto. El resto de familias conserva su contrato; no afirmar seguridad global ni extender permisos sin un cambio revisado.
 
 - No almacenar secretos, tokens, contraseñas ni credenciales en el repositorio.

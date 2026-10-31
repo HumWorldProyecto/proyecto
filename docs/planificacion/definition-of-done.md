@@ -20,4 +20,4 @@ Esta Definition of Done se redacta como acuerdo del Equipo 5 y debe ser validada
 
 ## SonarQube/SonarCloud
 
-El guion de P3 propone SonarQube/SonarCloud como ejemplo de criterio. No se declara evidencia de Sonar mientras la herramienta no esté integrada. Cuando se integre, su Quality Gate deberá incorporarse formalmente a esta DoD.
+El cierre Sprint 5 incorpora una comprobación **local** reproducible de SonarQube con [evidencia y límites](../calidad/sonar-sprint5.md). Su gate pasó y se exige cobertura >=80% y ausencia de vulnerabilidades críticas en ese chequeo. No está conectado como gate automático de GitHub; esa integración permanente y el tratamiento humano de los avisos/deuda alta deben acordarse antes de afirmarlos como condiciones automáticas de CI. No se simulan aprobaciones ni se relajan reglas para marcar Done.
