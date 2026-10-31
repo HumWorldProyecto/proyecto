@@ -25,9 +25,28 @@ model RssSource {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
+  channelId String?
+  channel Channel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
+
   news News[]
 
   @@map("rss_sources")
+}
+
+model Channel {
+  id String @id @default(uuid())
+  name String @db.VarChar(120)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sources RssSource[]
+  @@map("channels")
+}
+
+model NewsRetentionPolicy {
+  id String @id @default("global")
+  retentionDays Int?
+  updatedAt DateTime @updatedAt
+  @@map("news_retention_policy")
 }
 
 model CaptureConfig {
@@ -57,6 +76,7 @@ model News {
   source                  RssSource           @relation(fields: [sourceId], references: [id], onDelete: Restrict)
 
   @@unique([sourceId, dedupeKey])
+  @@index([capturedAt])
   @@map("news")
 }
 

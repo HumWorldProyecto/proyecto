@@ -6,12 +6,12 @@ function SourceRow({
   source,
   countries,
   onSaved,
-  accessKey,
+  credential,
 }: {
   source: Source;
   countries: Country[];
   onSaved: () => void;
-  accessKey: string;
+  credential: string;
 }) {
   const [country, setCountry] = useState(source.countryCode ?? '');
   const [pending, setPending] = useState(false);
@@ -29,7 +29,7 @@ function SourceRow({
         setPending(true);
         setMessage('');
         try {
-          await assignCountry(source.id, country || null, controller.signal, accessKey);
+          await assignCountry(source.id, country || null, controller.signal, credential);
           if (!controller.signal.aborted) {
             setMessage('País guardado');
             onSaved();
@@ -60,7 +60,7 @@ function SourceRow({
           </option>
         ))}
       </select>
-      <button className="secondary" disabled={pending}>
+      <button type="submit" className="secondary" disabled={pending}>
         {pending ? 'Guardando…' : 'Guardar país'}
       </button>
       {message && <p role="status">{message}</p>}
@@ -72,12 +72,12 @@ export function SourceCountries({
   sources,
   countries,
   onSaved,
-  accessKey = '',
+  credential = '',
 }: {
   sources: Source[];
   countries: Country[];
   onSaved: () => void;
-  accessKey?: string;
+  credential?: string;
 }) {
   return (
     <details className="panel source-settings">
@@ -93,7 +93,7 @@ export function SourceCountries({
       {sources.length ? (
         sources.map((source) => (
           <SourceRow
-            accessKey={accessKey}
+            credential={credential}
             key={`${source.id}:${source.countryCode}`}
             source={source}
             countries={countries}

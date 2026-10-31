@@ -119,6 +119,7 @@ jobs:
           node-version: '24.20.0'
       - run: npx --yes @fission-ai/openspec@1.14.3 validate sprint4-consultas-visualizaciones --strict
       - run: npx --yes @fission-ai/openspec@1.14.3 validate proteger-fuentes-rss --strict
+      - run: npx --yes @fission-ai/openspec@1.14.3 validate cierre-sprint5 --strict
 
   p12-security:
     # Sin pull_request_target: nunca ejecutar código de forks con secretos del repositorio.
