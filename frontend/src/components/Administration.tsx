@@ -20,9 +20,9 @@ function useAdminAction(refresh: () => void) {
   return { message, busy, run };
 }
 
-function RetentionPanel({ accessKey, onChanged }: { accessKey: string; onChanged: () => void }) {
+function RetentionPanel({ credential, onChanged }: { credential: string; onChanged: () => void }) {
   const [revision, setRevision] = useState(0); const [days, setDays] = useState('');
-  const load = useCallback((signal: AbortSignal) => adminRequest<Preview>('/news/purge-preview', accessKey, signal), [accessKey]);
+  const load = useCallback((signal: AbortSignal) => adminRequest<Preview>('/news/purge-preview', credential, signal), [credential]);
   const state = useResource(`retention:${revision}`, load);
   useEffect(() => { if (state.data) setDays(state.data.retentionDays?.toString() ?? ''); }, [state.data]);
   const refresh = () => { setRevision(value => value + 1); onChanged(); };
@@ -34,13 +34,13 @@ function RetentionPanel({ accessKey, onChanged }: { accessKey: string; onChanged
     <form aria-label="Configurar caducidad" onSubmit={event => {
       event.preventDefault();
       void action.run(async signal => {
-        await adminRequest('/config/retention', accessKey, signal, 'PUT', { retentionDays: days === '' ? null : Number(days) });
+        await adminRequest('/config/retention', credential, signal, 'PUT', { retentionDays: days === '' ? null : Number(days) });
         return days === '' ? 'Caducidad desactivada' : 'Periodo de caducidad guardado';
       });
     }}>
-      <label>Días de permanencia<input type="number" min="1" max="36500" value={days}
+      <label>Días de permanencia<input type="number" min="1" max="36500" value={days} disabled={action.busy || !state.data}
         onChange={event => setDays(event.target.value)} placeholder="Sin configurar" /></label>
-      <button className="secondary" disabled={action.busy}>Guardar caducidad</button>
+      <button type="submit" className="secondary" disabled={action.busy || !state.data}>Guardar caducidad</button>
       <small>Deja el campo vacío para desactivar.</small>
     </form>
     {state.error && <p role="alert">{state.error} <button onClick={() => setRevision(value => value + 1)}>Reintentar caducidad</button></p>}
@@ -53,7 +53,7 @@ function RetentionPanel({ accessKey, onChanged }: { accessKey: string; onChanged
           const preview = state.data!;
           if (!window.confirm(`¿Purgar las ${preview.expiredCount} noticias caducadas? Esta operación elimina esas noticias y conserva sus fuentes.`)) return;
           void action.run(async signal => {
-            const result = await adminRequest<{ deletedCount: number }>('/news/purge', accessKey, signal, 'POST', { expectedRetentionDays: preview.retentionDays });
+            const result = await adminRequest<{ deletedCount: number }>('/news/purge', credential, signal, 'POST', { expectedRetentionDays: preview.retentionDays });
             return `Se eliminaron ${result.deletedCount} noticias caducadas`;
           });
         }}>Purgar noticias caducadas</button>
@@ -62,33 +62,33 @@ function RetentionPanel({ accessKey, onChanged }: { accessKey: string; onChanged
   </section>;
 }
 
-function ChannelRow({ channel, sources, accessKey, refresh }: {
-  channel: Channel; sources: Source[]; accessKey: string; refresh: () => void;
+function ChannelRow({ channel, sources, credential, refresh }: {
+  channel: Channel; sources: Source[]; credential: string; refresh: () => void;
 }) {
   const [name, setName] = useState(channel.name); const [sourceId, setSourceId] = useState('');
   const action = useAdminAction(refresh);
   return <article className="channel-row" aria-label={`Medio ${channel.name}`}>
     <form onSubmit={event => {
       event.preventDefault(); void action.run(async signal => {
-        await adminRequest(`/channels/${channel.id}`, accessKey, signal, 'PUT', { name }); return 'Nombre del medio guardado';
+        await adminRequest(`/channels/${channel.id}`, credential, signal, 'PUT', { name }); return 'Nombre del medio guardado';
       });
     }}>
       <label>Nombre de {channel.name}<input value={name} required maxLength={120} onChange={event => setName(event.target.value)} /></label>
-      <button className="secondary" disabled={action.busy}>Renombrar medio</button>
+      <button type="submit" className="secondary" disabled={action.busy}>Renombrar medio</button>
       <button type="button" className="danger" disabled={action.busy} onClick={() => {
         if (!window.confirm(`¿Eliminar el medio ${channel.name}? Se conservarán sus fuentes y noticias.`)) return;
-        void action.run(async signal => { await adminRequest(`/channels/${channel.id}`, accessKey, signal, 'DELETE'); return 'Medio eliminado'; });
+        void action.run(async signal => { await adminRequest(`/channels/${channel.id}`, credential, signal, 'DELETE'); return 'Medio eliminado'; });
       }}>Eliminar medio</button>
     </form>
     <ul>{channel.sources.map(source => <li key={source.id}>{source.url}{' '}
       <button className="text-button" disabled={action.busy} onClick={() => void action.run(async signal => {
-        await adminRequest(`/channels/${channel.id}/sources/${source.id}`, accessKey, signal, 'DELETE'); return 'Fuente desvinculada';
+        await adminRequest(`/channels/${channel.id}/sources/${source.id}`, credential, signal, 'DELETE'); return 'Fuente desvinculada';
       })}>Desvincular fuente</button></li>)}</ul>
     {!channel.sources.length && <p className="muted">Sin fuentes asociadas.</p>}
     <form onSubmit={event => {
       event.preventDefault(); if (!sourceId) return;
       void action.run(async signal => {
-        await adminRequest(`/channels/${channel.id}/sources/${encodeURIComponent(sourceId)}`, accessKey, signal, 'PUT');
+        await adminRequest(`/channels/${channel.id}/sources/${encodeURIComponent(sourceId)}`, credential, signal, 'PUT');
         return 'Fuente asociada al medio';
       });
     }}>
@@ -96,15 +96,15 @@ function ChannelRow({ channel, sources, accessKey, refresh }: {
         <option value="">Selecciona una fuente</option>
         {sources.map(source => <option key={source.id} value={source.id}>{source.url}</option>)}
       </select></label>
-      <button className="secondary" disabled={action.busy || !sourceId}>Asociar fuente</button>
+      <button type="submit" className="secondary" disabled={action.busy || !sourceId}>Asociar fuente</button>
     </form>
     {action.message && <p role="status">{action.message}</p>}
   </article>;
 }
 
-function ChannelsPanel({ accessKey, sources, onChanged }: { accessKey: string; sources: Source[]; onChanged: () => void }) {
+function ChannelsPanel({ credential, sources, onChanged }: { credential: string; sources: Source[]; onChanged: () => void }) {
   const [revision, setRevision] = useState(0); const [name, setName] = useState('');
-  const load = useCallback((signal: AbortSignal) => adminRequest<Channel[]>('/channels', accessKey, signal), [accessKey]);
+  const load = useCallback((signal: AbortSignal) => adminRequest<Channel[]>('/channels', credential, signal), [credential]);
   const state = useResource(`channels:${revision}`, load);
   const refresh = () => { setRevision(value => value + 1); onChanged(); };
   const action = useAdminAction(refresh);
@@ -113,19 +113,19 @@ function ChannelsPanel({ accessKey, sources, onChanged }: { accessKey: string; s
     <p className="muted">Un medio agrupa varias fuentes. Eliminarlo conserva sus fuentes y noticias; asociar una fuente a otro medio la traslada.</p>
     <form aria-label="Crear medio" onSubmit={event => {
       event.preventDefault(); void action.run(async signal => {
-        await adminRequest('/channels', accessKey, signal, 'POST', { name }); setName(''); return 'Medio creado';
+        await adminRequest('/channels', credential, signal, 'POST', { name }); setName(''); return 'Medio creado';
       });
     }}>
       <label>Nombre del nuevo medio<input required maxLength={120} value={name} onChange={event => setName(event.target.value)} /></label>
-      <button className="secondary" disabled={action.busy}>Crear medio</button>
+      <button type="submit" className="secondary" disabled={action.busy}>Crear medio</button>
     </form>
     {state.error && <p role="alert">{state.error} <button onClick={() => setRevision(value => value + 1)}>Reintentar medios</button></p>}
-    {state.data?.map(channel => <ChannelRow key={channel.id} channel={channel} sources={sources} accessKey={accessKey} refresh={refresh} />)}
+    {state.data?.map(channel => <ChannelRow key={channel.id} channel={channel} sources={sources} credential={credential} refresh={refresh} />)}
     {state.data?.length === 0 && <p>No hay medios registrados.</p>}
     {action.message && <p role="status">{action.message}</p>}
   </section>;
 }
 
-export function Administration(props: { accessKey: string; sources: Source[]; onChanged: () => void }) {
+export function Administration(props: { credential: string; sources: Source[]; onChanged: () => void }) {
   return <><ChannelsPanel {...props} /><RetentionPanel {...props} /></>;
 }

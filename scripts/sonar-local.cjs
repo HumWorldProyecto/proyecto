@@ -12,7 +12,12 @@ const docker = process.env.DOCKER_EXE || (process.platform === 'win32'
 const scrub = (text) => token ? text.split(token).join('[OMITIDO]') : text;
 async function api(route) {
   const response = await fetch(url + route, { headers: { Authorization: `Bearer ${token}` } });
-  if (!response.ok) throw new Error(`API Sonar no disponible (${response.status})`);
+  if (!response.ok) {
+    const detail = await response.json().catch(() => ({}));
+    const error = new Error(`API Sonar ${route} (${response.status}): ${JSON.stringify(detail.errors ?? [])}`);
+    error.httpStatus = response.status;
+    throw error;
+  }
   return response.json();
 }
 function coverage(source, destination, prefix) {
@@ -36,11 +41,16 @@ async function main() {
     'sonarsource/sonar-scanner-cli@sha256:47956b669bf486bdad919e1cbd0533223515aa0b6d1d31763e5a3754942df6d7',
     '-Dsonar.host.url=http://127.0.0.1:9000','-Dsonar.working.directory=/tmp/humworld-scanner',`-Dsonar.scm.revision=${sha}`];
   let log = '';
-  const scanner = spawn(docker, args, { cwd: root, env: { ...process.env, SONAR_TOKEN: token }, windowsHide: true });
-  scanner.stdout.on('data', chunk => { log += chunk; }); scanner.stderr.on('data', chunk => { log += chunk; });
-  const exit = await new Promise((resolve, reject) => { scanner.on('error',reject);scanner.on('close',resolve); });
-  fs.writeFileSync(path.join(output,'scanner.log'),scrub(log));
-  if (exit !== 0) throw new Error('El scanner falló; consulta reports/quality/scanner.log sin credenciales');
+  // El marcador local permite recuperar solo el informe de una tarea ya subida, sin alterar el gate.
+  const reportOnly = process.argv.includes('--report-only') || fs.existsSync(path.join(output,'report-only.local'));
+  if (reportOnly) log = fs.readFileSync(path.join(output,'scanner.log'),'utf8');
+  else {
+    const scanner = spawn(docker, args, { cwd: root, env: { ...process.env, SONAR_TOKEN: token }, windowsHide: true });
+    scanner.stdout.on('data', chunk => { log += chunk; }); scanner.stderr.on('data', chunk => { log += chunk; });
+    const exit = await new Promise((resolve, reject) => { scanner.on('error',reject);scanner.on('close',resolve); });
+    fs.writeFileSync(path.join(output,'scanner.log'),scrub(log));
+    if (exit !== 0) throw new Error('El scanner falló; consulta reports/quality/scanner.log sin credenciales');
+  }
   const taskId = /api\/ce\/task\?id=([\w-]+)/.exec(log)?.[1];
   if (!taskId) throw new Error('No se obtuvo la tarea de análisis');
   let task;
@@ -53,14 +63,22 @@ async function main() {
   const gate = await api(`/api/qualitygates/project_status?analysisId=${task.analysisId}`);
   const measures = await api('/api/measures/component?component=humworld-equipo5&metricKeys=ncloc,coverage,duplicated_lines_density,violations,security_hotspots');
   const issues = await api('/api/issues/search?componentKeys=humworld-equipo5&resolved=false&ps=500');
-  const hotspots = await api('/api/hotspots/search?projectKey=humworld-equipo5&ps=500');
+  let hotspots;
+  try { hotspots = await api('/api/hotspots/search?project=humworld-equipo5&ps=500'); }
+  catch (error) {
+    if (error.httpStatus !== 403) throw error;
+    hotspots = { paging: { total: Number(measures.component.measures.find(item => item.metric === 'security_hotspots')?.value ?? 0) },
+      access: 'El token de análisis no permite revisar hotspots; se requiere revisión humana con permiso apropiado.' };
+  }
   const summary = { checkedAt: new Date().toISOString(), sha, serverVersion: (await api('/api/system/status')).version,
     gate: gate.projectStatus, measures: measures.component.measures, issueTotal: issues.paging.total,
-    hotspotTotal: hotspots.paging.total, humanReviewSimulated: false };
+    hotspotTotal: hotspots.paging.total, humanReviewSimulated: false,
+    coverageThreshold: 80, criticalVulnerabilities: issues.issues.filter(issue => issue.type === 'VULNERABILITY' && ['CRITICAL','BLOCKER'].includes(issue.severity)).length };
   for (const [name,value] of Object.entries({summary,issues,hotspots})) {
     fs.writeFileSync(path.join(output,`${name}.json`), JSON.stringify(value,null,2));
   }
   console.log(JSON.stringify(summary));
-  if (gate.projectStatus.status === 'ERROR') process.exitCode = 2;
+  const measuredCoverage = Number(measures.component.measures.find(item => item.metric === 'coverage')?.value ?? 0);
+  if (gate.projectStatus.status === 'ERROR' || measuredCoverage < 80 || summary.criticalVulnerabilities > 0) process.exitCode = 2;
 }
 main().catch(error=>{console.error(scrub(error.message));process.exitCode=1;});

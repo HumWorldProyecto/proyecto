@@ -327,13 +327,13 @@ export function App() {
         {geography.data && (
           <SourceCountries
             key={accessRevision}
-            accessKey={accessKey}
+            credential={accessKey}
             sources={geography.data.sources}
             countries={geography.data.countries}
             onSaved={refresh}
           />
         )}
-        {accessKey && <Administration key={`administration:${accessRevision}`} accessKey={accessKey}
+        {accessKey && <Administration key={`administration:${accessRevision}`} credential={accessKey}
           sources={geography.data?.sources ?? []} onChanged={refresh} />}
         <section id="method" className="method">
           <p className="eyebrow">LECTURA RESPONSABLE DEL RESULTADO</p>

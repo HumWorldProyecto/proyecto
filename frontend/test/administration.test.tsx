@@ -34,7 +34,7 @@ afterEach(()=>{vi.unstubAllGlobals();vi.restoreAllMocks();});
 
 it('CRUD de medios, asociación y desvinculación conservan fuentes; eliminar exige confirmación',async()=>{
   const changed=vi.fn();const user=userEvent.setup();
-  render(<Administration accessKey={crypto.randomUUID()} sources={geography.sources} onChanged={changed}/>);
+  render(<Administration credential={crypto.randomUUID()} sources={geography.sources} onChanged={changed}/>);
   await screen.findByText('No hay medios registrados.');
   await user.type(screen.getByLabelText('Nombre del nuevo medio'),'Medio');
   await user.click(screen.getByRole('button',{name:'Crear medio'}));
@@ -57,7 +57,7 @@ it('CRUD de medios, asociación y desvinculación conservan fuentes; eliminar ex
 
 it('configura/desactiva caducidad y cancela/confirma purga usando el periodo de preview',async()=>{
   const changed=vi.fn();const user=userEvent.setup();
-  render(<Administration accessKey={crypto.randomUUID()} sources={[]} onChanged={changed}/>);
+  render(<Administration credential={crypto.randomUUID()} sources={[]} onChanged={changed}/>);
   const input=await screen.findByLabelText('Días de permanencia');
   await waitFor(()=>expect(input).toHaveValue(7));
   fireEvent.change(input,{target:{value:'14'}});await user.click(screen.getByRole('button',{name:'Guardar caducidad'}));
@@ -65,6 +65,8 @@ it('configura/desactiva caducidad y cancela/confirma purga usando el periodo de 
   await waitFor(()=>expect(input).toHaveValue(14));
   fireEvent.change(input,{target:{value:''}});await user.click(screen.getByRole('button',{name:'Guardar caducidad'}));
   await screen.findByText('Caducidad desactivada');
+  await waitFor(()=>expect(input).toHaveValue(null));
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Guardar caducidad'})).not.toBeDisabled());
   expect(screen.getByRole('button',{name:'Purgar noticias caducadas'})).toBeDisabled();
   fireEvent.change(input,{target:{value:'7'}});await user.click(screen.getByRole('button',{name:'Guardar caducidad'}));
   await waitFor(()=>expect(screen.getByRole('button',{name:'Purgar noticias caducadas'})).not.toBeDisabled());
@@ -83,7 +85,7 @@ it('permite reintentar lecturas y muestra conflicto sin ocultar la política',as
   const original=fetcher.getMockImplementation()! as (url:string,options?:RequestInit)=>Promise<Response>;
   let fail=true;
   fetcher.mockImplementation((url:string,options?:RequestInit)=>fail?Promise.resolve(ok({},503)):original(url,options));
-  const user=userEvent.setup();render(<Administration accessKey={crypto.randomUUID()} sources={[]} onChanged={vi.fn()}/>);
+  const user=userEvent.setup();render(<Administration credential={crypto.randomUUID()} sources={[]} onChanged={vi.fn()}/>);
   await screen.findByRole('button',{name:'Reintentar medios'});fail=false;
   await user.click(screen.getByRole('button',{name:'Reintentar medios'}));
   await user.click(screen.getByRole('button',{name:'Reintentar caducidad'}));
@@ -97,7 +99,7 @@ it('permite reintentar lecturas y muestra conflicto sin ocultar la política',as
 
 it('operación pendiente se aborta al retirar la vista; fallo no Error se sanitiza',async()=>{
   const user=userEvent.setup();const changed=vi.fn();
-  const view=render(<Administration accessKey={crypto.randomUUID()} sources={[]} onChanged={changed}/>);
+  const view=render(<Administration credential={crypto.randomUUID()} sources={[]} onChanged={changed}/>);
   await screen.findByText('No hay medios registrados.');
   await user.type(screen.getByLabelText('Nombre del nuevo medio'),'Fallo');
   fetcher.mockRejectedValueOnce('detalle no Error');
