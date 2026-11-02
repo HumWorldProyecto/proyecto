@@ -8,6 +8,7 @@ import { Evolution } from './components/Evolution';
 import { NewsDialog, NewsRanking, WordCloud, WordDetail } from './components/Evidence';
 import { SourceCountries } from './components/SourceCountries';
 import { SourceAccess } from './components/SourceAccess';
+import { Administration } from './components/Administration';
 
 export function App() {
   const [accessKey, setAccessKey] = useState('');
@@ -326,12 +327,14 @@ export function App() {
         {geography.data && (
           <SourceCountries
             key={accessRevision}
-            accessKey={accessKey}
+            credential={accessKey}
             sources={geography.data.sources}
             countries={geography.data.countries}
             onSaved={refresh}
           />
         )}
+        {accessKey && <Administration key={`administration:${accessRevision}`} credential={accessKey}
+          sources={geography.data?.sources ?? []} onChanged={refresh} />}
         <section id="method" className="method">
           <p className="eyebrow">LECTURA RESPONSABLE DEL RESULTADO</p>
           <h2>Un indicador con evidencia a la vista.</h2>

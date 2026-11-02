@@ -111,10 +111,10 @@ P3 pedía verificar requisitos técnicos dentro del backlog. Tras P4 y P5, el eq
 - PostgreSQL y Prisma conforme a la arquitectura vigente.
 - Seguridad y calidad verificadas mediante los controles actualmente integrados.
 
-SonarQube/SonarCloud no se declara como integrado porque el repositorio no conserva evidencia de esa integración.
+El cierre Sprint 5 añade [SonarQube local con evidencia](../calidad/sonar-sprint5.md). No se presenta como un gate automático de CI ni como una integración cloud.
 
 ## Gap obligatorio identificado
 
-> La gestión de canales/medios y las fuentes RSS asociadas a cada uno forma parte del alcance obligatorio del proyecto final. El slice actual de HU-15 cubre las fuentes RSS, pero no debe interpretarse como implementación de Channel/Media. Esta capacidad permanece pendiente de planificación/refinamiento.
+> La gestión de canales/medios y las fuentes RSS asociadas a cada uno forma parte del alcance obligatorio del proyecto final. El slice integrado de HU-15 cubre fuentes RSS. El cierre Sprint 5 implementa y prueba medios y asociación de fuentes en una rama; la integración y revisión humanas siguen pendientes.
 
-Este gap no crea una HU ni un Issue nuevo en esta tarea documental.
+El 31-10-2026 se registró la brecha en [#50](https://github.com/HumWorldProyecto/proyecto/issues/50), con autorización del usuario, sin crear una nueva HU ni cerrar manualmente #16. Véase el [estado de cierre y calendario](cierre-sprint5-2026-10-31.md).

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { stripMarkup } from '../../common/strip-markup';
 import {
   MediaTopicClassificationInput,
   MediaTopicClassifierPort,
@@ -12,8 +13,7 @@ interface TokenRange {
 }
 
 function normalize(value: string): string[] {
-  return value
-    .replace(/<[^>]*>/g, ' ')
+  return stripMarkup(value)
     .normalize('NFKD')
     .replace(/\p{Mark}/gu, '')
     .toLocaleLowerCase('es')

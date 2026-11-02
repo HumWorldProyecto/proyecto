@@ -96,3 +96,6 @@ Para explorar el dashboard, iniciar `npm ci` y `npm run dev` desde `frontend/` y
 # Práctica P12: acceso a fuentes RSS
 
 Las operaciones de fuentes RSS requieren `X-API-Key`; consulta admite ambos perfiles y las escrituras requieren gestión. Incluye captura manual y geografía de fuentes. Antes de arrancar, define `HUMWORLD_API_KEY_READ` y `HUMWORLD_API_KEY_WRITE` con valores distintos; no hay claves predeterminadas. La web las recibe durante el uso y solo en memoria. Consulta [la guía P12](docs/practicas/P12-secretos-acceso-api.md) para configuración, permisos, Swagger, rotación y evidencia de CI. Las demás familias conservan sus contratos.
+# Cierre y demo final
+
+Caducidad, purga y medios se describen en [la guía de demo](docs/demo-final.md). El estado verificable de fechas e integración está en [el cierre Sprint 5](docs/planificacion/cierre-sprint5-2026-10-31.md) y el análisis real de calidad en [Sonar local](docs/calidad/sonar-sprint5.md). La rama probada no se declara Done antes de revisión e integración humanas.

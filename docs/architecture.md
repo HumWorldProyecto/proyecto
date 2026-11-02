@@ -167,6 +167,8 @@ Las integraciones RSS se conectan a los servicios mediante contratos encapsulado
 
 ## 9. API REST
 
+El cierre Sprint 5 añade política de caducidad/purga y gestión de medios mediante módulos y puertos separados. Las once operaciones administrativas nuevas usan permisos explícitos read/write de P12; no se cambian permisos de otras rutas históricas. La regla de antigüedad desde captura, la periodicidad horaria y la relación opcional de medios pertenecen al diseño aprobado `cierre-sprint5`. SonarQube se verifica localmente con evidencia, sin afirmar un gate automático de CI no conectado.
+
 P12 incorpora control de acceso de aplicaciones colaboradoras en la familia de fuentes RSS, incluidas captura manual y consulta/asignación de su geografía. La clave viaja solo en cabecera y los perfiles consulta/gestión se comprueban en guards del límite HTTP antes de servicios. No hay usuarios personales ni claves en datos de negocio o frontend distribuido. El alcance exacto y la matriz están en el cambio OpenSpec `proteger-fuentes-rss`; las demás familias conservan sus contratos. Esta evolución posterior a Sprint 4 no reescribe la aceptación anónima histórica de Sprint 1 ni altera el monolito, las capas o el stack.
 
 La regla general de versionado es `/api/v1`. Se prevén inicialmente las siguientes familias de recursos:

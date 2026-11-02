@@ -4,6 +4,8 @@ import { CaptureModule } from './capture/capture.module';
 import { DictionaryModule } from './dictionary/dictionary.module';
 import { SentimentModule } from './sentiment/sentiment.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { PurgeModule } from './purge/purge.module';
+import { ChannelsModule } from './channels/channels.module';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import { AnalyticsModule } from './analytics/analytics.module';
     DictionaryModule,
     SentimentModule,
     AnalyticsModule,
+    PurgeModule,
+    ChannelsModule,
   ],
 })
 export class AppModule {}
