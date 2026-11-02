@@ -2,7 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Continent } from '@prisma/client';
 import { Test } from '@nestjs/testing';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
-import request from 'supertest';
+import request from '../helpers/authorized-request';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { SourceAccessibilityError } from '../../src/sources/errors/source-accessibility.error';

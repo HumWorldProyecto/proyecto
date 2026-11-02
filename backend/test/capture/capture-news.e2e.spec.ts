@@ -1,6 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import request from 'supertest';
+import request from '../helpers/authorized-request';
 import { AppModule } from '../../src/app.module';
 import { AutomaticCaptureJob } from '../../src/capture/jobs/automatic-capture.job';
 import { RSS_FETCHER_PORT } from '../../src/capture/ports/rss-fetcher.port';

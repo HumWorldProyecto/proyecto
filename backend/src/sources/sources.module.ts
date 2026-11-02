@@ -1,4 +1,5 @@
 import { HttpModule } from '@nestjs/axios';
+import { AuthModule } from '../auth/auth.module';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
 import { RssHttpConfigModule } from '../rss-http/rss-http-config.module';
@@ -16,7 +17,7 @@ import { SourceDestinationResolver } from './security/source-destination-resolve
 import { SourcesService } from './services/sources.service';
 
 @Module({
-  imports: [HttpModule, RssHttpConfigModule, PrismaModule],
+  imports: [HttpModule, RssHttpConfigModule, PrismaModule, AuthModule],
   controllers: [SourcesController],
   providers: [
     SourceUrlNormalizer,

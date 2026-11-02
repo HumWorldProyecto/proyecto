@@ -167,6 +167,8 @@ Las integraciones RSS se conectan a los servicios mediante contratos encapsulado
 
 ## 9. API REST
 
+P12 incorpora control de acceso de aplicaciones colaboradoras en la familia de fuentes RSS, incluidas captura manual y consulta/asignación de su geografía. La clave viaja solo en cabecera y los perfiles consulta/gestión se comprueban en guards del límite HTTP antes de servicios. No hay usuarios personales ni claves en datos de negocio o frontend distribuido. El alcance exacto y la matriz están en el cambio OpenSpec `proteger-fuentes-rss`; las demás familias conservan sus contratos. Esta evolución posterior a Sprint 4 no reescribe la aceptación anónima histórica de Sprint 1 ni altera el monolito, las capas o el stack.
+
 La regla general de versionado es `/api/v1`. Se prevén inicialmente las siguientes familias de recursos:
 
 - `/api/v1/sources`

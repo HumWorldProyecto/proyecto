@@ -972,3 +972,7 @@ footer p {
     margin-left: auto;
   }
 }
+.source-access { margin-block: 1.5rem; }
+.source-access form { display: flex; align-items: end; flex-wrap: wrap; gap: 1rem; }
+.source-access label { display: grid; gap: .5rem; flex: 1 1 16rem; }
+.source-access input { min-width: 0; width: 100%; padding: .75rem; border: 1px solid #ccd6ca; border-radius: 6px; background: white; }

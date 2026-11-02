@@ -27,6 +27,7 @@ import {
   SourceGeographyDto,
 } from '../dto/analytics.dto';
 import { AnalyticsService } from '../services/analytics.service';
+import { RequireApiKey } from '../../auth/require-api-key.decorator';
 import { AnalyticsInputError, GeographySourceNotFoundError } from '../types/analytics';
 
 @ApiTags('dashboards')
@@ -48,6 +49,7 @@ export class AnalyticsController {
   }
 
   @Get('geography')
+  @RequireApiKey('read')
   @ApiOperation({ summary: 'Obtener países del catálogo y procedencia asignada a fuentes RSS' })
   @ApiOkResponse({ type: GeographyDto })
   geography() {
@@ -55,6 +57,7 @@ export class AnalyticsController {
   }
 
   @Put('sources/:id/geography')
+  @RequireApiKey('write')
   @ApiOperation({ summary: 'Asignar explícitamente país de procedencia de una fuente RSS' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: SourceGeographyDto })

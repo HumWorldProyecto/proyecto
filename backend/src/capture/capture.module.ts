@@ -1,4 +1,5 @@
 import { HttpModule } from '@nestjs/axios';
+import { AuthModule } from '../auth/auth.module';
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CaptureOrchestratorService } from './services/capture-orchestrator.service';
@@ -25,6 +26,7 @@ import { MultipleSourceCaptureController } from './controllers/multiple-source-c
  */
 @Module({
   imports: [
+    AuthModule,
     HttpModule,
     ScheduleModule.forRoot(),
     SourcesModule,

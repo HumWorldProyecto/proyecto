@@ -118,3 +118,35 @@ jobs:
         with:
           node-version: '24.20.0'
       - run: npx --yes @fission-ai/openspec@1.14.3 validate sprint4-consultas-visualizaciones --strict
+      - run: npx --yes @fission-ai/openspec@1.14.3 validate proteger-fuentes-rss --strict
+
+  p12-security:
+    # Sin pull_request_target: nunca ejecutar código de forks con secretos del repositorio.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run build
+      - name: Comprobar permisos y rotación HTTP con secretos de CI
+        env:
+          HUMWORLD_API_KEY_READ: ${{ secrets.HUMWORLD_API_KEY_READ }}
+          HUMWORLD_API_KEY_WRITE: ${{ secrets.HUMWORLD_API_KEY_WRITE }}
+        run: npm run security:smoke
+      - name: Publicar evidencia de acceso sin credenciales
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: comprobaciones-acceso-p12
+          path: backend/reports/p12/
+          if-no-files-found: warn
+          retention-days: 7

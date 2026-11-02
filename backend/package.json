@@ -12,7 +12,9 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:reporter": "node --test test/reporting/junit-reporter.test.cjs",
-    "test:ci": "jest --ci --coverage"
+    "test:ci": "jest --ci --coverage",
+    "security:smoke": "node scripts/verify-api-access.cjs",
+    "openapi:export": "node scripts/export-openapi.cjs"
   },
   "dependencies": {
     "@nestjs/axios": "4.0.1",

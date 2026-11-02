@@ -7,8 +7,11 @@ import { WorldMap } from './components/WorldMap';
 import { Evolution } from './components/Evolution';
 import { NewsDialog, NewsRanking, WordCloud, WordDetail } from './components/Evidence';
 import { SourceCountries } from './components/SourceCountries';
+import { SourceAccess } from './components/SourceAccess';
 
 export function App() {
+  const [accessKey, setAccessKey] = useState('');
+  const [accessRevision, setAccessRevision] = useState(0);
   const [draft, setDraft] = useState<Filters>({});
   const [filters, setFilters] = useState<Filters>({});
   const [revision, setRevision] = useState(0);
@@ -17,7 +20,8 @@ export function App() {
   const [selectedWord, setWord] = useState<Word | null>(null);
   const load = useCallback((signal: AbortSignal) => getDashboard(filters, signal), [filters]);
   const result = useResource(`${JSON.stringify(filters)}:${revision}`, load);
-  const geography = useResource(`geography:${revision}`, getGeography);
+  const loadGeography = useCallback((signal: AbortSignal) => getGeography(signal, accessKey), [accessKey]);
+  const geography = useResource(`geography:${revision}:${accessRevision}`, loadGeography);
   const refresh = useCallback(() => {
     setRevision((value) => value + 1);
     setNews(null);
@@ -32,8 +36,9 @@ export function App() {
   }, []);
   const selectDay = useCallback((date: string) => setDay(date), []);
   const data = result.data;
+  const countries = geography.data?.countries ?? data?.countries;
   const location = filters.country
-    ? (geography.data?.countries.find((country) => country.code === filters.country)?.name ??
+    ? (countries?.find((country) => country.code === filters.country)?.name ??
       filters.country)
     : filters.continent
       ? CONTINENT_LABELS[filters.continent]
@@ -114,11 +119,10 @@ export function App() {
               onChange={(event) =>
                 setDraft((current) => ({ ...current, country: event.target.value || undefined }))
               }
-              disabled={!geography.data}
+              disabled={!countries}
             >
               <option value="">Todos los países</option>
-              {geography.data?.countries
-                .filter((country) => !draft.continent || country.continent === draft.continent)
+              {countries?.filter((country) => !draft.continent || country.continent === draft.continent)
                 .map((country) => (
                   <option key={country.code} value={country.code}>
                     {country.name}
@@ -167,7 +171,7 @@ export function App() {
         </form>
         {geography.error && (
           <div className="notice" role="alert">
-            No se pudo cargar la lista de países y fuentes.{' '}
+            {geography.error}{' '}
             <button onClick={refresh}>Reintentar</button>
           </div>
         )}
@@ -314,8 +318,15 @@ export function App() {
             </div>
           </>
         )}
+        <SourceAccess active={Boolean(accessKey)} onApply={(key) => {
+          setAccessKey(key); setAccessRevision((value) => value + 1);
+        }} onClear={() => {
+          setAccessKey(''); setAccessRevision((value) => value + 1);
+        }} />
         {geography.data && (
           <SourceCountries
+            key={accessRevision}
+            accessKey={accessKey}
             sources={geography.data.sources}
             countries={geography.data.countries}
             onSaved={refresh}

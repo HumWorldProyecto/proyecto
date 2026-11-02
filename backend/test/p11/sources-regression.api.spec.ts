@@ -2,7 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { Continent, DictionaryLanguage } from '@prisma/client';
-import request from 'supertest';
+import request from '../helpers/authorized-request';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { SourceAccessibilityChecker } from '../../src/sources/integrations/source-accessibility-checker';
 import { SourcesModule } from '../../src/sources/sources.module';
