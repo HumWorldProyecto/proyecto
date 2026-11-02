@@ -7,6 +7,7 @@ COPY prisma ./prisma
 RUN npx prisma generate
 COPY tsconfig*.json ./
 COPY src ./src
+COPY scripts ./scripts
 RUN npm run build && npm prune --omit=dev --ignore-scripts
 
 FROM node:24.20.0-alpine

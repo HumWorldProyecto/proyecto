@@ -28,6 +28,8 @@ it('P12 envía la clave solo a rutas protegidas y comunica 401/403', async () =>
 it('P12 permite aplicar/retirar una clave efímera sin storage y conserva filtros públicos', async () => {
   const key = crypto.randomUUID();
   const fetcher = vi.fn(async (url: string, options?: RequestInit) => {
+    if (url.endsWith('/channels')) return response([]);
+    if (url.endsWith('/news/purge-preview')) return response({retentionDays:null,cutoff:null,totalCount:0,expiredCount:0});
     if (url.includes('/geography')) return new Headers(options?.headers).get('X-API-Key') === key
       ? response(geography) : response({}, 401);
     return response(dashboard);

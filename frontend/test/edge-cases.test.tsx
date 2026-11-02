@@ -176,3 +176,7 @@ it('presentación usa signo, ausencia, texto escapado y solo enlaces web', () =>
   expect(safeLink('data:text/html,x')).toBeUndefined();
   expect(safeLink('http://example.org')).toBe('http://example.org/');
 });
+it('texto con etiquetas incompletas largas mantiene su contenido sin backtracking', () => {
+  expect(plainText('<'.repeat(100000))).toHaveLength(100000);
+  expect(plainText('a<<nested>tag')).toBe('a tag');
+});

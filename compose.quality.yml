@@ -1,0 +1,15 @@
+name: humworld-quality
+services:
+  sonarqube:
+    image: sonarqube@sha256:f95aaa9016dd4e92c7d70691167a6d96dbb5d8acffd61eba1cb4335d364a7840
+    container_name: humworld-quality-local
+    ports:
+      - "127.0.0.1:59000:9000"
+    environment:
+      # Solo evaluación local descartable; H2 y checks relajados no son configuración de producción.
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    mem_limit: 3g
+    ulimits:
+      nofile:
+        soft: 131072
+        hard: 131072

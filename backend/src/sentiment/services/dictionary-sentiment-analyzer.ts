@@ -104,7 +104,7 @@ export class DictionarySentimentAnalyzer implements SentimentAnalyzerPort, Senti
     if (typeof segment !== 'string') {
       return Object.freeze([]);
     }
-    const withoutTags = segment.replace(/<[^>]*>/g, ' ');
+    const withoutTags = stripMarkup(segment);
     const normalized = this.normalizer.normalize(withoutTags, language);
     return Object.freeze(normalized.length === 0 ? [] : normalized.split(' '));
   }
@@ -136,3 +136,4 @@ export class DictionarySentimentAnalyzer implements SentimentAnalyzerPort, Senti
     return needle.every((token, offset) => haystack[position + offset] === token);
   }
 }
+import { stripMarkup } from '../../common/strip-markup';
