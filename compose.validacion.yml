@@ -1,0 +1,41 @@
+name: humworld-validacion
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: humworld
+      POSTGRES_DB: humworld_validacion
+      POSTGRES_PASSWORD: ${HUMWORLD_VALIDATION_DB_PASSWORD:?Configura la contraseña de validación}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U humworld -d humworld_validacion"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://humworld:${HUMWORLD_VALIDATION_DB_PASSWORD}@postgres:5432/humworld_validacion?schema=public
+      HUMWORLD_API_KEY_READ: ${HUMWORLD_VALIDATION_READ_KEY:?Configura la clave de consulta de validación}
+      HUMWORLD_API_KEY_WRITE: ${HUMWORLD_VALIDATION_WRITE_KEY:?Configura la clave de gestión de validación}
+      HUMWORLD_VALIDATION_MODE: "1"
+    command: ["sh", "-c", "npx prisma migrate deploy && node scripts/validation-seed.cjs && exec node dist/main.js"]
+    ports:
+      - "127.0.0.1:53016:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    environment:
+      API_PROXY_TARGET: http://backend:3000
+    ports:
+      - "127.0.0.1:54176:4173"
+    depends_on:
+      - backend
+volumes:
+  postgres-data:
