@@ -66,6 +66,7 @@ export function NewsRanking({
   onSelect: (news: News) => void;
 }) {
   const visible = day ? news.filter((item) => item.date.slice(0, 10) === day) : news;
+  const [limit, setLimit] = useState(20);
   return (
     <section className="panel ranking" aria-labelledby="ranking-title">
       <div className="section-heading">
@@ -81,7 +82,7 @@ export function NewsRanking({
       </p>
       {visible.length ? (
         <ol className="news-list">
-          {visible.map((item, index) => (
+          {visible.slice(0, limit).map((item, index) => (
             <li key={item.id}>
               <span className="rank">{String(index + 1).padStart(2, '0')}</span>
               <div className="news-copy">
@@ -114,6 +115,9 @@ export function NewsRanking({
       ) : (
         <div className="empty">No hay noticias para mostrar en esta selección.</div>
       )}
+      {visible.length > limit && <button type="button" className="secondary" onClick={() => setLimit(value => value + 20)}>
+        Mostrar más noticias
+      </button>}
     </section>
   );
 }

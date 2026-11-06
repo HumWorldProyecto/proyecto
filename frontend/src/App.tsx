@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Continent, Filters, News, Word } from './types/dashboard';
 import { getDashboard, getGeography } from './services/api';
 import { useResource } from './services/use-resource';
@@ -8,9 +8,29 @@ import { Evolution } from './components/Evolution';
 import { NewsDialog, NewsRanking, WordCloud, WordDetail } from './components/Evidence';
 import { SourceCountries } from './components/SourceCountries';
 import { SourceAccess } from './components/SourceAccess';
-import { Administration } from './components/Administration';
+import { ChannelsPanel, RetentionPanel } from './components/Administration';
+
+type View = 'explorar' | 'fuentes' | 'administracion';
+
+function currentView(): View {
+  if (window.location.hash === '#fuentes') return 'fuentes';
+  if (window.location.hash === '#administracion') return 'administracion';
+  return 'explorar';
+}
 
 export function App() {
+  const [view, setView] = useState(currentView);
+  const [catalogTab, setCatalogTab] = useState<'medios' | 'rss'>('medios');
+  useEffect(() => {
+    const navigate = () => {
+      setView(currentView());
+      if (['#explorar', '#fuentes', '#administracion'].includes(window.location.hash)) {
+        document.querySelector('.topbar')?.scrollIntoView?.();
+      }
+    };
+    window.addEventListener('hashchange', navigate);
+    return () => window.removeEventListener('hashchange', navigate);
+  }, []);
   const [accessKey, setAccessKey] = useState('');
   const [accessRevision, setAccessRevision] = useState(0);
   const [draft, setDraft] = useState<Filters>({});
@@ -20,9 +40,9 @@ export function App() {
   const [selectedNews, setNews] = useState<News | null>(null);
   const [selectedWord, setWord] = useState<Word | null>(null);
   const load = useCallback((signal: AbortSignal) => getDashboard(filters, signal), [filters]);
-  const result = useResource(`${JSON.stringify(filters)}:${revision}`, load);
-  const loadGeography = useCallback((signal: AbortSignal) => getGeography(signal, accessKey), [accessKey]);
-  const geography = useResource(`geography:${revision}:${accessRevision}`, loadGeography);
+  const result = useResource(`${JSON.stringify(filters)}:${revision}`, load, view === 'explorar');
+  const loadGeography = useCallback((signal: AbortSignal) => getGeography(signal, accessKey), [accessKey, revision]);
+  const geography = useResource(`geography:${accessRevision}`, loadGeography, Boolean(accessKey) && view !== 'administracion', true);
   const refresh = useCallback(() => {
     setRevision((value) => value + 1);
     setNews(null);
@@ -50,7 +70,7 @@ export function App() {
         Saltar al contenido
       </a>
       <header className="topbar">
-        <a href="/" className="brand" aria-label="HumWorld inicio">
+        <a href="#explorar" className="brand" aria-label="HumWorld inicio">
           <span className="brand-mark">
             h<span>°</span>
           </span>
@@ -59,16 +79,17 @@ export function App() {
           </span>
         </a>
         <nav aria-label="Navegación">
-          <a className="active" href="#content">
-            Explorar el pulso
-          </a>
-          <a href="#method">Cómo se calcula ↗</a>
+          <a aria-current={view === 'explorar' ? 'page' : undefined} href="#explorar">Explorar</a>
+          <a aria-current={view === 'fuentes' ? 'page' : undefined} href="#fuentes">Medios y fuentes</a>
+          <a aria-current={view === 'administracion' ? 'page' : undefined} href="#administracion">Administración</a>
+          {view === 'explorar' && <a href="#method">Cómo se calcula</a>}
         </nav>
         <span className="team">
           EQUIPO 5 <span className="dot" />
         </span>
       </header>
       <main id="content">
+        {view === 'explorar' ? <>
         <div className="page-intro">
           <div>
             <p className="eyebrow">UNA MIRADA AL MUNDO, A TRAVÉS DE SUS NOTICIAS</p>
@@ -170,12 +191,6 @@ export function App() {
             Limpiar
           </button>
         </form>
-        {geography.error && (
-          <div className="notice" role="alert">
-            {geography.error}{' '}
-            <button onClick={refresh}>Reintentar</button>
-          </div>
-        )}
         <div className="context-line">
           <span>
             <i className="dot" /> {location}{' '}
@@ -233,7 +248,7 @@ export function App() {
             {data.summary.unknownCountry > 0 && (
               <p className="notice">
                 {data.summary.unknownCountry} noticias no tienen país asignado. Pueden aportar al
-                total global; asigna la procedencia de sus fuentes al pie de la página.
+                total global. <a href="#fuentes">Asignar países a las fuentes</a>.
               </p>
             )}
             <section className="panel geography" aria-labelledby="map-title">
@@ -315,26 +330,10 @@ export function App() {
                   <WordDetail word={selectedWord} news={data.news} onSelect={setNews} />
                 )}
               </div>
-              <NewsRanking news={data.news} day={day} onSelect={setNews} />
+              <NewsRanking key={day} news={data.news} day={day} onSelect={setNews} />
             </div>
           </>
         )}
-        <SourceAccess active={Boolean(accessKey)} onApply={(key) => {
-          setAccessKey(key); setAccessRevision((value) => value + 1);
-        }} onClear={() => {
-          setAccessKey(''); setAccessRevision((value) => value + 1);
-        }} />
-        {geography.data && (
-          <SourceCountries
-            key={accessRevision}
-            credential={accessKey}
-            sources={geography.data.sources}
-            countries={geography.data.countries}
-            onSaved={refresh}
-          />
-        )}
-        {accessKey && <Administration key={`administration:${accessRevision}`} credential={accessKey}
-          sources={geography.data?.sources ?? []} onChanged={refresh} />}
         <section id="method" className="method">
           <p className="eyebrow">LECTURA RESPONSABLE DEL RESULTADO</p>
           <h2>Un indicador con evidencia a la vista.</h2>
@@ -351,6 +350,35 @@ export function App() {
             resultados guardados hasta reanalizar.
           </p>
         </section>
+        </> : <>
+          <div className="page-intro workspace-intro">
+            <div>
+              <p className="eyebrow">ESPACIO DE GESTIÓN</p>
+              <h1>{view === 'fuentes' ? 'Medios y fuentes' : 'Administración'}<span>.</span></h1>
+              <p className="lead">{view === 'fuentes'
+                ? 'Organiza los medios y administra las direcciones RSS que alimentan el observatorio.'
+                : 'Consulta y configura cuánto tiempo se conservan las noticias capturadas.'}</p>
+            </div>
+          </div>
+          <SourceAccess active={Boolean(accessKey)} onApply={(key) => {
+            setAccessKey(key); setAccessRevision((value) => value + 1);
+          }} onClear={() => {
+            setAccessKey(''); setAccessRevision((value) => value + 1);
+          }} />
+          {accessKey && (view === 'administracion'
+            ? <RetentionPanel key={accessRevision} credential={accessKey} onChanged={refresh} />
+            : <>
+              <div className="catalog-tabs" role="group" aria-label="Secciones del catálogo">
+                <button type="button" className="secondary" aria-pressed={catalogTab === 'medios'} onClick={() => setCatalogTab('medios')}>Medios</button>
+                <button type="button" className="secondary" aria-pressed={catalogTab === 'rss'} onClick={() => setCatalogTab('rss')}>Fuentes RSS</button>
+              </div>
+              {geography.error && <div className="notice" role="alert">{geography.error} <button onClick={refresh}>Reintentar</button></div>}
+              {!geography.data && !geography.error && <p role="status">Cargando catálogo…</p>}
+              {geography.data && (catalogTab === 'medios'
+                ? <ChannelsPanel key={accessRevision} credential={accessKey} sources={geography.data.sources} onChanged={refresh} />
+                : <SourceCountries key={accessRevision} initiallyOpen credential={accessKey} sources={geography.data.sources} countries={geography.data.countries} onSaved={refresh} />)}
+            </>)}
+        </>}
       </main>
       <footer>
         <span className="footer-brand">
@@ -359,7 +387,7 @@ export function App() {
         <p>Proyecto académico · Equipo 5</p>
         <a href="#content">Volver arriba ↑</a>
       </footer>
-      {selectedNews && (
+      {view === 'explorar' && selectedNews && (
         <NewsDialog key={selectedNews.id} news={selectedNews} onClose={() => setNews(null)} />
       )}
     </>

@@ -6,6 +6,7 @@ import { SentimentModule } from './sentiment/sentiment.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { PurgeModule } from './purge/purge.module';
 import { ChannelsModule } from './channels/channels.module';
+import { ValidationModule } from './validation/validation.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ChannelsModule } from './channels/channels.module';
     AnalyticsModule,
     PurgeModule,
     ChannelsModule,
+    ValidationModule,
   ],
 })
 export class AppModule {}

@@ -36,6 +36,7 @@ import { NewsSentimentAnalysisService } from './services/news-sentiment-analysis
     DirectSentimentAnalysisService,
     NewsSentimentAnalysisService,
     AnalyzeAndPersistNewsSentimentService,
+    NewsSentimentEvidenceService,
   ],
 })
 export class SentimentModule {}

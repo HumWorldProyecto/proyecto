@@ -9,7 +9,11 @@ async function json<T>(path: string, options: RequestInit): Promise<T> {
         : response.status === 403
           ? 'Esta operación requiere una clave de gestión.'
           : response.status === 409
-            ? 'La configuración cambió o hay una operación en curso. Actualiza la vista previa.'
+            ? path.endsWith('/capture')
+              ? 'La fuente está pausada o ya tiene una captura en curso.'
+              : path.startsWith('/sources')
+                ? 'Esa dirección RSS ya está registrada.'
+                : 'La configuración cambió o hay una operación en curso. Actualiza la vista previa.'
           : response.status === 404
             ? 'El recurso ya no existe. Actualiza la información.'
           : response.status === 400
