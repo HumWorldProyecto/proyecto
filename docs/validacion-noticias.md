@@ -26,3 +26,7 @@ docker cp humworld-validacion-postgres-1:/tmp/humworld-validacion.dump ./humworl
 ```
 
 Al presentar, elige un intervalo en **Explorar** para ver la evolución. Los gráficos usan la fecha de publicación y, si falta, la de captura. Las cantidades pueden crecer a ritmos distintos según la frecuencia con que cada medio publica.
+
+## Comprobación inicial del 6 de noviembre de 2026
+
+La primera sesión guardó 3.226 noticias de las 53 fuentes, incluido un reintento de Euronews. Se procesaron las 3.226 y 699 tuvieron coincidencias en el diccionario. El total se mantuvo después de detener y volver a arrancar los tres servicios. Se comprobó también el acceso de consulta (200 al listar, 403 al intentar crear) y se generó un respaldo local. Esto verifica un día de captura en este equipo; la serie irá creciendo mientras el entorno esté encendido.

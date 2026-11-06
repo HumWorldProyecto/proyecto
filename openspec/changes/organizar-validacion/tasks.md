@@ -7,4 +7,4 @@
 
 - [x] 2.1 Comprobar y preparar el catálogo.
 - [x] 2.2 Añadir entorno persistente con captura y análisis.
-- [ ] 2.3 Verificar arranque, captura, permisos y conservación tras reinicio.
+- [x] 2.3 Verificar arranque, captura, permisos y conservación tras reinicio.
