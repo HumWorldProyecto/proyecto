@@ -2,6 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import { RssSource } from '../types/rss-source';
 
 export class SourceResponseDto {
+  @ApiProperty({ nullable: true, type: String }) countryCode?: string | null;
+  @ApiProperty({ nullable: true, type: String }) continent?: string | null;
+  @ApiProperty({ nullable: true, type: String }) channelId?: string | null;
+  @ApiProperty({ nullable: true, enum: ['es', 'en'] }) language?: 'es' | 'en' | null;
+  @ApiProperty({ nullable: true, type: String }) mediaTopicQcode?: string | null;
+
   @ApiProperty({
     description: 'Identificador UUID estable de la fuente',
     example: '0f826bb6-df8e-42c5-bd57-27a213ff2f24',
@@ -34,6 +40,9 @@ export class SourceResponseDto {
   static fromDomain(source: RssSource): SourceResponseDto {
     const dto = new SourceResponseDto();
     dto.id = source.id;
+    for (const key of ['countryCode', 'continent', 'channelId', 'language', 'mediaTopicQcode'] as const) {
+      if (source[key] !== undefined) Object.assign(dto, { [key]: source[key] });
+    }
     dto.url = source.url;
     dto.active = source.active;
     dto.createdAt = source.createdAt.toISOString();

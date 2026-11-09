@@ -22,6 +22,7 @@ services:
       HUMWORLD_API_KEY_READ: ${HUMWORLD_VALIDATION_READ_KEY:?Configura la clave de consulta de validación}
       HUMWORLD_API_KEY_WRITE: ${HUMWORLD_VALIDATION_WRITE_KEY:?Configura la clave de gestión de validación}
       HUMWORLD_VALIDATION_MODE: "1"
+      HUMWORLD_EVALUATION_MODE: "1"
     command: ["sh", "-c", "npx prisma migrate deploy && node scripts/validation-seed.cjs && exec node dist/main.js"]
     ports:
       - "127.0.0.1:53016:3000"

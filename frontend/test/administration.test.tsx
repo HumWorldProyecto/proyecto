@@ -126,7 +126,7 @@ it('gestiona fuentes RSS desde el catálogo y conserva la protección por clave'
   const user = userEvent.setup();
   const credential = crypto.randomUUID();
   const onSaved = vi.fn();
-  fetcher.mockImplementation(async (url: string) => ok(url.endsWith('/capture') ? { itemsParsed: 3 } : {}));
+  fetcher.mockImplementation(async (url: string) => ok(url.endsWith('/channels') ? [{ id: 'c1', name: 'Medio' }] : url.endsWith('/capture') ? { itemsParsed: 3 } : {}));
   const source = { ...geography.sources[0], active: true };
   const props = { credential, countries: geography.countries, onSaved, initiallyOpen: true };
   const view = render(<SourceCountries {...props} sources={[source]} />);
@@ -135,6 +135,10 @@ it('gestiona fuentes RSS desde el catálogo y conserva la protección por clave'
   expect(screen.getByText('No encontramos fuentes para esos filtros.')).toBeVisible();
   await user.clear(screen.getByLabelText('Buscar fuente'));
   await user.type(screen.getByLabelText('Nueva dirección RSS'), 'https://example.org/new.xml');
+  const registration = screen.getByRole('form', { name: 'Registrar fuente RSS' });
+  await user.selectOptions(within(registration).getByLabelText('Medio de la fuente'), 'c1');
+  await user.selectOptions(within(registration).getByLabelText('País de la fuente'), 'CL');
+  await user.selectOptions(within(registration).getByLabelText('Categoría IPTC de la fuente'), 'medtop:07000000');
   await user.click(screen.getByRole('button', { name: 'Registrar fuente' }));
   await screen.findByText('Fuente RSS registrada');
 
@@ -153,9 +157,9 @@ it('gestiona fuentes RSS desde el catálogo y conserva la protección por clave'
   await user.click(screen.getByRole('button', { name: 'Activar fuente' }));
   await screen.findByText('Fuente activada');
 
-  expect(fetcher.mock.calls.map(([path, options]) => [path, options.method, options.body])).toEqual([
-    ['/api/v1/sources', 'POST', '{"url":"https://example.org/new.xml"}'],
-    ['/api/v1/sources/s1', 'PUT', '{"url":"https://example.org/updated.xml"}'],
+  expect(fetcher.mock.calls.filter(([, options]) => options.method !== 'GET').map(([path, options]) => [path, options.method, options.body])).toEqual([
+    ['/api/v1/sources', 'POST', '{"url":"https://example.org/new.xml","channelId":"c1","countryCode":"CL","language":"es","mediaTopicQcode":"medtop:07000000"}'],
+    ['/api/v1/sources/s1', 'PATCH', '{"url":"https://example.org/updated.xml","channelId":null,"countryCode":null,"language":"es","mediaTopicQcode":null}'],
     ['/api/v1/sources/s1/capture', 'POST', undefined],
     ['/api/v1/sources/s1', 'PATCH', '{"active":false}'],
     ['/api/v1/sources/s1', 'PATCH', '{"active":true}'],

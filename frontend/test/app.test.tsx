@@ -16,6 +16,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
     if (url === '/world.geo.json') return response({ type: 'FeatureCollection', features: [] });
+    if (/\/api\/v1\/news\/[^/]+$/.test(url)) return response({ capturedAt: '2026-11-09T10:00:00Z', continent: 'SOUTH_AMERICA', mediaTopics: [] });
     if (url.endsWith('/channels')) return response([]);
     if (options?.method === 'PUT') return response(geography.sources[0]);
     return response(url.includes('/geography') ? geography : dashboard);

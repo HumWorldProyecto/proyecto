@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, RssSource as PrismaRssSource } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { SourceNotFoundError, SourceUrlConflictError } from '../errors/source-domain.error';
-import { SourceChanges, SourceRepositoryPort } from '../ports/source-repository.port';
+import { SourceInputError, SourceNotFoundError, SourceUrlConflictError } from '../errors/source-domain.error';
+import { SourceChanges, SourceMetadata, SourceRepositoryPort } from '../ports/source-repository.port';
 import { RssSource } from '../types/rss-source';
 
 function toDomain(row: PrismaRssSource): RssSource {
   return {
     id: row.id,
+    countryCode: row.countryCode, continent: row.continent, channelId: row.channelId,
+    language: row.language, mediaTopicQcode: row.mediaTopicQcode,
     url: row.url,
     active: row.active,
     createdAt: row.createdAt,
@@ -20,6 +22,7 @@ function translateWriteError(error: unknown): never {
     if (error.code === 'P2002') {
       throw new SourceUrlConflictError();
     }
+    if (error.code === 'P2003') throw new SourceInputError('Medio no encontrado');
     if (error.code === 'P2025') {
       throw new SourceNotFoundError();
     }
@@ -31,9 +34,9 @@ function translateWriteError(error: unknown): never {
 export class PrismaSourceRepository implements SourceRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(url: string): Promise<RssSource> {
+  async create(url: string, metadata: SourceMetadata = {}): Promise<RssSource> {
     try {
-      return toDomain(await this.prisma.rssSource.create({ data: { url, active: true } }));
+      return toDomain(await this.prisma.rssSource.create({ data: { url, active: true, ...metadata } }));
     } catch (error) {
       return translateWriteError(error);
     }
@@ -67,6 +70,15 @@ export class PrismaSourceRepository implements SourceRepositoryPort {
 
   async setActive(id: string, active: boolean): Promise<RssSource> {
     return this.writeUpdate(id, { active });
+  }
+
+  async deleteWithNews(id: string): Promise<void> {
+    try {
+      await this.prisma.$transaction(async tx => {
+        await tx.news.deleteMany({ where: { sourceId: id } });
+        await tx.rssSource.delete({ where: { id } });
+      });
+    } catch (error) { translateWriteError(error); }
   }
 
   private async writeUpdate(id: string, changes: SourceChanges): Promise<RssSource> {

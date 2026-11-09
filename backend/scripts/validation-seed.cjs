@@ -53,6 +53,7 @@ async function main() {
         data: feeds.map(feed => ({
           url: feed.url, channelId: channelId(feed.name), countryCode: feed.country,
           continent: countryByCode.get(feed.country).continent, active: true,
+          language: feed.language, mediaTopicQcode: feed.mediaTopicQcode,
         })),
         skipDuplicates: true,
       });

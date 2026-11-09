@@ -46,15 +46,15 @@ export class ValidationCollection implements OnApplicationBootstrap {
     this.processing = true;
     try {
       const pending = await this.prisma.news.findMany({
-        where: { sentimentAnalyzedAt: null, source: { url: { in: catalogUrls } } },
+        where: { sentimentAnalyzedAt: null, source: { OR: [{ language: { not: null } }, { url: { in: catalogUrls } }] } },
         orderBy: [{ capturedAt: 'asc' }, { id: 'asc' }],
-        select: { id: true, source: { select: { url: true } } },
+        select: { id: true, source: { select: { url: true, language: true } } },
         take: 400,
       });
       let saved = 0;
       let failed = 0;
       for (const news of pending) {
-        const language = feedLanguages.get(news.source.url);
+        const language = news.source.language ?? feedLanguages.get(news.source.url);
         if (!language) continue;
         try {
           const analysis = await this.sentiment.analyzeNews({ newsId: news.id, language });

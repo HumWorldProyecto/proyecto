@@ -8,6 +8,11 @@ import { Evolution } from './components/Evolution';
 import { NewsDialog, NewsRanking, WordCloud, WordDetail } from './components/Evidence';
 import { SourceCountries } from './components/SourceCountries';
 import { SourceAccess } from './components/SourceAccess';
+import { DictionaryPanel } from './components/DictionaryPanel';
+import { CaptureSettings } from './components/CaptureSettings';
+import { TOPICS } from './components/SourceMetadata';
+import { NewsActions } from './components/NewsActions';
+import { adminRequest } from './services/api';
 import { ChannelsPanel, RetentionPanel } from './components/Administration';
 
 type View = 'explorar' | 'fuentes' | 'administracion';
@@ -31,6 +36,10 @@ export function App() {
     window.addEventListener('hashchange', navigate);
     return () => window.removeEventListener('hashchange', navigate);
   }, []);
+  const loadMode = useCallback((signal: AbortSignal) => adminRequest<{ evaluationMode?: boolean }>('/config', '', signal), []);
+  const mode = useResource('runtime-mode', loadMode);
+  const evaluationMode = mode.data?.evaluationMode === true;
+  const [adminTab, setAdminTab] = useState<'captura' | 'diccionario' | 'caducidad'>('caducidad');
   const [accessKey, setAccessKey] = useState('');
   const [accessRevision, setAccessRevision] = useState(0);
   const [draft, setDraft] = useState<Filters>({});
@@ -40,9 +49,12 @@ export function App() {
   const [selectedNews, setNews] = useState<News | null>(null);
   const [selectedWord, setWord] = useState<Word | null>(null);
   const load = useCallback((signal: AbortSignal) => getDashboard(filters, signal), [filters]);
-  const result = useResource(`${JSON.stringify(filters)}:${revision}`, load, view === 'explorar');
+  const rangeResult = useResource(`${JSON.stringify(filters)}:${revision}`, load, view === 'explorar');
+  const loadDay = useCallback((signal: AbortSignal) => getDashboard({ ...filters, from: day, to: day }, signal), [filters, day]);
+  const dayResult = useResource(`day:${JSON.stringify(filters)}:${day}:${revision}`, loadDay, view === 'explorar' && Boolean(day));
+  const result = day ? dayResult : rangeResult;
   const loadGeography = useCallback((signal: AbortSignal) => getGeography(signal, accessKey), [accessKey, revision]);
-  const geography = useResource(`geography:${accessRevision}`, loadGeography, Boolean(accessKey) && view !== 'administracion', true);
+  const geography = useResource(`geography:${accessRevision}`, loadGeography, (Boolean(accessKey) || evaluationMode) && view !== 'administracion', true);
   const refresh = useCallback(() => {
     setRevision((value) => value + 1);
     setNews(null);
@@ -152,6 +164,12 @@ export function App() {
                 ))}
             </select>
           </label>
+          <label>Fuente RSS<select value={draft.source ?? ''} onChange={event => setDraft(current => ({ ...current, source: event.target.value || undefined }))}>
+            <option value="">Todas las fuentes</option>{Array.from(new Map((rangeResult.data?.news ?? []).map(item => [item.sourceId, item.sourceUrl])).entries()).map(([id, url]) => <option key={id} value={id}>{url}</option>)}
+          </select></label>
+          <label>Categoría de noticia<select value={draft.category ?? ''} onChange={event => setDraft(current => ({ ...current, category: event.target.value || undefined }))}>
+            <option value="">Todas las categorías</option>{TOPICS.map(topic => <option key={topic.qcode} value={topic.qcode}>{topic.label}</option>)}
+          </select></label>
           <label>
             Desde
             <input
@@ -265,7 +283,11 @@ export function App() {
               <p className="muted">
                 País de la fuente RSS. Selecciona un país para explorar su resultado.
               </p>
-              <WorldMap countries={data.countries} onSelect={selectCountry} />
+              <WorldMap countries={data.countries} onSelect={selectCountry} onSelectContinent={continent => {
+                setFilters(current => ({ ...current, country: undefined, continent }));
+                setDraft(current => ({ ...current, country: undefined, continent }));
+                setDay(''); setNews(null); setWord(null);
+              }} />
               <div className="map-footer">
                 <div className="legend">
                   {[
@@ -318,7 +340,8 @@ export function App() {
                 </div>
               </details>
             </section>
-            <Evolution timeline={data.timeline} selected={day} onSelect={selectDay} />
+            {day && <p className="notice">Todo el resultado corresponde al {day} (UTC). <button className="text-button" onClick={() => setDay('')}>Volver al rango completo</button></p>}
+            <Evolution timeline={rangeResult.data?.timeline ?? data.timeline} selected={day} onSelect={selectDay} />
             <div className="evidence-grid">
               <div>
                 <WordCloud
@@ -357,16 +380,21 @@ export function App() {
               <h1>{view === 'fuentes' ? 'Medios y fuentes' : 'Administración'}<span>.</span></h1>
               <p className="lead">{view === 'fuentes'
                 ? 'Organiza los medios y administra las direcciones RSS que alimentan el observatorio.'
-                : 'Consulta y configura cuánto tiempo se conservan las noticias capturadas.'}</p>
+                : 'Configura la captura, el diccionario de sentimiento y la conservación de las noticias.'}</p>
             </div>
           </div>
-          <SourceAccess active={Boolean(accessKey)} onApply={(key) => {
+          {evaluationMode ? <p className="notice" role="status">Evaluación local · Gestión sin clave. Al eliminar una fuente se borran también sus noticias.</p> : <SourceAccess active={Boolean(accessKey)} onApply={(key) => {
             setAccessKey(key); setAccessRevision((value) => value + 1);
           }} onClear={() => {
             setAccessKey(''); setAccessRevision((value) => value + 1);
-          }} />
-          {accessKey && (view === 'administracion'
-            ? <RetentionPanel key={accessRevision} credential={accessKey} onChanged={refresh} />
+          }} />}
+          {(accessKey || evaluationMode) && (view === 'administracion'
+            ? <>
+              <div className="catalog-tabs" role="group" aria-label="Secciones de administración">
+                {(['captura', 'diccionario', 'caducidad'] as const).map(tab => <button key={tab} className="secondary" aria-pressed={adminTab === tab} onClick={() => setAdminTab(tab)}>{tab === 'captura' ? 'Captura automática' : tab === 'diccionario' ? 'Diccionario' : 'Caducidad y purgado'}</button>)}
+              </div>
+              {adminTab === 'captura' ? <CaptureSettings key={accessRevision} credential={accessKey} /> : adminTab === 'diccionario' ? <DictionaryPanel key={accessRevision} credential={accessKey} /> : <RetentionPanel key={accessRevision} credential={accessKey} onChanged={refresh} />}
+            </>
             : <>
               <div className="catalog-tabs" role="group" aria-label="Secciones del catálogo">
                 <button type="button" className="secondary" aria-pressed={catalogTab === 'medios'} onClick={() => setCatalogTab('medios')}>Medios</button>
@@ -376,7 +404,7 @@ export function App() {
               {!geography.data && !geography.error && <p role="status">Cargando catálogo…</p>}
               {geography.data && (catalogTab === 'medios'
                 ? <ChannelsPanel key={accessRevision} credential={accessKey} sources={geography.data.sources} onChanged={refresh} />
-                : <SourceCountries key={accessRevision} initiallyOpen credential={accessKey} sources={geography.data.sources} countries={geography.data.countries} onSaved={refresh} />)}
+                : <SourceCountries key={accessRevision} initiallyOpen evaluationMode={evaluationMode} credential={accessKey} sources={geography.data.sources} countries={geography.data.countries} onSaved={refresh} />)}
             </>)}
         </>}
       </main>
@@ -388,7 +416,7 @@ export function App() {
         <a href="#content">Volver arriba ↑</a>
       </footer>
       {view === 'explorar' && selectedNews && (
-        <NewsDialog key={selectedNews.id} news={selectedNews} onClose={() => setNews(null)} />
+        <NewsDialog key={selectedNews.id} news={selectedNews} onClose={() => setNews(null)} actions={<NewsActions id={selectedNews.id} language={selectedNews.language} credential={accessKey} canManage={evaluationMode || Boolean(accessKey)} onChanged={refresh} />} />
       )}
     </>
   );

@@ -1,6 +1,6 @@
 # Validación con noticias reales
 
-La aplicación tiene tres espacios. **Explorar** muestra las noticias, filtros, mapa, evolución, nube y ranking. **Medios y fuentes** permite buscar y organizar el catálogo, registrar direcciones RSS, editarlas, asignar país, activarlas, pausarlas y capturarlas. **Administración** reúne la política de caducidad, la vista previa y el purgado. La clave se mantiene en memoria durante la navegación. El servidor comprueba los permisos en cada petición.
+La aplicación tiene tres espacios. **Explorar** muestra las noticias, filtros, mapa, evolución, nube y ranking. **Medios y fuentes** permite buscar y organizar el catálogo, registrar direcciones RSS, editarlas, asignar país, activarlas, pausarlas y capturarlas. **Administración** separa captura automática, diccionario y caducidad/purgado. En la configuración normal la clave se mantiene en memoria y el servidor comprueba los permisos. Este compose activa el modo de evaluación local aprobado: gestión sin clave y eliminación de fuente junto a sus noticias, con confirmación. Requiere ambas banderas explícitas y usa solo puertos ligados a 127.0.0.1. Consulta [el alcance y las evidencias](checklist-validacion.md).
 
 ## Arranque y seguimiento
 
@@ -8,9 +8,9 @@ Desde PowerShell, con Docker Desktop abierto, ejecuta `./scripts/Iniciar-validac
 
 - Web en <http://127.0.0.1:54176/>
 - Swagger en <http://127.0.0.1:53016/api/docs>
-- Para copiar una clave, ejecuta `./scripts/Iniciar-validacion.ps1 -CopiarClave Consulta` o `./scripts/Iniciar-validacion.ps1 -CopiarClave Gestion`. Pégala en el espacio de gestión o en Authorize.
+- En modo normal, para copiar una clave, ejecuta `./scripts/Iniciar-validacion.ps1 -CopiarClave Consulta` o `./scripts/Iniciar-validacion.ps1 -CopiarClave Gestion`. Pégala en el espacio de gestión o en Authorize.
 - El primer ciclo arranca cuando la base está vacía. La periodicidad inicial es de 60 minutos. En **Fuentes RSS**, **Gestionar fuente** ofrece una captura manual de una fuente activa.
-- En este entorno se analizan automáticamente las noticias pendientes de los feeds del catálogo, según el idioma configurado por feed. Los análisis guardados se conservan. El diccionario inicial es editable y sus resultados reflejan los términos que encuentra. Las fuentes agregadas después se pueden analizar explícitamente mediante la API existente.
+- En este entorno se analizan automáticamente las noticias pendientes de los feeds del catálogo, según el idioma configurado por feed. Los análisis guardados se conservan. El diccionario inicial es editable y sus resultados reflejan los términos que encuentra. Las fuentes agregadas después se analizan automáticamente si tienen idioma asignado; también se pueden analizar explícitamente desde el detalle de noticia o la API. La categoría editorial de fuente se guarda por separado de las categorías detectadas en sus noticias.
 
 ## Conservar la serie de varios días
 

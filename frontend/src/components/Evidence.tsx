@@ -122,7 +122,7 @@ export function NewsRanking({
   );
 }
 
-export function NewsDialog({ news, onClose }: { news: News; onClose: () => void }) {
+export function NewsDialog({ news, onClose, actions }: { news: News; onClose: () => void; actions?: React.ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const previous = document.activeElement;
@@ -187,6 +187,7 @@ export function NewsDialog({ news, onClose }: { news: News; onClose: () => void 
         </ul>
       )}
       <p className="source-url">Fuente RSS: {news.sourceUrl}</p>
+      {actions}
       {link && (
         <a className="primary link-button" href={link} target="_blank" rel="noopener noreferrer">
           Abrir noticia original ↗

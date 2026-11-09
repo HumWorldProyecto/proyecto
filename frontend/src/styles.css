@@ -1013,3 +1013,20 @@ footer p {
   .topbar nav { display: flex; flex: 1 1 100%; flex-wrap: wrap; height: auto; gap: .35rem 1rem; order: 3; }
   .topbar nav a { height: auto; min-height: 38px; }
 }
+
+/* Administration keeps long catalogs compact and editable on mobile. */
+.metadata-fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:1rem; flex:1 1 100%; }
+.metadata-fields small { grid-column:1/-1; color:var(--muted); }
+.metadata-fields label, .dictionary-entry label { min-width:0; }
+.metadata-fields select { max-width:100%; }
+.dictionary-list { list-style:none; padding:0; }
+.dictionary-entry { padding:1rem 0; border-bottom:1px solid #dce2dc; }
+.dictionary-entry form { align-items:end; }
+.dictionary-entry input[type=number] { width:6rem; }
+.news-actions { margin:1.5rem 0; padding:1rem 0; border-top:1px solid #dce2dc; }
+.news-actions form { display:flex; align-items:end; flex-wrap:wrap; gap:1rem; margin-bottom:1rem; }
+.news-actions label { display:grid; gap:.4rem; }
+@media(max-width:600px) { .dictionary-entry form { display:grid; grid-template-columns:1fr; } .dictionary-entry input[type=number] { width:100%; } }
+
+.continent-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.6rem; margin-top:1rem; }
+.continent-list small { display:block; margin-top:.35rem; font-weight:400; }

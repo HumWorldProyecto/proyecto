@@ -49,7 +49,8 @@ export class SourcesController {
   @ApiBadRequestResponse({ description: 'URL inválida, no permitida o inaccesible' })
   @ApiConflictResponse({ description: 'La URL normalizada ya está registrada' })
   async create(@Body() input: CreateSourceDto): Promise<SourceResponseDto> {
-    return this.execute(async () => SourceResponseDto.fromDomain(await this.sourcesService.create(input.url)));
+    return this.execute(async () => SourceResponseDto.fromDomain(await (Object.keys(input).some(key => key !== 'url')
+      ? this.sourcesService.create(input.url, input) : this.sourcesService.create(input.url))));
   }
 
   @Get()
@@ -108,7 +109,7 @@ export class SourcesController {
   @Delete(':id')
   @RequireApiKey('write')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Desactivar una fuente RSS sin borrarla' })
+  @ApiOperation({ summary: 'Desactivar fuente; en evaluación local elimina fuente y sus noticias' })
   @ApiParam({ name: 'id', description: 'Identificador estable de la fuente' })
   @ApiNoContentResponse({ description: 'Fuente desactivada o ya inactiva' })
   @ApiNotFoundResponse({ description: 'La fuente no existe' })

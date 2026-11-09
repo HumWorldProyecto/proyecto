@@ -1,8 +1,11 @@
 export type Continent =
   'AFRICA' | 'ASIA' | 'EUROPE' | 'NORTH_AMERICA' | 'SOUTH_AMERICA' | 'OCEANIA';
-export type Filters = { continent?: Continent; country?: string; from?: string; to?: string };
+export type Filters = { source?: string; category?: string; continent?: Continent; country?: string; from?: string; to?: string };
 export type Country = { code: string; name: string; continent: Continent };
 export type Source = {
+  channelId?: string | null;
+  language?: 'es' | 'en' | null;
+  mediaTopicQcode?: string | null;
   id: string;
   url: string;
   active: boolean;
