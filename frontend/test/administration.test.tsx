@@ -1,8 +1,14 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Administration } from '../src/components/Administration';
+import { ChannelsPanel, RetentionPanel } from '../src/components/Administration';
 import { adminRequest } from '../src/services/api';
+import { SourceCountries } from '../src/components/SourceCountries';
 import { geography } from './fixtures';
+
+function Administration({ credential, sources, onChanged }: Parameters<typeof ChannelsPanel>[0]) {
+  return <><ChannelsPanel credential={credential} sources={sources} onChanged={onChanged} />
+    <RetentionPanel credential={credential} onChanged={onChanged} /></>;
+}
 
 const ok = (data: unknown, status = 200) => ({ ok: status < 400, status, json: async () => structuredClone(data) }) as Response;
 let channels: {id:string;name:string;sources:{id:string;url:string;active:boolean}[]}[];
@@ -114,4 +120,49 @@ it('operación pendiente se aborta al retirar la vista; fallo no Error se saniti
 it.each([400,404,409])('cliente administrativo comunica error %s sin reproducir detalles',async(status)=>{
   fetcher.mockResolvedValue(ok({},status));
   await expect(adminRequest('/channels','',new AbortController().signal)).rejects.toThrow(status===400?'datos introducidos':status===404?'ya no existe':'configuración cambió');
+});
+
+it('gestiona fuentes RSS desde el catálogo y conserva la protección por clave', async () => {
+  const user = userEvent.setup();
+  const credential = crypto.randomUUID();
+  const onSaved = vi.fn();
+  fetcher.mockImplementation(async (url: string) => ok(url.endsWith('/channels') ? [{ id: 'c1', name: 'Medio' }] : url.endsWith('/capture') ? { itemsParsed: 3 } : {}));
+  const source = { ...geography.sources[0], active: true };
+  const props = { credential, countries: geography.countries, onSaved, initiallyOpen: true };
+  const view = render(<SourceCountries {...props} sources={[source]} />);
+
+  await user.type(screen.getByLabelText('Buscar fuente'), 'imposible');
+  expect(screen.getByText('No encontramos fuentes para esos filtros.')).toBeVisible();
+  await user.clear(screen.getByLabelText('Buscar fuente'));
+  await user.type(screen.getByLabelText('Nueva dirección RSS'), 'https://example.org/new.xml');
+  const registration = screen.getByRole('form', { name: 'Registrar fuente RSS' });
+  await user.selectOptions(within(registration).getByLabelText('Medio de la fuente'), 'c1');
+  await user.selectOptions(within(registration).getByLabelText('País de la fuente'), 'CL');
+  await user.selectOptions(within(registration).getByLabelText('Categoría IPTC de la fuente'), 'medtop:07000000');
+  await user.click(screen.getByRole('button', { name: 'Registrar fuente' }));
+  await screen.findByText('Fuente RSS registrada');
+
+  await user.click(screen.getByText('Gestionar fuente'));
+  const url = screen.getByLabelText('Dirección RSS', { exact: true });
+  await user.clear(url);
+  await user.type(url, 'https://example.org/updated.xml');
+  await user.click(screen.getByRole('button', { name: 'Guardar dirección' }));
+  await screen.findByText('Dirección RSS guardada');
+  await user.click(screen.getByRole('button', { name: 'Capturar ahora' }));
+  await screen.findByText('Captura completada. Se leyeron 3 ítems del RSS.');
+  await user.click(screen.getByRole('button', { name: 'Pausar fuente' }));
+  await screen.findByText('Fuente pausada');
+  view.rerender(<SourceCountries {...props} sources={[{ ...source, active: false }]} />);
+  expect(screen.getByRole('button', { name: 'Capturar ahora' })).toBeDisabled();
+  await user.click(screen.getByRole('button', { name: 'Activar fuente' }));
+  await screen.findByText('Fuente activada');
+
+  expect(fetcher.mock.calls.filter(([, options]) => options.method !== 'GET').map(([path, options]) => [path, options.method, options.body])).toEqual([
+    ['/api/v1/sources', 'POST', '{"url":"https://example.org/new.xml","channelId":"c1","countryCode":"CL","language":"es","mediaTopicQcode":"medtop:07000000"}'],
+    ['/api/v1/sources/s1', 'PATCH', '{"url":"https://example.org/updated.xml","channelId":null,"countryCode":null,"language":"es","mediaTopicQcode":null}'],
+    ['/api/v1/sources/s1/capture', 'POST', undefined],
+    ['/api/v1/sources/s1', 'PATCH', '{"active":false}'],
+    ['/api/v1/sources/s1', 'PATCH', '{"active":true}'],
+  ]);
+  expect(fetcher.mock.calls.every(([, options]) => new Headers(options.headers).get('X-API-Key') === credential)).toBe(true);
 });

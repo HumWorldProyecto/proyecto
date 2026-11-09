@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Continent, Filters, News, Word } from './types/dashboard';
 import { getDashboard, getGeography } from './services/api';
 import { useResource } from './services/use-resource';
@@ -8,9 +8,38 @@ import { Evolution } from './components/Evolution';
 import { NewsDialog, NewsRanking, WordCloud, WordDetail } from './components/Evidence';
 import { SourceCountries } from './components/SourceCountries';
 import { SourceAccess } from './components/SourceAccess';
-import { Administration } from './components/Administration';
+import { DictionaryPanel } from './components/DictionaryPanel';
+import { CaptureSettings } from './components/CaptureSettings';
+import { TOPICS } from './components/SourceMetadata';
+import { NewsActions } from './components/NewsActions';
+import { adminRequest } from './services/api';
+import { ChannelsPanel, RetentionPanel } from './components/Administration';
+
+type View = 'explorar' | 'fuentes' | 'administracion';
+
+function currentView(): View {
+  if (window.location.hash === '#fuentes') return 'fuentes';
+  if (window.location.hash === '#administracion') return 'administracion';
+  return 'explorar';
+}
 
 export function App() {
+  const [view, setView] = useState(currentView);
+  const [catalogTab, setCatalogTab] = useState<'medios' | 'rss'>('medios');
+  useEffect(() => {
+    const navigate = () => {
+      setView(currentView());
+      if (['#explorar', '#fuentes', '#administracion'].includes(window.location.hash)) {
+        document.querySelector('.topbar')?.scrollIntoView?.();
+      }
+    };
+    window.addEventListener('hashchange', navigate);
+    return () => window.removeEventListener('hashchange', navigate);
+  }, []);
+  const loadMode = useCallback((signal: AbortSignal) => adminRequest<{ evaluationMode?: boolean }>('/config', '', signal), []);
+  const mode = useResource('runtime-mode', loadMode);
+  const evaluationMode = mode.data?.evaluationMode === true;
+  const [adminTab, setAdminTab] = useState<'captura' | 'diccionario' | 'caducidad'>('caducidad');
   const [accessKey, setAccessKey] = useState('');
   const [accessRevision, setAccessRevision] = useState(0);
   const [draft, setDraft] = useState<Filters>({});
@@ -20,9 +49,12 @@ export function App() {
   const [selectedNews, setNews] = useState<News | null>(null);
   const [selectedWord, setWord] = useState<Word | null>(null);
   const load = useCallback((signal: AbortSignal) => getDashboard(filters, signal), [filters]);
-  const result = useResource(`${JSON.stringify(filters)}:${revision}`, load);
-  const loadGeography = useCallback((signal: AbortSignal) => getGeography(signal, accessKey), [accessKey]);
-  const geography = useResource(`geography:${revision}:${accessRevision}`, loadGeography);
+  const rangeResult = useResource(`${JSON.stringify(filters)}:${revision}`, load, view === 'explorar');
+  const loadDay = useCallback((signal: AbortSignal) => getDashboard({ ...filters, from: day, to: day }, signal), [filters, day]);
+  const dayResult = useResource(`day:${JSON.stringify(filters)}:${day}:${revision}`, loadDay, view === 'explorar' && Boolean(day));
+  const result = day ? dayResult : rangeResult;
+  const loadGeography = useCallback((signal: AbortSignal) => getGeography(signal, accessKey), [accessKey, revision]);
+  const geography = useResource(`geography:${accessRevision}`, loadGeography, (Boolean(accessKey) || evaluationMode) && view !== 'administracion', true);
   const refresh = useCallback(() => {
     setRevision((value) => value + 1);
     setNews(null);
@@ -50,7 +82,7 @@ export function App() {
         Saltar al contenido
       </a>
       <header className="topbar">
-        <a href="/" className="brand" aria-label="HumWorld inicio">
+        <a href="#explorar" className="brand" aria-label="HumWorld inicio">
           <span className="brand-mark">
             h<span>°</span>
           </span>
@@ -59,16 +91,17 @@ export function App() {
           </span>
         </a>
         <nav aria-label="Navegación">
-          <a className="active" href="#content">
-            Explorar el pulso
-          </a>
-          <a href="#method">Cómo se calcula ↗</a>
+          <a aria-current={view === 'explorar' ? 'page' : undefined} href="#explorar">Explorar</a>
+          <a aria-current={view === 'fuentes' ? 'page' : undefined} href="#fuentes">Medios y fuentes</a>
+          <a aria-current={view === 'administracion' ? 'page' : undefined} href="#administracion">Administración</a>
+          {view === 'explorar' && <a href="#method">Cómo se calcula</a>}
         </nav>
         <span className="team">
           EQUIPO 5 <span className="dot" />
         </span>
       </header>
       <main id="content">
+        {view === 'explorar' ? <>
         <div className="page-intro">
           <div>
             <p className="eyebrow">UNA MIRADA AL MUNDO, A TRAVÉS DE SUS NOTICIAS</p>
@@ -131,6 +164,12 @@ export function App() {
                 ))}
             </select>
           </label>
+          <label>Fuente RSS<select value={draft.source ?? ''} onChange={event => setDraft(current => ({ ...current, source: event.target.value || undefined }))}>
+            <option value="">Todas las fuentes</option>{Array.from(new Map((rangeResult.data?.news ?? []).map(item => [item.sourceId, item.sourceUrl])).entries()).map(([id, url]) => <option key={id} value={id}>{url}</option>)}
+          </select></label>
+          <label>Categoría de noticia<select value={draft.category ?? ''} onChange={event => setDraft(current => ({ ...current, category: event.target.value || undefined }))}>
+            <option value="">Todas las categorías</option>{TOPICS.map(topic => <option key={topic.qcode} value={topic.qcode}>{topic.label}</option>)}
+          </select></label>
           <label>
             Desde
             <input
@@ -170,12 +209,6 @@ export function App() {
             Limpiar
           </button>
         </form>
-        {geography.error && (
-          <div className="notice" role="alert">
-            {geography.error}{' '}
-            <button onClick={refresh}>Reintentar</button>
-          </div>
-        )}
         <div className="context-line">
           <span>
             <i className="dot" /> {location}{' '}
@@ -233,7 +266,7 @@ export function App() {
             {data.summary.unknownCountry > 0 && (
               <p className="notice">
                 {data.summary.unknownCountry} noticias no tienen país asignado. Pueden aportar al
-                total global; asigna la procedencia de sus fuentes al pie de la página.
+                total global. <a href="#fuentes">Asignar países a las fuentes</a>.
               </p>
             )}
             <section className="panel geography" aria-labelledby="map-title">
@@ -250,7 +283,11 @@ export function App() {
               <p className="muted">
                 País de la fuente RSS. Selecciona un país para explorar su resultado.
               </p>
-              <WorldMap countries={data.countries} onSelect={selectCountry} />
+              <WorldMap countries={data.countries} onSelect={selectCountry} onSelectContinent={continent => {
+                setFilters(current => ({ ...current, country: undefined, continent }));
+                setDraft(current => ({ ...current, country: undefined, continent }));
+                setDay(''); setNews(null); setWord(null);
+              }} />
               <div className="map-footer">
                 <div className="legend">
                   {[
@@ -303,7 +340,8 @@ export function App() {
                 </div>
               </details>
             </section>
-            <Evolution timeline={data.timeline} selected={day} onSelect={selectDay} />
+            {day && <p className="notice">Todo el resultado corresponde al {day} (UTC). <button className="text-button" onClick={() => setDay('')}>Volver al rango completo</button></p>}
+            <Evolution timeline={rangeResult.data?.timeline ?? data.timeline} selected={day} onSelect={selectDay} />
             <div className="evidence-grid">
               <div>
                 <WordCloud
@@ -315,26 +353,10 @@ export function App() {
                   <WordDetail word={selectedWord} news={data.news} onSelect={setNews} />
                 )}
               </div>
-              <NewsRanking news={data.news} day={day} onSelect={setNews} />
+              <NewsRanking key={day} news={data.news} day={day} onSelect={setNews} />
             </div>
           </>
         )}
-        <SourceAccess active={Boolean(accessKey)} onApply={(key) => {
-          setAccessKey(key); setAccessRevision((value) => value + 1);
-        }} onClear={() => {
-          setAccessKey(''); setAccessRevision((value) => value + 1);
-        }} />
-        {geography.data && (
-          <SourceCountries
-            key={accessRevision}
-            credential={accessKey}
-            sources={geography.data.sources}
-            countries={geography.data.countries}
-            onSaved={refresh}
-          />
-        )}
-        {accessKey && <Administration key={`administration:${accessRevision}`} credential={accessKey}
-          sources={geography.data?.sources ?? []} onChanged={refresh} />}
         <section id="method" className="method">
           <p className="eyebrow">LECTURA RESPONSABLE DEL RESULTADO</p>
           <h2>Un indicador con evidencia a la vista.</h2>
@@ -351,6 +373,40 @@ export function App() {
             resultados guardados hasta reanalizar.
           </p>
         </section>
+        </> : <>
+          <div className="page-intro workspace-intro">
+            <div>
+              <p className="eyebrow">ESPACIO DE GESTIÓN</p>
+              <h1>{view === 'fuentes' ? 'Medios y fuentes' : 'Administración'}<span>.</span></h1>
+              <p className="lead">{view === 'fuentes'
+                ? 'Organiza los medios y administra las direcciones RSS que alimentan el observatorio.'
+                : 'Configura la captura, el diccionario de sentimiento y la conservación de las noticias.'}</p>
+            </div>
+          </div>
+          {evaluationMode ? <p className="notice" role="status">Evaluación local · Gestión sin clave. Al eliminar una fuente se borran también sus noticias.</p> : <SourceAccess active={Boolean(accessKey)} onApply={(key) => {
+            setAccessKey(key); setAccessRevision((value) => value + 1);
+          }} onClear={() => {
+            setAccessKey(''); setAccessRevision((value) => value + 1);
+          }} />}
+          {(accessKey || evaluationMode) && (view === 'administracion'
+            ? <>
+              <div className="catalog-tabs" role="group" aria-label="Secciones de administración">
+                {(['captura', 'diccionario', 'caducidad'] as const).map(tab => <button key={tab} className="secondary" aria-pressed={adminTab === tab} onClick={() => setAdminTab(tab)}>{tab === 'captura' ? 'Captura automática' : tab === 'diccionario' ? 'Diccionario' : 'Caducidad y purgado'}</button>)}
+              </div>
+              {adminTab === 'captura' ? <CaptureSettings key={accessRevision} credential={accessKey} /> : adminTab === 'diccionario' ? <DictionaryPanel key={accessRevision} credential={accessKey} /> : <RetentionPanel key={accessRevision} credential={accessKey} onChanged={refresh} />}
+            </>
+            : <>
+              <div className="catalog-tabs" role="group" aria-label="Secciones del catálogo">
+                <button type="button" className="secondary" aria-pressed={catalogTab === 'medios'} onClick={() => setCatalogTab('medios')}>Medios</button>
+                <button type="button" className="secondary" aria-pressed={catalogTab === 'rss'} onClick={() => setCatalogTab('rss')}>Fuentes RSS</button>
+              </div>
+              {geography.error && <div className="notice" role="alert">{geography.error} <button onClick={refresh}>Reintentar</button></div>}
+              {!geography.data && !geography.error && <p role="status">Cargando catálogo…</p>}
+              {geography.data && (catalogTab === 'medios'
+                ? <ChannelsPanel key={accessRevision} credential={accessKey} sources={geography.data.sources} onChanged={refresh} />
+                : <SourceCountries key={accessRevision} initiallyOpen evaluationMode={evaluationMode} credential={accessKey} sources={geography.data.sources} countries={geography.data.countries} onSaved={refresh} />)}
+            </>)}
+        </>}
       </main>
       <footer>
         <span className="footer-brand">
@@ -359,8 +415,8 @@ export function App() {
         <p>Proyecto académico · Equipo 5</p>
         <a href="#content">Volver arriba ↑</a>
       </footer>
-      {selectedNews && (
-        <NewsDialog key={selectedNews.id} news={selectedNews} onClose={() => setNews(null)} />
+      {view === 'explorar' && selectedNews && (
+        <NewsDialog key={selectedNews.id} news={selectedNews} onClose={() => setNews(null)} actions={<NewsActions id={selectedNews.id} language={selectedNews.language} credential={accessKey} canManage={evaluationMode || Boolean(accessKey)} onChanged={refresh} />} />
       )}
     </>
   );

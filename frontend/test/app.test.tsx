@@ -16,6 +16,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   fetchMock = vi.fn(async (url: string, options?: RequestInit) => {
     if (url === '/world.geo.json') return response({ type: 'FeatureCollection', features: [] });
+    if (/\/api\/v1\/news\/[^/]+$/.test(url)) return response({ capturedAt: '2026-11-09T10:00:00Z', continent: 'SOUTH_AMERICA', mediaTopics: [] });
+    if (url.endsWith('/channels')) return response([]);
     if (options?.method === 'PUT') return response(geography.sources[0]);
     return response(url.includes('/geography') ? geography : dashboard);
   });
@@ -26,6 +28,13 @@ const ready = async () => {
   await screen.findByRole('heading', { name: 'El mundo en perspectiva' });
   await waitFor(() => expect(renderMap).toHaveBeenCalled());
 };
+
+async function openCatalog(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('link', { name: 'Medios y fuentes' }));
+  fireEvent.change(screen.getByLabelText('Clave de acceso'), { target: { value: 'clave-de-prueba' } });
+  await user.click(screen.getByRole('button', { name: 'Aplicar clave' }));
+  await user.click(screen.getByRole('button', { name: 'Fuentes RSS' }));
+}
 
 it('muestra el resultado coherente, nube, ranking y detalle seguro', async () => {
   const user = userEvent.setup();
@@ -114,7 +123,8 @@ it('asigna explícitamente país de la fuente y actualiza la consulta', async ()
   const user = userEvent.setup();
   render(<App />);
   await ready();
-  await user.click(screen.getByText('Procedencia de las fuentes'));
+  await openCatalog(user);
+  await screen.findByText('Procedencia de las fuentes');
   await user.selectOptions(screen.getByLabelText(/https:\/\/example.org\/rss/), 'CL');
   await user.click(screen.getByRole('button', { name: 'Guardar país' }));
   await waitFor(() =>
@@ -124,6 +134,7 @@ it('asigna explícitamente país de la fuente y actualiza la consulta', async ()
       ),
     ).toBe(true),
   );
+  await user.click(screen.getByRole('link', { name: 'Explorar' }));
   await ready();
 });
 
@@ -155,11 +166,12 @@ it('comunica catálogo no disponible y permite reintentar', async () => {
   );
   const user = userEvent.setup();
   render(<App />);
+  await ready();
+  await waitFor(() => expect(screen.getByLabelText('País')).not.toBeDisabled());
+  await openCatalog(user);
   expect(await screen.findByRole('alert')).toHaveTextContent(
     'No pudimos conectar con los datos',
   );
-  // El catálogo público del resultado mantiene los filtros si falla el acceso a fuentes.
-  await waitFor(() => expect(screen.getByLabelText('País')).not.toBeDisabled());
   await user.click(screen.getByRole('button', { name: 'Reintentar' }));
   expect(fetchMock.mock.calls.filter(([url]) => url.includes('/geography')).length).toBeGreaterThan(
     1,
@@ -189,7 +201,7 @@ it('muestra vacíos y ausencia de evidencia con cobertura real', async () => {
         ? { type: 'FeatureCollection', features: [] }
         : url.includes('/geography')
           ? { ...geography, sources: [] }
-          : empty,
+          : url.endsWith('/channels') ? [] : empty,
     ),
   );
   const user = userEvent.setup();
@@ -198,6 +210,6 @@ it('muestra vacíos y ausencia de evidencia con cobertura real', async () => {
   expect(screen.getByText(/La evolución aparecerá/)).toBeVisible();
   expect(screen.getByText(/No hay palabras guardadas/)).toBeVisible();
   expect(screen.getByText(/No hay noticias para mostrar/)).toBeVisible();
-  await user.click(screen.getByText('Procedencia de las fuentes'));
-  expect(screen.getByText('No hay fuentes RSS registradas.')).toBeVisible();
+  await openCatalog(user);
+  expect(await screen.findByText('No hay fuentes RSS registradas.')).toBeVisible();
 });

@@ -99,3 +99,5 @@ Las operaciones de fuentes RSS requieren `X-API-Key`; consulta admite ambos perf
 # Cierre y demo final
 
 Caducidad, purga y medios se describen en [la guía de demo](docs/demo-final.md). El estado verificable de fechas e integración está en [el cierre Sprint 5](docs/planificacion/cierre-sprint5-2026-10-31.md) y el análisis real de calidad en [Sonar local](docs/calidad/sonar-sprint5.md). La rama probada no se declara Done antes de revisión e integración humanas.
+
+Para acumular noticias reales durante varios días, consulta [Validación con noticias reales](docs/validacion-noticias.md). Tiene su propio catálogo, captura periódica y almacenamiento persistente.

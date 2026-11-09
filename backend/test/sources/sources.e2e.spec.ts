@@ -81,7 +81,7 @@ describe('/api/v1/sources (e2e, PostgreSQL real)', () => {
     ).resolves.toMatchObject({ continent: null });
   });
 
-  it('mantiene continent ausente del contrato CRUD y captura de fuentes HU-14', async () => {
+  it('amplía el contrato de fuentes con metadatos opcionales sin cambiar los campos HU-14', async () => {
     const source = await prisma.rssSource.create({
       data: {
         url: 'https://continent-internal.example/feed',
@@ -96,16 +96,26 @@ describe('/api/v1/sources (e2e, PostgreSQL real)', () => {
     expect(collection.body).toHaveLength(1);
     expect(Object.keys(collection.body[0]).sort()).toEqual([
       'active',
+      'channelId',
+      'continent',
+      'countryCode',
       'createdAt',
       'id',
+      'language',
+      'mediaTopicQcode',
       'updatedAt',
       'url',
     ]);
     expect(detail.status).toBe(200);
     expect(Object.keys(detail.body).sort()).toEqual([
       'active',
+      'channelId',
+      'continent',
+      'countryCode',
       'createdAt',
       'id',
+      'language',
+      'mediaTopicQcode',
       'updatedAt',
       'url',
     ]);
@@ -116,15 +126,20 @@ describe('/api/v1/sources (e2e, PostgreSQL real)', () => {
     const responseSchema = openApi.components?.schemas?.SourceResponseDto as
       | { properties?: Record<string, unknown> }
       | undefined;
-    expect(Object.keys(createSchema?.properties ?? {})).toEqual(['url']);
+    expect(Object.keys(createSchema?.properties ?? {}).sort()).toEqual(['channelId', 'countryCode', 'language', 'mediaTopicQcode', 'url']);
     expect(Object.keys(responseSchema?.properties ?? {}).sort()).toEqual([
       'active',
+      'channelId',
+      'continent',
+      'countryCode',
       'createdAt',
       'id',
+      'language',
+      'mediaTopicQcode',
       'updatedAt',
       'url',
     ]);
-    // Sprint 4 adds geography under dashboards; the existing sources family stays URL-only.
+    // The continent remains derived from countryCode, never accepted as a separate input.
     const sourcePaths = Object.fromEntries(Object.entries(openApi.paths).filter(([path]) => path.startsWith('/api/v1/sources')));
     expect(JSON.stringify(sourcePaths)).not.toMatch(/continent/i);
   });

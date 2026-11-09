@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
+import { NewsRecordsService } from './services/news-records.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { CAPTURE_OUTPUT_PORT } from '../capture/ports/capture-output.port';
 import { NEWS_REPOSITORY_PORT } from './ports/news-repository.port';
@@ -14,11 +16,12 @@ import { ClassificationModule } from '../classification/classification.module';
  * CaptureModule pueda resolverlo, sin alterar su contrato.
  */
 @Module({
-  imports: [PrismaModule, ClassificationModule],
+  imports: [PrismaModule, ClassificationModule, AuthModule],
   controllers: [NewsController],
   providers: [
     { provide: NEWS_REPOSITORY_PORT, useClass: PrismaNewsRepository },
     NewsService,
+    NewsRecordsService,
     NewsCaptureOutputAdapter,
     { provide: CAPTURE_OUTPUT_PORT, useClass: NewsCaptureOutputAdapter },
   ],

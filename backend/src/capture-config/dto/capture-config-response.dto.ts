@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ALLOWED_PERIODICITY_MINUTES,
   AllowedPeriodicityMinutes,
@@ -6,6 +6,9 @@ import {
 } from '../domain/periodicity';
 
 export class CaptureConfigResponseDto {
+  @ApiPropertyOptional({ type: Number, nullable: true, description: 'Días desde captura; null desactiva caducidad' }) retentionDays?: number | null;
+  @ApiPropertyOptional({ type: Boolean, description: 'Administración abierta solo en la evaluación local explícita' }) evaluationMode?: boolean;
+
   @ApiProperty({
     description: 'Periodicidad vigente; null indica que aún no está configurada',
     enum: ALLOWED_PERIODICITY_MINUTES,

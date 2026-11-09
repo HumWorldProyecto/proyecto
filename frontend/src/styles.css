@@ -157,10 +157,10 @@ input::-webkit-calendar-picker-indicator {
   position: relative;
   color: #66766c;
 }
-.topbar nav .active {
+.topbar nav [aria-current='page'] {
   color: #214c3d;
 }
-.active:after {
+.topbar nav [aria-current='page']:after {
   content: '';
   height: 2px;
   position: absolute;
@@ -983,3 +983,50 @@ footer p {
 .source-access form { display: flex; align-items: end; flex-wrap: wrap; gap: 1rem; }
 .source-access label { display: grid; gap: .5rem; flex: 1 1 16rem; }
 .source-access input { min-width: 0; width: 100%; padding: .75rem; border: 1px solid #ccd6ca; border-radius: 6px; background: white; }
+
+.workspace-intro { margin-bottom: 1.25rem; }
+.catalog-tabs, .catalog-toolbar, .rss-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: .75rem;
+}
+.catalog-tabs [aria-pressed='true'] { background: #214c3d; color: #fff; }
+.catalog-toolbar {
+  margin: 1.25rem 0;
+  padding: 1rem;
+  background: #f2f6f1;
+  border: 1px solid #dce4d9;
+  border-radius: 8px;
+}
+.catalog-toolbar label { flex: 1 1 12rem; min-width: 0; }
+.catalog-toolbar p { margin: .5rem 0; }
+.rss-card { border-top: 1px solid #dce4d9; padding: .75rem 0; }
+.rss-card label { min-width: 0; overflow-wrap: anywhere; }
+.rss-actions { margin-block: .5rem; }
+.rss-actions summary { cursor: pointer; color: #214c3d; font-weight: 600; }
+.rss-action-buttons { margin-block: .75rem; }
+.channel-row li { overflow-wrap: anywhere; margin-block: .35rem; }
+
+@media (max-width: 900px) {
+  .topbar { height: auto; min-height: 76px; flex-wrap: wrap; padding-block: .75rem; }
+  .topbar nav { display: flex; flex: 1 1 100%; flex-wrap: wrap; height: auto; gap: .35rem 1rem; order: 3; }
+  .topbar nav a { height: auto; min-height: 38px; }
+}
+
+/* Administration keeps long catalogs compact and editable on mobile. */
+.metadata-fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:1rem; flex:1 1 100%; }
+.metadata-fields small { grid-column:1/-1; color:var(--muted); }
+.metadata-fields label, .dictionary-entry label { min-width:0; }
+.metadata-fields select { max-width:100%; }
+.dictionary-list { list-style:none; padding:0; }
+.dictionary-entry { padding:1rem 0; border-bottom:1px solid #dce2dc; }
+.dictionary-entry form { align-items:end; }
+.dictionary-entry input[type=number] { width:6rem; }
+.news-actions { margin:1.5rem 0; padding:1rem 0; border-top:1px solid #dce2dc; }
+.news-actions form { display:flex; align-items:end; flex-wrap:wrap; gap:1rem; margin-bottom:1rem; }
+.news-actions label { display:grid; gap:.4rem; }
+@media(max-width:600px) { .dictionary-entry form { display:grid; grid-template-columns:1fr; } .dictionary-entry input[type=number] { width:100%; } }
+
+.continent-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.6rem; margin-top:1rem; }
+.continent-list small { display:block; margin-top:.35rem; font-weight:400; }
