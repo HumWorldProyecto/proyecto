@@ -1,8 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsString, Matches, ValidateIf } from 'class-validator';
+import { IsIn, IsString, IsUUID, Matches, ValidateIf } from 'class-validator';
 import { AnalyticsContinent, CONTINENTS } from '../types/analytics';
 
+import { MEDIA_TOPIC_QCODES } from '../../classification/types/media-topic';
 export class HumorQueryDto {
+  @ApiPropertyOptional({ format: 'uuid', description: 'Fuente RSS de origen' })
+  @ValidateIf((_o, v) => v !== undefined) @IsUUID('4') source?: string;
+  @ApiPropertyOptional({ enum: MEDIA_TOPIC_QCODES, description: 'Categoría IPTC detectada en la noticia' })
+  @ValidateIf((_o, v) => v !== undefined) @IsIn(MEDIA_TOPIC_QCODES) category?: string;
+
   @ApiPropertyOptional({ enum: CONTINENTS })
   @ValidateIf((_o, v) => v !== undefined)
   @IsIn(CONTINENTS)

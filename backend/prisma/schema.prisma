@@ -25,6 +25,9 @@ model RssSource {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
+  language DictionaryLanguage?
+  mediaTopicQcode String?
+
   channelId String?
   channel Channel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
 

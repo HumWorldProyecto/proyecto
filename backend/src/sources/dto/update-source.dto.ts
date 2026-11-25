@@ -1,7 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsString, ValidateIf } from 'class-validator';
 
-export class UpdateSourceDto {
+import { SourceMetadataDto } from './source-metadata.dto';
+
+export class UpdateSourceDto extends SourceMetadataDto {
   @ApiPropertyOptional({
     description: 'Nueva URL HTTP/HTTPS accesible de la fuente RSS',
     example: 'https://example.org/updated-feed.xml',

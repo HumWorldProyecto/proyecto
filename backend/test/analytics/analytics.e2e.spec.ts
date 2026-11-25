@@ -75,7 +75,7 @@ describe('Sprint 4 API + PostgreSQL 16', () => {
       (await prisma.news.findUniqueOrThrow({ where: { id: item.id } })).mediaTopicQcodes,
     ).toEqual(['medtop:13000000']);
     const old = await request(app.getHttpServer()).get(`/api/v1/sources/${sid}`);
-    expect(old.body).not.toHaveProperty('countryCode');
+    expect(old.body).toMatchObject({ id: sid, countryCode: 'CL', continent: 'SOUTH_AMERICA' });
     const removed = await request(app.getHttpServer())
       .put(`${api}/sources/${sid}/geography`)
       .send({ countryCode: null });

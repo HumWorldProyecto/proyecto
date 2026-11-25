@@ -139,6 +139,7 @@ it('procedencia muestra error recuperable, país retirado y fuente inactiva', as
   const saved = vi.fn();
   const fetcher = vi
     .fn()
+    .mockResolvedValueOnce(ok([])) // medio catalog lookup
     .mockRejectedValueOnce(new Error('Fallo de red'))
     .mockResolvedValueOnce(ok(geography.sources[0]));
   vi.stubGlobal('fetch', fetcher);
@@ -151,12 +152,12 @@ it('procedencia muestra error recuperable, país retirado y fuente inactiva', as
   );
   await user.click(screen.getByText('Procedencia de las fuentes'));
   expect(screen.getByText(/Inactiva/)).toBeVisible();
-  await user.selectOptions(screen.getByLabelText(/https:/), '');
+  await user.selectOptions(screen.getByRole('combobox', { name: /https:/ }), '');
   await user.click(screen.getByRole('button', { name: 'Guardar país' }));
   expect(await screen.findByRole('status')).toHaveTextContent('Fallo de red');
   await user.click(screen.getByRole('button', { name: 'Guardar país' }));
   await waitFor(() => expect(saved).toHaveBeenCalled());
-  expect(fetcher.mock.calls[1][1].body).toBe('{"countryCode":null}');
+  expect(fetcher.mock.calls[2][1].body).toBe('{"countryCode":null}');
 });
 
 it('presentación usa signo, ausencia, texto escapado y solo enlaces web', () => {

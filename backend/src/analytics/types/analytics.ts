@@ -11,12 +11,17 @@ export const CONTINENTS = [
 export type AnalyticsContinent = (typeof CONTINENTS)[number];
 export type Country = Readonly<{ code: string; name: string; continent: AnalyticsContinent }>;
 export type HumorFilter = Readonly<{
+  source?: string;
+  category?: string;
   continent?: AnalyticsContinent;
   country?: string;
   from?: string;
   to?: string;
 }>;
 export type SourceGeography = Readonly<{
+  channelId?: string | null;
+  language?: 'es' | 'en' | null;
+  mediaTopicQcode?: string | null;
   id: string;
   url: string;
   active: boolean;

@@ -9,7 +9,7 @@ export function SourceAccess({ active, onApply, onClear }: {
       event.preventDefault();
       const form = event.currentTarget;
       const key = new FormData(form).get('accessKey');
-      if (typeof key === 'string' && key.trim()) { onApply(key); form.reset(); }
+      if (typeof key === 'string' && key.trim()) { onApply(key.trim()); form.reset(); }
     }}>
       <label>Clave de acceso<input type="password" name="accessKey" autoComplete="off" required /></label>
       <button className="primary" type="submit">Aplicar clave</button>

@@ -38,7 +38,7 @@ describe('/api/v1/config (e2e, PostgreSQL real)', () => {
     const response = await request(app.getHttpServer()).get('/api/v1/config');
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ capturePeriodicityMinutes: null });
+    expect(response.body).toMatchObject({ capturePeriodicityMinutes: null, evaluationMode: false });
     await expect(prisma.captureConfig.count()).resolves.toBe(0);
   });
 
@@ -52,7 +52,7 @@ describe('/api/v1/config (e2e, PostgreSQL real)', () => {
       expect(put.status).toBe(200);
       expect(put.body).toEqual({ capturePeriodicityMinutes: minutes });
       expect(get.status).toBe(200);
-      expect(get.body).toEqual({ capturePeriodicityMinutes: minutes });
+      expect(get.body).toMatchObject({ capturePeriodicityMinutes: minutes, evaluationMode: false });
       await expect(prisma.captureConfig.count()).resolves.toBe(1);
     }
   });

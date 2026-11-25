@@ -1,0 +1,4 @@
+services:
+  backend:
+    environment:
+      HUMWORLD_EVALUATION_MODE: "0"

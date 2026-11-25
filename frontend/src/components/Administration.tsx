@@ -6,7 +6,7 @@ import { useResource } from '../services/use-resource';
 type Preview = { retentionDays: number | null; cutoff: string | null; totalCount: number; expiredCount: number };
 type Channel = { id: string; name: string; sources: { id: string; url: string; active: boolean }[] };
 
-function useAdminAction(refresh: () => void) {
+export function useAdminAction(refresh: () => void) {
   const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false);
   const controller = useRef<AbortController | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
@@ -20,7 +20,7 @@ function useAdminAction(refresh: () => void) {
   return { message, busy, run };
 }
 
-function RetentionPanel({ credential, onChanged }: { credential: string; onChanged: () => void }) {
+export function RetentionPanel({ credential, onChanged }: { credential: string; onChanged: () => void }) {
   const [revision, setRevision] = useState(0); const [days, setDays] = useState('');
   const load = useCallback((signal: AbortSignal) => adminRequest<Preview>('/news/purge-preview', credential, signal), [credential]);
   const state = useResource(`retention:${revision}`, load);
@@ -102,12 +102,15 @@ function ChannelRow({ channel, sources, credential, refresh }: {
   </article>;
 }
 
-function ChannelsPanel({ credential, sources, onChanged }: { credential: string; sources: Source[]; onChanged: () => void }) {
+export function ChannelsPanel({ credential, sources, onChanged }: { credential: string; sources: Source[]; onChanged: () => void }) {
   const [revision, setRevision] = useState(0); const [name, setName] = useState('');
-  const load = useCallback((signal: AbortSignal) => adminRequest<Channel[]>('/channels', credential, signal), [credential]);
-  const state = useResource(`channels:${revision}`, load);
+  const [query, setQuery] = useState('');
+  const [limit, setLimit] = useState(8);
+  const load = useCallback((signal: AbortSignal) => adminRequest<Channel[]>('/channels', credential, signal), [credential, revision]);
+  const state = useResource('channels', load, true, true);
   const refresh = () => { setRevision(value => value + 1); onChanged(); };
   const action = useAdminAction(refresh);
+  const matching = state.data?.filter(channel => channel.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())) ?? [];
   return <section className="panel admin-panel" aria-label="Medios y fuentes RSS">
     <h2>Medios y fuentes RSS</h2>
     <p className="muted">Un medio agrupa varias fuentes. Eliminarlo conserva sus fuentes y noticias; asociar una fuente a otro medio la traslada.</p>
@@ -119,13 +122,15 @@ function ChannelsPanel({ credential, sources, onChanged }: { credential: string;
       <label>Nombre del nuevo medio<input required maxLength={120} value={name} onChange={event => setName(event.target.value)} /></label>
       <button type="submit" className="secondary" disabled={action.busy}>Crear medio</button>
     </form>
+    {action.message && <p role="status" className="notice">{action.message}</p>}
     {state.error && <p role="alert">{state.error} <button onClick={() => setRevision(value => value + 1)}>Reintentar medios</button></p>}
-    {state.data?.map(channel => <ChannelRow key={channel.id} channel={channel} sources={sources} credential={credential} refresh={refresh} />)}
+    {Boolean(state.data?.length) && <div className="catalog-toolbar">
+      <label>Buscar medio<input type="search" value={query} onChange={event => { setQuery(event.target.value); setLimit(8); }} /></label>
+      <p className="muted">{matching.length} de {state.data?.length} medios</p>
+    </div>}
+    {matching.slice(0, limit).map(channel => <ChannelRow key={channel.id} channel={channel} sources={sources} credential={credential} refresh={refresh} />)}
+    {state.data?.length !== 0 && state.data && !matching.length && <p>No encontramos medios con ese nombre.</p>}
     {state.data?.length === 0 && <p>No hay medios registrados.</p>}
-    {action.message && <p role="status">{action.message}</p>}
+    {matching.length > limit && <button type="button" className="secondary" onClick={() => setLimit(value => value + 8)}>Mostrar más medios</button>}
   </section>;
-}
-
-export function Administration(props: { credential: string; sources: Source[]; onChanged: () => void }) {
-  return <><ChannelsPanel {...props} /><RetentionPanel {...props} /></>;
 }

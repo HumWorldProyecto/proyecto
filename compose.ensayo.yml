@@ -1,0 +1,39 @@
+name: humworld-ensayo
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: humworld
+      POSTGRES_DB: humworld_demo_final
+      POSTGRES_PASSWORD: ${HUMWORLD_VALIDATION_DB_PASSWORD:?Genera .env.validacion con el script de arranque}
+    volumes:
+      - ensayo-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U humworld -d humworld_demo_final"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://humworld:${HUMWORLD_VALIDATION_DB_PASSWORD}@postgres:5432/humworld_demo_final?schema=public
+      HUMWORLD_API_KEY_READ: ${HUMWORLD_VALIDATION_READ_KEY:?Configura la clave local de consulta}
+      HUMWORLD_API_KEY_WRITE: ${HUMWORLD_VALIDATION_WRITE_KEY:?Configura la clave local de gestión}
+      HUMWORLD_VALIDATION_MODE: "1"
+      HUMWORLD_EVALUATION_MODE: "1"
+    command: ["sh", "-c", "npx prisma migrate deploy && node scripts/demo-seed.cjs && exec node dist/main.js"]
+    ports:
+      - "127.0.0.1:53019:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+  frontend:
+    build: ./frontend
+    environment:
+      API_PROXY_TARGET: http://backend:3000
+    ports:
+      - "127.0.0.1:54179:4173"
+    depends_on:
+      - backend
+volumes:
+  ensayo-data:

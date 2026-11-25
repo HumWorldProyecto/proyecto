@@ -7,6 +7,9 @@ import {
   SourceChanges,
   SourceRepositoryPort,
 } from '../ports/source-repository.port';
+import { COUNTRY_BY_CODE } from '../../analytics/data/geography';
+import { evaluationMode } from '../../auth/evaluation-mode';
+import { SourceMetadata } from '../ports/source-repository.port';
 import { RssSource } from '../types/rss-source';
 
 @Injectable()
@@ -17,10 +20,10 @@ export class SourcesService {
     private readonly accessibilityChecker: SourceAccessibilityChecker,
   ) {}
 
-  async create(rawUrl: string): Promise<RssSource> {
+  async create(rawUrl: string, metadata?: SourceMetadata): Promise<RssSource> {
     const url = await this.validateNewUrl(rawUrl);
     await this.assertUrlAvailable(url);
-    return this.repository.create(url);
+    return metadata ? this.repository.create(url, this.metadata(metadata)) : this.repository.create(url);
   }
 
   async findById(id: string): Promise<RssSource> {
@@ -45,12 +48,12 @@ export class SourcesService {
   }
 
   async update(id: string, changes: SourceChanges): Promise<RssSource> {
-    if (changes.url === undefined && changes.active === undefined) {
+    if (Object.values(changes).every(value => value === undefined)) {
       throw new SourceInputError('PATCH requiere al menos una propiedad');
     }
 
     const current = await this.findRequired(id);
-    const persistedChanges: { url?: string; active?: boolean } = {};
+    const persistedChanges: { -readonly [K in keyof SourceChanges]: SourceChanges[K] } = { ...this.metadata(changes) };
 
     if (changes.url !== undefined) {
       const url = this.normalizer.normalize(changes.url).toString();
@@ -74,9 +77,24 @@ export class SourcesService {
 
   async deactivate(id: string): Promise<void> {
     const current = await this.findRequired(id);
+    if (evaluationMode()) {
+      await this.repository.deleteWithNews!(id);
+      return;
+    }
     if (current.active) {
       await this.repository.setActive(id, false);
     }
+  }
+
+  private metadata(input: SourceMetadata): SourceMetadata {
+    const { countryCode, channelId, language, mediaTopicQcode } = input;
+    const country = countryCode ? COUNTRY_BY_CODE.get(countryCode) : undefined;
+    if (countryCode && !country) throw new SourceInputError('País fuera del catálogo');
+    return { ...(countryCode === undefined ? {} : { countryCode }),
+      ...(country ? { continent: country.continent } : {}),
+      ...(channelId === undefined ? {} : { channelId }),
+      ...(language === undefined ? {} : { language }),
+      ...(mediaTopicQcode === undefined ? {} : { mediaTopicQcode }) };
   }
 
   private async validateNewUrl(rawUrl: string): Promise<string> {

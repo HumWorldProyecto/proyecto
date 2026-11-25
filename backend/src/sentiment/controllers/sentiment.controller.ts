@@ -30,7 +30,7 @@ import { DirectSentimentAnalysisService } from '../services/direct-sentiment-ana
 export class SentimentController {
   constructor(private readonly directAnalysis: DirectSentimentAnalysisService) {}
 
-  @Post('analyze')
+  @Post(['', 'analyze'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Analizar directamente el sentimiento de un texto',

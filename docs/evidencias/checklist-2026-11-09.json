@@ -1,0 +1,225 @@
+{
+  "date": "2026-11-09",
+  "scope": "Validación técnica local, con pruebas automatizadas y recorrido de navegador; no constituye aceptación del profesor ni integración en main.",
+  "repository": "HumWorldProyecto/proyecto",
+  "branch": "feedback/gestion-validacion",
+  "pullRequest": "https://github.com/HumWorldProyecto/proyecto/pull/53",
+  "normalMode": "P12 y desactivación lógica de fuentes conservados",
+  "evaluationMode": "Solo ambas banderas a 1; compose ligado a 127.0.0.1",
+  "backend": {
+    "suites": 82,
+    "tests": 867,
+    "coverage": {
+      "statements": 98.98,
+      "branches": 95.26,
+      "functions": 99.35,
+      "lines": 98.95
+    }
+  },
+  "frontend": {
+    "suites": 6,
+    "tests": 38,
+    "coverage": {
+      "statements": 95.98,
+      "branches": 93.55,
+      "functions": 93.6,
+      "lines": 97.39
+    }
+  },
+  "openspec": {
+    "strict": true,
+    "passed": 19,
+    "failed": 0
+  },
+  "cleanSeed": {
+    "media": 50,
+    "sources": 53,
+    "continents": 6,
+    "missingMetadata": 0
+  },
+  "repeatSeed": {
+    "preservedDeletedSource": true,
+    "sources": 52,
+    "preservedOptionalNull": true,
+    "preservedRetentionDays": 31
+  },
+  "browserFlow": {
+    "sourceId": "6c41b65e-70b8-438d-ab6b-1b9a9fd210fb",
+    "sourceUrl": "https://feeds.bbci.co.uk/news/health/rss.xml",
+    "news": 56,
+    "analyzed": 56,
+    "withEvidence": 7,
+    "words": 4,
+    "average": 0.1142857142857143
+  },
+  "restart": {
+    "checkedAt": "2026-11-09T10:37:51.6810806-03:00",
+    "allDataIdentical": true,
+    "before": {
+      "newsCount": 5013,
+      "newsHash": "bdceb7a177681e23eedad93ea9286b4e",
+      "sourcesHash": "1996870190ee781761eaffcdc83eb444",
+      "channelsHash": "d1268766cb1b66f0c3dc75a42fe8c384",
+      "dictionaryHash": "6b620d34141490d0615e3cdae1fa0c6b",
+      "captureHash": "e59f26c675d40a5261157f1ad9f4e720",
+      "retentionHash": "a495f6e663f9b89c281e998bf04fc223"
+    },
+    "after": {
+      "newsCount": 5013,
+      "newsHash": "bdceb7a177681e23eedad93ea9286b4e",
+      "sourcesHash": "1996870190ee781761eaffcdc83eb444",
+      "channelsHash": "d1268766cb1b66f0c3dc75a42fe8c384",
+      "dictionaryHash": "6b620d34141490d0615e3cdae1fa0c6b",
+      "captureHash": "e59f26c675d40a5261157f1ad9f4e720",
+      "retentionHash": "a495f6e663f9b89c281e998bf04fc223"
+    },
+    "config": {
+      "capturePeriodicityMinutes": 15,
+      "retentionDays": null,
+      "evaluationMode": true
+    },
+    "scope": "Solo los tres servicios humworld-validacion, conservando el volumen"
+  },
+  "cases": [
+    {
+      "id": 1,
+      "result": "SI",
+      "observation": "SI en evaluación local explícita: navegador accede a catálogo y administración sin clave. En configuración normal P12 conserva 401/403."
+    },
+    {
+      "id": 2,
+      "result": "SI",
+      "observation": "Carga limpia en PostgreSQL 16: 50 medios, 53 fuentes, seis continentes y cero fuentes sin país, idioma o categoría editorial IPTC."
+    },
+    {
+      "id": 3,
+      "result": "SI",
+      "observation": "Navegador: medio Validación checklist 09-11 y RSS BBC Health creados con GB, Europa derivada, inglés y categoría Salud. GET confirma los valores."
+    },
+    {
+      "id": 4,
+      "result": "SI",
+      "observation": "Listado/detalle/active comprobados por E2E; búsqueda y estado desde catálogo web. Metadatos de fuente disponibles en la respuesta."
+    },
+    {
+      "id": 5,
+      "result": "SI",
+      "observation": "SI en evaluación local: E2E borra fuente y sus noticias de forma transaccional, conserva otra fuente/noticia y responde 404 al repetir. Normal: desactivación conserva noticias."
+    },
+    {
+      "id": 6,
+      "result": "SI",
+      "observation": "Navegador: Capturar ahora leyó y guardó 56 ítems del RSS BBC Health. Además, E2E recorre captura de un RSS controlado hasta persistencia."
+    },
+    {
+      "id": 7,
+      "result": "SI",
+      "observation": "Programador automático verificado con reloj simulado y job real cubierto por pruebas; no se afirma haber esperado un intervalo real completo en esta sesión."
+    },
+    {
+      "id": 8,
+      "result": "SI",
+      "observation": "Navegador cambia 60 a 15 minutos; GET config y reinicio conservan 15. Pruebas del programador comprueban el cambio de cadencia con reloj simulado."
+    },
+    {
+      "id": 9,
+      "result": "SI",
+      "observation": "Detalle real muestra contenido, fuente, fecha de captura, continente, categoría Salud y análisis persistido. Nuevas fuentes con idioma se procesan en validación."
+    },
+    {
+      "id": 10,
+      "result": "SI",
+      "observation": "Pruebas del motor y persistencia en ES/EN; navegador guardó análisis en inglés de noticia capturada."
+    },
+    {
+      "id": 11,
+      "result": "SI",
+      "observation": "Motor independiente probado con lotes de referencia; texto excelente avance y RSS controlado producen score 0,7 y 2 coincidencias."
+    },
+    {
+      "id": 12,
+      "result": "SI",
+      "observation": "POST /api/v1/sentiment y /sentiment/analyze devuelven el mismo score 0,7 en E2E con PostgreSQL 16."
+    },
+    {
+      "id": 13,
+      "result": "SI",
+      "observation": "Diccionario con CRUD web y REST. Navegador creó validacionhumworld y cambió su peso; pruebas comprueban borrado confirmado y errores."
+    },
+    {
+      "id": 14,
+      "result": "SI",
+      "observation": "Pruebas de diccionario y sentimiento verifican cambios en análisis nuevos y conservación de análisis guardados hasta reanalizar."
+    },
+    {
+      "id": 15,
+      "result": "SI",
+      "observation": "GET news lista/detalle y filtros de fecha, país, continente, fuente y categoría probados con inclusiones y exclusiones; filtros compartidos por dashboard."
+    },
+    {
+      "id": 16,
+      "result": "SI",
+      "observation": "DELETE /api/v1/news con body UUID y DELETE /news/:id: 204, consulta posterior 404, conserva fuente. UI exige confirmación; pruebas en base aislada."
+    },
+    {
+      "id": 17,
+      "result": "SI",
+      "observation": "Mapa con agrupación País/Continente; promedio del continente ponderado por número de noticias con evidencia. Pruebas de agregación y recorrido web."
+    },
+    {
+      "id": 18,
+      "result": "SI",
+      "observation": "Seleccionar un día consulta nuevamente resumen, mapa, nube y ranking con from=to; prueba de interfaz comprueba la solicitud y el cambio de resultado."
+    },
+    {
+      "id": 19,
+      "result": "SI",
+      "observation": "Ranking por abs(score/N), con filtros compartidos y cobertura de ausencia de evidencia; comparado con referencias automatizadas."
+    },
+    {
+      "id": 20,
+      "result": "SI",
+      "observation": "Nube basada en términos guardados, magnitud absoluta y aporte neto. RSS real: cuatro términos; pruebas verifican ponderación y detalle."
+    },
+    {
+      "id": 21,
+      "result": "SI",
+      "observation": "UI de caducidad probada; E2E configura 31 días y GET /api/v1/config coincide. La base real queda sin caducidad para conservar la colección."
+    },
+    {
+      "id": 22,
+      "result": "SI",
+      "observation": "Job de purga automática probado en PostgreSQL 16 con fechas controladas; conserva el límite y noticias vigentes. No se afirma esperar una hora real."
+    },
+    {
+      "id": 23,
+      "result": "SI",
+      "observation": "Purgado manual y confirmación web probados; elimina solo noticias anteriores al límite, con recuento de resultado. Base real protegida de estos ensayos."
+    },
+    {
+      "id": 24,
+      "result": "SI",
+      "observation": "Cliente HTTP independiente en E2E verifica POST 201, GET/PUT/PATCH 200, DELETE 204 sin cuerpo y metadatos persistidos."
+    },
+    {
+      "id": 25,
+      "result": "SI",
+      "observation": "GET /api/v1/sentiment global/continente/país coincide con /dashboards/humor; detalle mediante GET /news/:id. RSS real: 56 noticias y media 0,1142857143."
+    },
+    {
+      "id": 26,
+      "result": "SI",
+      "observation": "E2E obtiene 404 para UUID inexistente y 400 para validación inválida; respuestas publicadas en Swagger, sin escrituras indebidas."
+    },
+    {
+      "id": 27,
+      "result": "SI",
+      "observation": "Reinicio real de los tres servicios sin retirar volumen: 5.013 noticias y hashes idénticos de noticias, fuentes, medios, diccionario, periodicidad y caducidad."
+    },
+    {
+      "id": 28,
+      "result": "SI",
+      "observation": "E2E: alta RSS controlado → captura → clasificación → análisis 0,7 → consulta/nube. Navegador: medio/fuente real → 56 noticias → análisis guardado → dashboard; API coincide."
+    }
+  ]
+}

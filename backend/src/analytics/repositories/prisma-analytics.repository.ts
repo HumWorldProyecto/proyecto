@@ -17,6 +17,7 @@ const sourceSelect = {
   active: true,
   countryCode: true,
   continent: true,
+  channelId: true, language: true, mediaTopicQcode: true,
 } as const;
 
 export function readTermEvidence(
@@ -55,6 +56,8 @@ export class PrismaAnalyticsRepository implements AnalyticsRepositoryPort {
 
   async readNews(filter: HumorFilter): Promise<readonly AnalyticsRecord[]> {
     const conditions: Prisma.NewsWhereInput[] = [];
+    if (filter.source) conditions.push({ sourceId: filter.source });
+    if (filter.category) conditions.push({ mediaTopicQcodes: { has: filter.category } });
     if (filter.continent || filter.country)
       conditions.push({ source: { continent: filter.continent, countryCode: filter.country } });
     if (filter.from) {

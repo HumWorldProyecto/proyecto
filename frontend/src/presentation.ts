@@ -13,6 +13,21 @@ const number = new Intl.NumberFormat('es-CL', {
 });
 export const valueLabel = (value: number | null): string =>
   value === null ? 'Sin evidencia' : number.format(value);
+const contributionNumber = new Intl.NumberFormat('es-CL', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 6,
+  signDisplay: 'exceptZero',
+});
+const tinyContributionNumber = new Intl.NumberFormat('es-CL', {
+  notation: 'scientific',
+  maximumSignificantDigits: 3,
+  signDisplay: 'exceptZero',
+});
+export const contributionLabel = (value: number | null): string => {
+  if (value === null) return 'Sin evidencia';
+  return (value !== 0 && Math.abs(value) < 0.000001
+    ? tinyContributionNumber : contributionNumber).format(value);
+};
 export const moodLabel = (value: number | null): string =>
   value === null ? 'Sin evidencia' : value > 0 ? 'Positivo' : value < 0 ? 'Negativo' : 'Neutral';
 export const moodColor = (value: number | null): string =>

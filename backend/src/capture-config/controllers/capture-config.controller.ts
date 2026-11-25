@@ -5,6 +5,7 @@ import {
   Get,
   InternalServerErrorException,
   Put,
+  Optional,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -12,6 +13,8 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { PrismaService } from '../../prisma/prisma.service';
+import { evaluationMode } from '../../auth/evaluation-mode';
 import { CaptureConfigResponseDto } from '../dto/capture-config-response.dto';
 import { UpdateCaptureConfigDto } from '../dto/update-capture-config.dto';
 import { PeriodicityInputError } from '../errors/periodicity.error';
@@ -20,7 +23,7 @@ import { CaptureConfigService } from '../services/capture-config.service';
 @ApiTags('config')
 @Controller('config')
 export class CaptureConfigController {
-  constructor(private readonly service: CaptureConfigService) {}
+  constructor(private readonly service: CaptureConfigService, @Optional() private readonly prisma?: PrismaService) {}
 
   @Get()
   @ApiOperation({ summary: 'Consultar la periodicidad global de captura' })
@@ -29,9 +32,14 @@ export class CaptureConfigController {
     type: CaptureConfigResponseDto,
   })
   async getCurrent(): Promise<CaptureConfigResponseDto> {
-    return this.execute(async () =>
-      CaptureConfigResponseDto.fromState(await this.service.getCurrentState()),
-    );
+    return this.execute(async () => {
+      const response = CaptureConfigResponseDto.fromState(await this.service.getCurrentState());
+      if (this.prisma) {
+        const policy = await this.prisma.newsRetentionPolicy.findUnique({ where: { id: 'global' } });
+        Object.assign(response, { retentionDays: policy?.retentionDays ?? null, evaluationMode: evaluationMode() });
+      }
+      return response;
+    });
   }
 
   @Put()
