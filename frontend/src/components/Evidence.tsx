@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { News, Word } from '../types/dashboard';
-import { dateLabel, moodColor, moodLabel, plainText, safeLink, valueLabel } from '../presentation';
+import { contributionLabel, dateLabel, moodColor, moodLabel, plainText, safeLink, valueLabel } from '../presentation';
 
 export function WordCloud({
   words,
@@ -39,7 +39,7 @@ export function WordCloud({
                 fontSize: `${1 + (max ? word.influence / max : 0) * 2}rem`,
                 color: moodColor(word.contribution),
               }}
-              title={`${word.term} (${word.language}) · aporte ${valueLabel(word.contribution)} · ${word.occurrences} coincidencias`}
+              title={`${word.term} (${word.language}) · aporte ${contributionLabel(word.contribution)} · ${word.occurrences} coincidencias`}
               onClick={() => onSelect(word)}
             >
               {word.term} <small>{word.language}</small>
@@ -99,7 +99,7 @@ export function NewsRanking({
               </div>
               <div className="news-value">
                 <strong style={{ color: moodColor(item.contribution) }}>
-                  {valueLabel(item.contribution)}
+                  {contributionLabel(item.contribution)}
                 </strong>
                 <small>
                   {item.score === null
@@ -158,7 +158,7 @@ export function NewsDialog({ news, onClose, actions }: { news: News; onClose: ()
         </div>
         <div>
           <dt>Aporte al periodo</dt>
-          <dd>{valueLabel(news.contribution)}</dd>
+          <dd>{contributionLabel(news.contribution)}</dd>
         </div>
         <div>
           <dt>Coincidencias</dt>
@@ -218,7 +218,7 @@ export function WordDetail({
         {word.term} <small>({word.language})</small>
       </h3>
       <p>
-        Aporte neto {valueLabel(word.contribution)} · magnitud {valueLabel(word.influence)} ·{' '}
+        Aporte neto {contributionLabel(word.contribution)} · magnitud {contributionLabel(word.influence)} ·{' '}
         {word.occurrences} coincidencias en {word.newsCount} noticias.
       </p>
       <ul>

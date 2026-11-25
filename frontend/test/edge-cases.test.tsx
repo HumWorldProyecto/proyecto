@@ -152,7 +152,7 @@ it('procedencia muestra error recuperable, país retirado y fuente inactiva', as
   );
   await user.click(screen.getByText('Procedencia de las fuentes'));
   expect(screen.getByText(/Inactiva/)).toBeVisible();
-  await user.selectOptions(screen.getByLabelText(/https:/), '');
+  await user.selectOptions(screen.getByRole('combobox', { name: /https:/ }), '');
   await user.click(screen.getByRole('button', { name: 'Guardar país' }));
   expect(await screen.findByRole('status')).toHaveTextContent('Fallo de red');
   await user.click(screen.getByRole('button', { name: 'Guardar país' }));

@@ -125,7 +125,7 @@ it('asigna explícitamente país de la fuente y actualiza la consulta', async ()
   await ready();
   await openCatalog(user);
   await screen.findByText('Procedencia de las fuentes');
-  await user.selectOptions(screen.getByLabelText(/https:\/\/example.org\/rss/), 'CL');
+  await user.selectOptions(screen.getByRole('combobox', { name: /https:\/\/example.org\/rss/ }), 'CL');
   await user.click(screen.getByRole('button', { name: 'Guardar país' }));
   await waitFor(() =>
     expect(

@@ -5,16 +5,21 @@ import { useResource } from '../services/use-resource';
 import { Medium, SourceMetadata, sourceMetadata, TOPICS } from './SourceMetadata';
 import { useAdminAction } from './Administration';
 
+type CaptureResult = { sourceId: string } & (
+  { status: 'completed'; itemsParsed: number } | { status: 'failed'; errorCode: string }
+);
+
 function SourceRow({
   source,
   countries,
   onSaved,
-  credential, channels, evaluationMode,
+  credential, channels, evaluationMode, selected, onToggle, capturing,
 }: {
   source: Source;
   countries: Country[];
   onSaved: () => void;
   credential: string; channels: Medium[]; evaluationMode: boolean;
+  selected: boolean; onToggle: () => void; capturing: boolean;
 }) {
   const [country, setCountry] = useState(source.countryCode ?? '');
   useEffect(() => setCountry(source.countryCode ?? ''), [source.countryCode]);
@@ -26,6 +31,9 @@ function SourceRow({
   const path = `/sources/${encodeURIComponent(source.id)}`;
   return (
     <article className="rss-card">
+    <label className="batch-selection"><input type="checkbox" checked={selected}
+      disabled={!source.active || capturing} onChange={onToggle}
+      aria-label={`Seleccionar ${source.url}`} /> Seleccionar para captura múltiple</label>
     <form
       className="source-row"
       onSubmit={async (event) => {
@@ -128,6 +136,12 @@ export function SourceCountries({
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('todas');
   const [limit, setLimit] = useState(10);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [results, setResults] = useState<CaptureResult[]>([]);
+  useEffect(() => {
+    setSelected(current => current.filter(id => sources.some(source => source.id === id && source.active)));
+  }, [sources]);
+  const selectedIds = selected.filter(id => sources.some(source => source.id === id && source.active));
   const action = useAdminAction(onSaved);
   const matching = sources.filter(source => {
     const text = `${source.url} ${source.countryCode ?? ''} ${channels.find(channel => channel.id === source.channelId)?.name ?? ''}`.toLocaleLowerCase();
@@ -171,6 +185,28 @@ export function SourceCountries({
         </select></label>
         <p className="muted">{matching.length} de {sources.length} fuentes</p>
       </div>}
+      {sources.length > 0 && <section aria-label="Captura múltiple">
+        <p>{selectedIds.length} fuentes activas seleccionadas. La selección se conserva al buscar.</p>
+        <button type="button" className="secondary" disabled={action.busy || selectedIds.length < 2}
+          onClick={() => {
+            setResults([]);
+            void action.run(async signal => {
+              const result = await adminRequest<{ results: CaptureResult[] }>('/sources/capture', credential, signal, 'POST', { sourceIds: selectedIds });
+              setResults(result.results);
+              const failed = result.results.filter(item => item.status === 'failed');
+              setSelected(failed.map(item => item.sourceId));
+              return `Captura múltiple. Completadas: ${result.results.length - failed.length}. Sin completar: ${failed.length}.`;
+            });
+          }}>Capturar fuentes seleccionadas</button>{' '}
+        <button type="button" className="text-button" disabled={action.busy || !selectedIds.length}
+          onClick={() => setSelected([])}>Limpiar selección</button>
+        {results.length > 0 && <ul aria-label="Resultado de captura múltiple">
+          {results.map(item => <li key={item.sourceId}>
+            {sources.find(source => source.id === item.sourceId)?.url ?? 'Fuente seleccionada'}: {' '}
+            {item.status === 'completed' ? `${item.itemsParsed} ítems leídos` : 'No se completó. Revisa la fuente y vuelve a intentarlo.'}
+          </li>)}
+        </ul>}
+      </section>}
       {sources.length ? (
         matching.slice(0, limit).map((source) => (
           <SourceRow
@@ -180,6 +216,9 @@ export function SourceCountries({
             source={source}
             countries={countries}
             onSaved={onSaved}
+            selected={selectedIds.includes(source.id)} capturing={action.busy}
+            onToggle={() => setSelected(current => current.includes(source.id)
+              ? current.filter(id => id !== source.id) : [...current, source.id])}
           />
         ))
       ) : (

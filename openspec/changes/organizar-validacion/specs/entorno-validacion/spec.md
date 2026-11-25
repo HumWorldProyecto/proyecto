@@ -8,6 +8,16 @@ La web SHALL ofrecer espacios separados para explorar noticias, gestionar medios
 - **WHEN** la persona cambia entre catálogo y administración
 - **THEN** conserva la clave en memoria y la API mantiene sus comprobaciones de lectura y escritura
 
+#### Scenario: Mostrar HU-03 desde el catálogo web
+- **GIVEN** al menos dos fuentes activas seleccionadas en el catálogo
+- **WHEN** se solicita su captura conjunta
+- **THEN** la web utiliza el contrato existente de captura múltiple, conserva sus comprobaciones de acceso y muestra los resultados individuales, incluidos los fallos parciales
+
+#### Scenario: Aportes pequeños en una colección grande
+- **GIVEN** un aporte distinto de cero que se redondearía a cero con tres decimales
+- **WHEN** se consulta el ranking, el detalle de noticia o una palabra
+- **THEN** la web muestra precisión adicional o notación científica sin alterar el valor calculado ni el análisis guardado
+
 ### Requirement: Catálogo y captura persistente
 El entorno de validación SHALL preparar un catálogo público de RSS y conservar las noticias capturadas entre reinicios.
 

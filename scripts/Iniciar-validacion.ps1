@@ -1,4 +1,8 @@
-param([ValidateSet('Consulta', 'Gestion')][string]$CopiarClave)
+param(
+  [ValidateSet('Consulta', 'Gestion')][string]$CopiarClave,
+  [switch]$ConClaves,
+  [switch]$Ensayo
+)
 
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
@@ -25,7 +29,18 @@ if (-not (Test-Path -LiteralPath $envFile)) {
   Set-Content -LiteralPath $envFile -Value $values -Encoding ascii
 }
 
-docker compose --env-file $envFile -f (Join-Path $repo 'compose.validacion.yml') up -d --build
+$composeName = if ($Ensayo) { 'compose.ensayo.yml' } else { 'compose.validacion.yml' }
+$composeFiles = @('-f', (Join-Path $repo $composeName))
+if ($ConClaves) { $composeFiles += @('-f', (Join-Path $repo 'compose.claves.yml')) }
+docker compose --project-directory $repo --env-file $envFile @composeFiles up -d --build
 if ($LASTEXITCODE -ne 0) { throw 'No se pudo iniciar el entorno. Revisa el estado de Docker.' }
-Write-Host 'Web: http://127.0.0.1:54176/'
-Write-Host 'Swagger: http://127.0.0.1:53016/api/docs'
+if ($Ensayo) {
+  Write-Host 'Ensayo aislado con seis noticias ficticias restaurables. No es la colección real.'
+  Write-Host 'Web: http://127.0.0.1:54179/'
+  Write-Host 'Swagger: http://127.0.0.1:53019/api/docs'
+} else {
+  Write-Host 'Web: http://127.0.0.1:54176/'
+  Write-Host 'Swagger: http://127.0.0.1:53016/api/docs'
+}
+if ($ConClaves) { Write-Host 'Modo normal: la gestión requiere clave.' }
+else { Write-Host 'Evaluación local: administración sin clave y borrado de fuente con noticias.' }

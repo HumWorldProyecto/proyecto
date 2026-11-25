@@ -2,6 +2,8 @@
 
 - [x] 1.1 Separar exploración, catálogo y caducidad.
 - [x] 1.2 Añadir búsqueda y acciones de fuentes RSS.
+- [x] 1.3 Exponer la captura múltiple existente de HU-03 y sus fallos parciales en el catálogo.
+- [x] 1.4 Mostrar los aportes pequeños sin redondearlos a cero.
 
 ## 2. Validación con datos reales
 

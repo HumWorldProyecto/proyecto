@@ -1,0 +1,275 @@
+{
+  "scope": "Revisión previa a presentación. SI indica evidencia técnica descrita; no aceptación del profesor. PARCIAL conserva una espera real pendiente. Casos 1/5 condicionados al modo de evaluación local.",
+  "repository": "HumWorldProyecto/proyecto",
+  "branch": "feedback/gestion-validacion",
+  "pullRequest": "https://github.com/HumWorldProyecto/proyecto/pull/53",
+  "normalMode": "P12 y desactivación lógica de fuentes conservados",
+  "evaluationMode": "Solo ambas banderas a 1; compose ligado a 127.0.0.1",
+  "openspec": {
+    "strict": true,
+    "passed": 19,
+    "failed": 0
+  },
+  "cleanSeed": {
+    "media": 50,
+    "sources": 53,
+    "continents": 6,
+    "missingMetadata": 0
+  },
+  "repeatSeed": {
+    "preservedDeletedSource": true,
+    "sources": 52,
+    "preservedOptionalNull": true,
+    "preservedRetentionDays": 31
+  },
+  "date": "2026-11-25",
+  "backend": {
+    "suites": 82,
+    "tests": 867,
+    "coverage": {
+      "lines": 98.95,
+      "statements": 98.98,
+      "functions": 99.35,
+      "branches": 95.26
+    }
+  },
+  "frontend": {
+    "suites": 8,
+    "tests": 42,
+    "coverage": {
+      "lines": 97.3,
+      "statements": 96.02,
+      "functions": 93.63,
+      "branches": 93.49
+    }
+  },
+  "collection": {
+    "news": 20098,
+    "analyzed": 20098,
+    "withEvidence": 4206,
+    "captureDays": 7,
+    "firstCapture": "2026-11-06T19:43:34.146",
+    "lastCapture": "2026-11-25T16:45:56.566",
+    "publicationDays": 246
+  },
+  "restart": {
+    "checkedAt": "2026-11-25T13:54:07.2130779-03:00",
+    "allDataIdentical": true,
+    "before": {
+      "newsCount": 20098,
+      "newsHash": "4d6ca5ec4b3cf330ebb42afc09182391",
+      "sourcesHash": "2a6913397da59be1aff2731607320cbd",
+      "channelsHash": "638e5996d12eddfe2dea7c5f6b710a27",
+      "dictionaryHash": "6b620d34141490d0615e3cdae1fa0c6b",
+      "captureHash": "009016b8b75a5b0afdade1f8c3573150",
+      "retentionHash": "8df143cfd8ded5b786baa766beafcb72"
+    },
+    "after": {
+      "newsCount": 20098,
+      "newsHash": "4d6ca5ec4b3cf330ebb42afc09182391",
+      "sourcesHash": "2a6913397da59be1aff2731607320cbd",
+      "channelsHash": "638e5996d12eddfe2dea7c5f6b710a27",
+      "dictionaryHash": "6b620d34141490d0615e3cdae1fa0c6b",
+      "captureHash": "009016b8b75a5b0afdade1f8c3573150",
+      "retentionHash": "8df143cfd8ded5b786baa766beafcb72"
+    },
+    "config": {
+      "capturePeriodicityMinutes": 15,
+      "retentionDays": null,
+      "evaluationMode": true
+    },
+    "scope": "Solo los tres servicios humworld-validacion, conservando el volumen"
+  },
+  "browserFlow": {
+    "sourceId": "26f517cc-280b-4b48-b066-c2685803016b",
+    "sourceUrl": "https://feeds.bbci.co.uk/news/business/rss.xml",
+    "filter": {
+      "continent": null,
+      "country": null,
+      "from": null,
+      "to": null
+    },
+    "summary": {
+      "total": 53,
+      "analyzed": 53,
+      "withEvidence": 7,
+      "withoutEvidence": 46,
+      "unanalyzed": 0,
+      "unknownCountry": 0,
+      "missingTermEvidence": 0,
+      "average": 0.26667142857142856
+    },
+    "wordCount": 7,
+    "newsCount": 53
+  },
+  "browserBatch": {
+    "urls": [
+      "https://feeds.bbci.co.uk/news/business/rss.xml",
+      "https://feeds.bbci.co.uk/news/health/rss.xml"
+    ],
+    "completed": 2,
+    "failed": 0,
+    "itemsParsed": [
+      53,
+      57
+    ],
+    "scope": "Recorrido real del frontend. Ítems leídos no equivalen a noticias nuevas."
+  },
+  "rehearsal": {
+    "web": "http://127.0.0.1:54179/",
+    "api": "http://127.0.0.1:53019/api/v1",
+    "synthetic": true,
+    "news": 6,
+    "retentionDays": 7,
+    "expiredCount": 1,
+    "manualPurgeExecutedInBrowser": false,
+    "scope": "Vista previa verificada. Purgado manual/automático probado en PostgreSQL aislado mediante regresión. No se purgó la colección real."
+  },
+  "cases": [
+    {
+      "id": 1,
+      "result": "SI",
+      "observation": "SI condicionado: frontend de evaluación local sin clave verificado el 25/11. Normal conserva P12. No se presenta como administración pública en producción."
+    },
+    {
+      "id": 2,
+      "result": "SI",
+      "observation": "Carga limpia en PostgreSQL 16: 50 medios, 53 fuentes, seis continentes y cero fuentes sin país, idioma o categoría editorial IPTC."
+    },
+    {
+      "id": 3,
+      "result": "SI",
+      "observation": "Frontend real: Medio presentación Equipo 5 y BBC Business registrados con país GB, Europa derivada, idioma en y categoría editorial Economía. Consulta API confirma el registro."
+    },
+    {
+      "id": 4,
+      "result": "SI",
+      "observation": "Listado/detalle/active comprobados por E2E; búsqueda y estado desde catálogo web. Metadatos de fuente disponibles en la respuesta."
+    },
+    {
+      "id": 5,
+      "result": "SI",
+      "observation": "SI en evaluación local: E2E borra fuente y sus noticias de forma transaccional, conserva otra fuente/noticia y responde 404 al repetir. Normal: desactivación conserva noticias."
+    },
+    {
+      "id": 6,
+      "result": "SI",
+      "observation": "Frontend real: captura individual de BBC Business, 53 ítems. Captura múltiple HU-03 de Business/Health: 53 y 57 ítems, dos completadas. E2E adicional usa RSS controlado."
+    },
+    {
+      "id": 7,
+      "result": "PARCIAL",
+      "observation": "PARCIAL: programador y job cubiertos con reloj controlado; colección real conserva siete días de captura. Falta introducir un ítem identificable en un RSS controlado y esperar el intervalo real sin captura manual."
+    },
+    {
+      "id": 8,
+      "result": "PARCIAL",
+      "observation": "PARCIAL: frontend guardó 30 y volvió a 15 minutos; GET y reinicio confirman 15. Regresión de cadencia pasa con reloj simulado. Falta registrar una ejecución real posterior al cambio."
+    },
+    {
+      "id": 9,
+      "result": "SI",
+      "observation": "Detalle web de noticia BBC Education muestra título, descripción, fuente, publicación 24/11, captura 25/11, GB/Europa, categoría Educación y score -0,4 guardado."
+    },
+    {
+      "id": 10,
+      "result": "SI",
+      "observation": "Pruebas del motor y persistencia en ES/EN; navegador guardó análisis en inglés de noticia capturada."
+    },
+    {
+      "id": 11,
+      "result": "SI",
+      "observation": "Motor independiente probado con lotes de referencia; texto excelente avance y RSS controlado producen score 0,7 y 2 coincidencias."
+    },
+    {
+      "id": 12,
+      "result": "SI",
+      "observation": "POST /api/v1/sentiment y /sentiment/analyze devuelven el mismo score 0,7 en E2E con PostgreSQL 16."
+    },
+    {
+      "id": 13,
+      "result": "SI",
+      "observation": "CRUD del diccionario web/REST cubierto por regresión actual. Alta/cambio en navegador constan en evidencia 09/11. El 25/11 se comprobó la pantalla y sus 61 entradas; no se cambió el diccionario real."
+    },
+    {
+      "id": 14,
+      "result": "SI",
+      "observation": "Pruebas de diccionario y sentimiento verifican cambios en análisis nuevos y conservación de análisis guardados hasta reanalizar."
+    },
+    {
+      "id": 15,
+      "result": "SI",
+      "observation": "Filtros de fuente y día comprobados en web: BBC Education, 24/11, tres noticias y media -0,4. REST y frontend automatizados cubren fechas, geografía y categoría. La entrada manual Desde/Hasta debe repetirse en el navegador de presentación: la automatización no consiguió completar esos campos."
+    },
+    {
+      "id": 16,
+      "result": "SI",
+      "observation": "DELETE /api/v1/news con body UUID y DELETE /news/:id: 204, consulta posterior 404, conserva fuente. UI exige confirmación; pruebas en base aislada."
+    },
+    {
+      "id": 17,
+      "result": "SI",
+      "observation": "Web: agrupación por continente para BBC Business, Europa +0,2666714286 con siete noticias con evidencia. Promedio ponderado validado por regresión."
+    },
+    {
+      "id": 18,
+      "result": "SI",
+      "observation": "Web: selección 24/11 actualizó resumen, mapa, nube y ranking de Education, de 23 a tres noticias. API independiente confirma el mismo filtro."
+    },
+    {
+      "id": 19,
+      "result": "SI",
+      "observation": "Ranking conserva abs(score/N). Corrección de presentación muestra aportes hasta seis decimales o notación científica. Regresión comprueba 1/20045 visible como +0,00005, sin alterar el score."
+    },
+    {
+      "id": 20,
+      "result": "SI",
+      "observation": "Web: BBC Business muestra siete términos influyentes, siete noticias con evidencia. Ponderación y navegación a noticias contrastadas con pruebas; los aportes pequeños mantienen precisión."
+    },
+    {
+      "id": 21,
+      "result": "SI",
+      "observation": "Frontend guardó 36500 días y volvió a desactivar la caducidad. Vista previa siempre cero caducadas en colección real. GET/reinicio confirman retentionDays=null. Sin purgar noticias reales."
+    },
+    {
+      "id": 22,
+      "result": "PARCIAL",
+      "observation": "PARCIAL: job horario comprobado con fechas controladas en PostgreSQL 16 y conserva límite/vigentes. Falta esperar una ejecución automática real de una hora en ensayo aislado con caducadas."
+    },
+    {
+      "id": 23,
+      "result": "SI",
+      "observation": "Purgado manual y confirmación web cubiertos por regresión aislada. Ensayo restaurable en 54179 preparado: seis noticias ficticias, una caducada. Vista previa web real verificada; el clic de purga no se ejecutó en este recorrido."
+    },
+    {
+      "id": 24,
+      "result": "SI",
+      "observation": "Cliente HTTP independiente en E2E verifica POST 201, GET/PUT/PATCH 200, DELETE 204 sin cuerpo y metadatos persistidos."
+    },
+    {
+      "id": 25,
+      "result": "SI",
+      "observation": "API pública y frontend coinciden para source=BBC Business: 53 noticias, siete con evidencia, media +0,2666714286. Regresión cubre global, continente, país y detalle de noticia."
+    },
+    {
+      "id": 26,
+      "result": "SI",
+      "observation": "E2E obtiene 404 para UUID inexistente y 400 para validación inválida; respuestas publicadas en Swagger, sin escrituras indebidas."
+    },
+    {
+      "id": 27,
+      "result": "SI",
+      "observation": "Reinicio real 25/11 de los tres servicios: 20098 noticias y hashes idénticos de noticias, fuentes, medios, diccionario y ambas configuraciones. Volumen conservado."
+    },
+    {
+      "id": 28,
+      "result": "SI",
+      "observation": "Flujo real frontend: alta medio/fuente Business, captura 53 ítems, 53 análisis guardados, siete con evidencia y siete palabras, dashboard +0,2666714286. API con filtro source coincide. Regresión usa lote controlado."
+    }
+  ],
+  "pendingRealTimeChecks": [
+    7,
+    8,
+    22
+  ]
+}
